@@ -2,16 +2,16 @@
 
 REPO_DIR := ..
 
-BIN_DIR = $(REPO_DIR)/bin
+TOOLS_DIR = $(REPO_DIR)/tools
 BUILD_DIR = $(REPO_DIR)/build
 BITMAP_DIR = .
 GFX_FONT_DIR = $(REPO_DIR)/gfxfont
 
-CMD_SHAPOFONT = $(BIN_DIR)/shapofont.py
+CMD_SHAPOFONT = $(TOOLS_DIR)/shapofont.py
 
 EXTRA_DEPENDENCIES = \
 	Makefile \
-	$(wildcard $(BIN_DIR)/*.py)
+	$(wildcard $(TOOLS_DIR)/*.py)
 
 FONT_JSON_LIST = \
 	$(wildcard $(BITMAP_DIR)/$(TARGET_FAMILY)/*/shapofont.json)
