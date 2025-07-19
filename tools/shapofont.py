@@ -87,9 +87,9 @@ class BitmapFont:
         self.type_size = dic["s"]
         self.cap_height = dic.get("c", self.type_size)
         self.weight = dic.get("w", 1)
-        self.box_height = dic.get("h", math.ceil(self.type_size * 1.2))
+        self.line_height = dic.get("h", math.ceil(self.type_size * 1.2))
         self.ascender_spacing = dic.get("a", 0)
-        self.default_horizontal_spacing = dic.get(
+        self.normal_horizontal_spacing = dic.get(
             "p", 1 + math.floor(self.type_size / 12)
         )
 
@@ -181,8 +181,8 @@ class BitmapFont:
     def to_gfx_font(self, outdir: str):
         builder = gfxfont.GFXfontBuilder(
             self.full_name,
-            self.default_horizontal_spacing,
-            self.box_height,
+            self.normal_horizontal_spacing,
+            self.line_height,
         )
         for glyph in self.glyphs:
             bmp = glyph.img

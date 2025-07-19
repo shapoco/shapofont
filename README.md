@@ -9,7 +9,7 @@
 |s|typeSize|(required)|
 |c|capHeight|s|
 ||descenderHeight|s - c|
-|h|boxHeight|ceil(s \* 1.2)|
+|h|lineHeight|ceil(s \* 1.2)|
 |a|ascenderSpacing|0|
 ||descenderSpacing|h-s-a|
 |w|weight|1|
