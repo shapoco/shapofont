@@ -93,22 +93,23 @@ class GFXfontBuilder:
     def add_glyph(
         self,
         code: int,
-        box_width: int,
-        box_height: int,
+        bmp_width: int,
+        bmp_height: int,
         bitmap: list[int],
         bmp_offset: int = 0,
         bmp_stride: int = 0,
+        y_offset: int = 0,
     ):
         if bmp_stride == 0:
-            bmp_stride = box_width
+            bmp_stride = bmp_width
 
         # Cropping
-        x_min = box_width
+        x_min = bmp_width
         x_max = -1
-        y_min = box_height
+        y_min = bmp_height
         y_max = -1
-        for y in range(box_height):
-            for x in range(box_width):
+        for y in range(bmp_height):
+            for x in range(bmp_width):
                 col = bitmap[bmp_offset + y * bmp_stride + x]
                 if col >= 128:
                     x_min = min(x, x_min)
@@ -142,9 +143,9 @@ class GFXfontBuilder:
             bitmap_offset=0,
             width=type_w,
             height=type_h,
-            x_advance=box_width + self.x_spacing,
+            x_advance=bmp_width + self.x_spacing,
             x_offset=x_min,
-            y_offset=y_min,
+            y_offset=y_offset + y_min,
         )
 
         self.bitmaps[code] = packed_bmp

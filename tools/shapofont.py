@@ -119,6 +119,7 @@ class BitmapFont:
         marker_y = 1
         num_valid_glyphs = 0
         code_index = 0
+        glyph_max_bmp_height = self.bitmap_height()
         while marker_y < self.bmp.height:
             # Find marker line
             found = False
@@ -156,9 +157,9 @@ class BitmapFont:
 
                         bmp = self.bmp.crop(
                             start_x,
-                            marker_y - self.type_size,
+                            marker_y - glyph_max_bmp_height,
                             glyph_width,
-                            self.type_size,
+                            glyph_max_bmp_height,
                         )
 
                         glyph = BitmapGlyph(self.codes[code_index], bmp)
@@ -172,7 +173,10 @@ class BitmapFont:
 
                 last_is_valid = curr_is_valid
 
-            marker_y += self.type_size
+            marker_y += 1
+
+    def bitmap_height(self) -> int:
+        return self.type_size + self.ascender_spacing
 
     def to_gfx_font(self, outdir: str):
         builder = gfxfont.GFXfontBuilder(
@@ -182,7 +186,6 @@ class BitmapFont:
         )
         for glyph in self.glyphs:
             bmp = glyph.img
-            bmp_offset = len(builder.bitmaps)
             builder.add_glyph(
                 glyph.code,
                 bmp.width,
@@ -190,6 +193,7 @@ class BitmapFont:
                 bmp.data,
                 bmp_offset=bmp.offset,
                 bmp_stride=bmp.stride,
+                y_offset=-self.bitmap_height(),
             )
         gfx_font = builder.build()
         with open(path.join(outdir, f"{self.full_name}.h"), "w") as f:
