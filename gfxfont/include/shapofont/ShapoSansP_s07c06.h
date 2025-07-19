@@ -14,7 +14,7 @@
 #define PROGMEM
 #endif
 
-const uint8_t ShapoSansP_s7c6Bitmaps[] PROGMEM = {
+const uint8_t ShapoSansP_s07c06Bitmaps[] PROGMEM = {
   0xE8, 0xB4, 0x57, 0xD5, 0xF5, 0x00, 0x23, 0xA8,
   0xE2, 0xB8, 0x80, 0xED, 0xBE, 0xDB, 0x80, 0x45,
   0x1B, 0x26, 0x80, 0xC0, 0x6A, 0xA4, 0x95, 0x58,
@@ -50,7 +50,7 @@ const uint8_t ShapoSansP_s7c6Bitmaps[] PROGMEM = {
   0x64, 0x88, 0xFE, 0x89, 0x34, 0xA0, 0x45, 0x44,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s7c6Glyphs[] PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s07c06Glyphs[] PROGMEM = {
   { 0, 0, 0, 4, 3, 7 },
   { 0, 1, 5, 2, 0, 1 },
   { 1, 3, 2, 4, 0, 0 },
@@ -148,9 +148,9 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s7c6Glyphs[] PROGMEM = {
   { 262, 5, 3, 6, 0, 2 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansP_s7c6 PROGMEM = {
-  (uint8_t*)ShapoSansP_s7c6Bitmaps,
-  (GFXglyph*)ShapoSansP_s7c6Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansP_s07c06 PROGMEM = {
+  (uint8_t*)ShapoSansP_s07c06Bitmaps,
+  (GFXglyph*)ShapoSansP_s07c06Glyphs,
   0x20,
   0x7E,
   9
