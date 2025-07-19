@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
 from PIL import Image
-import numpy as np
-import json
-from enum import IntEnum
-import sys
+import json5
 from os import path
 import re
 import math
@@ -103,23 +100,19 @@ class BitmapFont:
         self.codes = list(range(0x20, 0x7F))
 
         # Load JSON
-        json_path = path.join(dir_path, "shapofont.json")
+        json_path = path.join(dir_path, "shapofont.json5")
+        if not path.exists(json_path):
+            json_path = path.join(dir_path, "shapofont.json")
         if path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
-                json_data = json.load(f)
+                json_data = json5.load(f)
             if "codes" in json_data:
                 self.codes = []
                 code_ranges = json_data["codes"]
                 for code_range in code_ranges:
-                    range_elements = code_range.split("-")
-                    if len(range_elements) == 1:
-                        self.codes.append(ord(range_elements[0]))
-                    elif len(range_elements) == 2:
-                        start_code = ord(range_elements[0])
-                        end_code = ord(range_elements[1])
-                        self.codes.extend(range(start_code, end_code + 1))
-                    else:
-                        raise ValueError(f"Invalid code range format: {code_range}")
+                    start_code = int(code_range['from'])
+                    end_code = int(code_range['to'])
+                    self.codes.extend(range(start_code, end_code + 1))
 
         # Find Glyphs
         self.glyphs: list[BitmapGlyph] = []
