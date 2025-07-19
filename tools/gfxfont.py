@@ -16,10 +16,7 @@ class GFXglyph:
         self.y_offset = y_offset
 
     def generate_struct_initializer(self) -> str:
-        return (
-            f"{{ {self.bitmap_offset}, {self.width}, {self.height}, "
-            f"{self.x_advance}, {self.x_offset}, {self.y_offset} }}"
-        )
+        return f"{{ {self.bitmap_offset}, {self.width}, {self.height}, {self.x_advance}, {self.x_offset}, {self.y_offset} }}"
 
 
 class GFXfont:
@@ -42,7 +39,14 @@ class GFXfont:
     def generate_header(self) -> str:
         header = "#pragma once\n\n"
         header += "#include <stdint.h>\n"
+        header += "\n"
+        header += "#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER\n"
         header += "#include <gfxfont.h>\n"
+        header += "#endif\n"
+        header += "\n"
+        header += "#ifndef SHAPOFONT_GFXFONT_NAMESPACE\n"
+        header += "#define SHAPOFONT_GFXFONT_NAMESPACE\n"
+        header += "#endif\n"
         header += "\n"
         header += "#ifndef PROGMEM\n"
         header += "#define PROGMEM\n"
@@ -59,15 +63,17 @@ class GFXfont:
             else:
                 header += " "
         header += "};\n\n"
-        
-        header += f"const GFXglyph {self.name}Glyphs[] PROGMEM = {{\n"
+
+        header += f"const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph {self.name}Glyphs[] PROGMEM = {{\n"
         for glyph in self.glyphs:
             header += f"  {glyph.generate_struct_initializer()},\n"
         header += "};\n\n"
-        
-        header += f"const GFXfont {self.name} PROGMEM = {{\n"
-        header += f"  (uint8_t  *){self.name}Bitmaps,\n"
-        header += f"  (GFXglyph *){self.name}Glyphs,\n"
+
+        header += (
+            f"const SHAPOFONT_GFXFONT_NAMESPACE GFXfont {self.name} PROGMEM = {{\n"
+        )
+        header += f"  (uint8_t*){self.name}Bitmaps,\n"
+        header += f"  (GFXglyph*){self.name}Glyphs,\n"
         header += f"  0x{self.first:02X},\n"
         header += f"  0x{self.last:02X},\n"
         header += f"  {self.y_advance}\n"
@@ -104,7 +110,7 @@ class GFXfontBuilder:
         for y in range(box_height):
             for x in range(box_width):
                 col = bitmap[bmp_offset + y * bmp_stride + x]
-                if col != 0:
+                if col >= 128:
                     x_min = min(x, x_min)
                     x_max = max(x, x_max)
                     y_min = min(y, y_min)
@@ -118,15 +124,19 @@ class GFXfontBuilder:
 
         # Pack bitmap into bytes
         packed_bmp: list[int] = []
+        byte = 0
+        i_bit = 7
         for y in range(type_h):
-            sreg = 0
             for x in range(type_w):
                 col = bitmap[bmp_offset + (y + y_min) * bmp_stride + (x + x_min)]
-                if col > 127:
-                    sreg |= 1 << x % 8
-                if x % 8 == 7 or x == type_w - 1:
-                    packed_bmp.append(sreg)
-                    sreg = 0
+                if col >= 128:
+                    byte |= 1 << i_bit
+                if i_bit == 0 or (y == type_h - 1 and x == type_w - 1):
+                    packed_bmp.append(byte)
+                    byte = 0
+                    i_bit = 7
+                else:
+                    i_bit -= 1
 
         glyph = GFXglyph(
             bitmap_offset=0,

@@ -163,9 +163,9 @@ class BitmapFont:
 
                         bmp = self.bmp.crop(
                             start_x,
-                            marker_y,
+                            marker_y - self.type_size,
                             glyph_width,
-                            self.box_height,
+                            self.type_size,
                         )
 
                         glyph = BitmapGlyph(self.codes[code_index], bmp)
@@ -179,7 +179,7 @@ class BitmapFont:
 
                 last_is_valid = curr_is_valid
 
-            marker_y += self.box_height
+            marker_y += self.type_size
 
     def to_gfx_font(self, outdir: str):
         builder = gfxfont.GFXfontBuilder(
@@ -195,7 +195,8 @@ class BitmapFont:
                 bmp.width,
                 bmp.height,
                 bmp.data,
-                bmp_offset=bmp_offset,
+                bmp_offset=bmp.offset,
+                bmp_stride=bmp.stride,
             )
         gfx_font = builder.build()
         with open(path.join(outdir, f"{self.full_name}.h"), "w") as f:
