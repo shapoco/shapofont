@@ -67,7 +67,9 @@ source venv-setup.shrc
 
 In this repository, after creating the venv, simply run `make all` and all fonts will be converted automatically.
 
-----
+## License
+
+I'm considering what to license.
 
 ## Memo: ASCII Code Table
 
