@@ -55,18 +55,19 @@ ShapoFonts are designed using Microsoft Paint and converted to some font formats
 1. Create a canvas of appropriate size with a black background.
 2. Design your glyphs in white.
 3. Draw a red line (**position marker**) of the same width at the bottom of each glyph.
+
+      ![](./img/how_to_design.svg)
+
 4. Save the image as `design.png`.
 5. In a JSON5 file `shapofont.json5`, list the characters contained in the image.
 
-![](./img/how_to_design.svg)
-
-```json5
-{
-    "codes": [
-        {"from": 0x20, "to": 0x7E},
-    ]
-}
-```
+      ```json5
+      {
+      "codes": [
+            {"from": 0x20, "to": 0x7E},
+      ]
+      }
+      ```
 
 - The vertical positions of the position markers of the glyphs side by side must be aligned.
 - There must be at least typeSize + ascenderSpacing pixels of space above the position marker.
