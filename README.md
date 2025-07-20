@@ -67,6 +67,17 @@ source venv-setup.shrc
 
 In this repository, after creating the venv, simply run `make all` and all fonts will be converted automatically.
 
+## Using GFXfont in LovyanGFX
+
+Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=::lgfx::` macro so that it can be used with LovyanGFX.
+
+```c++
+#pragma once
+
+#define SHAPOFONT_GFXFONT_NAMESPACE ::lgfx::
+#include "shapofont/ShapoSansP_s11c09w2a1.h"
+```
+
 ## License
 
 I'm considering what to license.
