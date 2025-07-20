@@ -33,7 +33,7 @@ ShapoFonts are designed using Microsoft Paint and converted to some font formats
 
 ![](./img/how_to_design.svg)
 
-```json
+```json5
 {
     "codes": [
         {"from": 0x20, "to": 0x7E},
