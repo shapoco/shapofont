@@ -202,12 +202,12 @@ class BitmapFont:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True)
-    parser.add_argument("--gfx_outdir", required=True)
+    parser.add_argument("--outdir_gfx", required=True)
     args = parser.parse_args()
 
     font = BitmapFont(args.input)
-    if args.gfx_outdir:
-        font.to_gfx_font(args.gfx_outdir)
+    if args.outdir_gfx:
+        font.to_gfx_font(args.outdir_gfx)
 
 
 if __name__ == "__main__":

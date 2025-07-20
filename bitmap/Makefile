@@ -29,4 +29,4 @@ $(GFX_FONT_INC_DIR)/$(TARGET_FAMILY)_%.h: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/desig
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
 		-i $(dir $<) \
-		--gfx_outdir $(dir $@)
+		--outdir_gfx $(dir $@)
