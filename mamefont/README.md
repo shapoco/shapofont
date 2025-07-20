@@ -38,13 +38,13 @@ A structure that provides information common to the entire font.
 |15:14|(Reserved)||
 |13:8|`ySpacing`|Vertical spacing in pixels|
 |7:6|(Reserved)||
-|5:0|`glyphHeight`|Number of pixels of glyph bitmap|
+|5:0|`glyphHeight`|Height of glyph in pixels|
 
 ## Glyph Table Entry
 
 |Size [Bytes]|Name|Description|
 |:--:|:--|:--|
-|2|`entryPoint`|Entry point offset in number of bytes from start of Microcode Block|
+|2|`entryPoint`|Offset from start of Microcode Block in bytes|
 |2|`glyphDimension`|Dimension of glyph bitmap|
 
 ### `glyphDimension`
@@ -52,19 +52,10 @@ A structure that provides information common to the entire font.
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |15|`scanDirection`|0: horizontal, 1: vertical|
-|14:13|(Reserved)||
-|12:8|`xSpacing`|Horizontal spacing in pixels|
-|7:6|`verticalArea`|Vertical scan range|
+|14|(Reserved)||
+|13:8|`xSpacing`|Horizontal spacing in pixels|
+|7:6|(Reserved)||
 |5:0|`glyphWidth`|Number of pixels of glyph bitmap|
-
-#### `verticalArea`
-
-|Value|Y-coordinate of top of bitmap|Y-coordinate of bottom of bitmap|
-|:--:|:--|:--|
-|0|0|`glyphHeight`-1|
-|1|0|floor(`glyphHeight` / 2)-1|
-|2|floor(`glyphHeight` / 4)-1|floor(`glyphHeight` * 3 / 4)-1|
-|3|floor(`glyphHeight` / 2)-1|`glyphHeight`-1|
 
 ## Microcode Block
 
