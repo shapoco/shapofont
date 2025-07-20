@@ -73,20 +73,21 @@ A structure that provides information common to the entire font.
 
 ## Instruction Set
 
-|Value Range|Mnemonic|Description|
-|:---|:---|:---|
-|0x00-3f|`LKP`|Load from LUT|
-|0x40-4f|`SLC`|Shift Previous Byte Left and Clear LSB|
-|0x50-5f|`SLS`|Shift Previous Byte Left and Set LSB|
-|0x60-6f|`SRC`|Shift Previous Byte Right and Clear MSB|
-|0x70-7f|`SRS`|Shift Previous Byte Right and Set MSB|
-|0x80-bf|`CPY`|Copy Previous Sequence|
-|0xc0-df|`REV`|Reverse Previous Sequence|
-|0xe0-ef|`RPT`|Repeat Previous Byte|
-|0xf0-f7|`XOR`|XOR Previous Byte and Immediate|
-|0xff|-|(Reserved)|
+|Byte0|Byte1|Mnemonic|Description|
+|:--:|:--:|:--:|:--|
+|0x00-3f|-|`LKP`|Load from LUT|
+|0x40-4f|-|`SLC`|Shift Previous Byte Left and Clear LSB|
+|0x50-5f|-|`SLS`|Shift Previous Byte Left and Set LSB|
+|0x60-6f|-|`SRC`|Shift Previous Byte Right and Clear MSB|
+|0x70-7f|-|`SRS`|Shift Previous Byte Right and Set MSB|
+|0x80-bf|-|`CPY`|Copy Previous Sequence|
+|0xc0|any|`LDI`|Load Immediate|
+|0xc1-df|-|`REV`|Reverse Previous Sequence|
+|0xe0-ef|-|`RPT`|Repeat Previous Byte|
+|0xf0-fe|-|`XOR`|XOR Previous Byte and Immediate|
+|0xff|-|-|(Reserved)|
 
-### Load from LUT (`LKP`)
+### Lookup (`LKP`)
 
 |Bit Range|Value|
 |:--:|:--|
@@ -144,6 +145,16 @@ memcpy(buff + cursor, buff + (cursor - len - offset), len);
 cursor += len;
 ```
 
+### Put Immediate (`IMM`)
+
+|Bit Range|Value|
+|:--:|:--|
+|7:0|0b11000000|
+
+```c
+buff[cursor++] = microcode[pc++];
+```
+
 ### Reverse Previous Sequence (`REV`)
 
 |Bit Range|Value|
@@ -151,6 +162,8 @@ cursor += len;
 |7:5|0b110|
 |4|`offset - 1`|
 |3:0|`len - 1`|
+
+Combination of `offset=1` and `len=1` (`0xc0`) is reserved for `LDI`.
 
 ```c
 for (int i = 0; i < len; i++) {
@@ -179,9 +192,9 @@ cursor += len;
 |3|`width - 1`|
 |2:0|`bit`|
 
+Combination of `width=2` and `bit=7` (`0xff`) is reserved.
+
 ```c
 int mask = width == 1 ? 0x01 : 0x03;
 buff[cursor++] = buff[cursor - 1] ^ (mask << bit);
 ```
-
-Combination of `width=2` and `bit=7` is reserved.
