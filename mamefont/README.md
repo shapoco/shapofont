@@ -29,25 +29,32 @@ A structure that provides information common to the entire font.
 |1|`firstCode`|ASCII code of the first entry of Glyph Table|
 |1|`glyphTableLen`|Number of entries of Glyph Table|
 |1|`lutSize`|Number of bytes of LUT|
-|2|`lineDimension`|Dimension of Line|
-|1|`fontFlags`||
+|1|`fontDimension0`|Dimension of Font|
+|1|`fontDimension1`|Dimension of Font|
 |1|(Reserved)||
+|1|`fontFlags`||
 
-### `lineDimension`
+### `fontDimension0`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
-|15:14|(Reserved)||
-|13:8|`ySpacing`|Vertical spacing in pixels|
 |7:6|(Reserved)||
 |5:0|`glyphHeight`|Height of glyph in pixels|
+
+### `fontDimension1`
+
+|Bit Range|Name|Description|
+|:--:|:--|:--|
+|7:6|(Reserved)||
+|5:0|`yAdvance`|Vertical spacing in pixels|
 
 ### `fontFlags`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7|`scanDirection`|0: horizontal, 1: vertical|
-|6:0|(Reserved)||
+|6|`reverseBitOrder`|0: LSB=nearBit, 1: LSB=farBit|
+|5:0|(Reserved)||
 
 ![](./img/scan_path.svg)
 
@@ -56,16 +63,22 @@ A structure that provides information common to the entire font.
 |Size \[Bytes\]|Name|Description|
 |:--:|:--|:--|
 |2|`entryPoint`|Offset from start of Microcode Block in bytes|
-|2|`glyphDimension`|Dimension of glyph bitmap|
+|1|`glyphDimensionL`|Dimension of glyph bitmap|
+|2|`glyphDimensionH`|Dimension of glyph bitmap|
 
-### `glyphDimension`
+### `glyphDimensionL`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
-|15:14|(Reserved)||
-|13:8|`xSpacing`|Horizontal spacing in pixels|
 |7:6|(Reserved)||
 |5:0|`glyphWidth`|Number of pixels of glyph bitmap|
+
+### `glyphDimensionH`
+
+|Bit Range|Name|Description|
+|:--:|:--|:--|
+|7:6|(Reserved)||
+|5:0|`xAdvance`|Horizontal spacing in pixels|
 
 ## Microcode Block
 
