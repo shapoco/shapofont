@@ -13,7 +13,7 @@ Compressed font format definitions and tools for embedded projects.
 |Size [Bytes]|Name|
 |:--:|:--|
 |8|Font Header|
-|(2 &lt;&lt; `glyphTableDepth`) \* `glyphTableLen`|Character Table|
+|`glyphEntryStride` \* `glyphTableLen`|Character Table|
 |`lutSize`|Lookup Table (LUT)|
 |(Variable)|Microcode Blocks|
 
@@ -77,14 +77,14 @@ A structure that provides information common to the entire font.
 |Value Range|Mnemonic|Description|
 |:---|:---|:---|
 |0x00-3f|`LKP`|Load from LUT|
-|0x40-4f|`SLC`|Shift Left and Clear LSB|
-|0x50-5f|`SLS`|Shift Left and Set LSB|
-|0x60-6f|`SRC`|Shift Right and Clear MSB|
-|0x70-7f|`SRS`|Shift Right and Set MSB|
-|0x80-bf|`CPY`|Copy Sequence|
-|0xc0-df|`REV`|Reverse Sequence|
+|0x40-4f|`SLC`|Shift Previous Byte Left and Clear LSB|
+|0x50-5f|`SLS`|Shift Previous Byte Left and Set LSB|
+|0x60-6f|`SRC`|Shift Previous Byte Right and Clear MSB|
+|0x70-7f|`SRS`|Shift Previous Byte Right and Set MSB|
+|0x80-bf|`CPY`|Copy Previous Sequence|
+|0xc0-df|`REV`|Reverse Previous Sequence|
 |0xe0-ef|`RPT`|Repeat Previous Byte|
-|0xf0-f7|`XOR`|XOR Previous Byte|
+|0xf0-f7|`XOR`|XOR Previous Byte and Immediate|
 |0xff|-|(Reserved)|
 
 ### Load from LUT (`LKP`)
@@ -98,7 +98,7 @@ A structure that provides information common to the entire font.
 buff[cursor++] = lut[index];
 ```
 
-### Shift and Clear/Set (`SLC`, `SLS`, `SRC`, `SRS`)
+### Shift Previous Byte and Clear/Set (`SLC`, `SLS`, `SRC`, `SRS`)
 
 |Bit Range|Value|
 |:--:|:--|
@@ -132,7 +132,7 @@ for (int i = 0; i < len; i++) {
 }
 ```
 
-### Copy Sequence (`CPY`)
+### Copy Previous Sequence (`CPY`)
 
 |Bit Range|Value|
 |:--:|:--|
@@ -145,7 +145,7 @@ memcpy(buff + cursor, buff + (cursor - len - offset), len);
 cursor += len;
 ```
 
-### Reverse Sequence (`REV`)
+### Reverse Previous Sequence (`REV`)
 
 |Bit Range|Value|
 |:--:|:--|
@@ -172,7 +172,7 @@ memset(buff + cursor, buff[cursor - 1], len);
 cursor += len;
 ```
 
-### XOR Previous Byte (`XOR`)
+### XOR Previous Byte and Immediate (`XOR`)
 
 |Bit Range|Value|
 |:--:|:--|
@@ -188,5 +188,9 @@ buff[cursor++] = buff[cursor - 1] ^ (mask << bit);
 Combination of `width=2` and `bit=7` is reserved.
 
 # Rendering
+
+## Scan Path
+
+Scan direction is defined in `scanDirection` for each glyph.
 
 ![](./img/scan_path.svg)
