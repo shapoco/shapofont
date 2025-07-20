@@ -1,5 +1,15 @@
 #pragma once
 
+// Generated from ShapoFont
+//   Pixel Count:
+//     Effective:  2520 px
+//     Shrinked :  1704 px
+//   Estimated Foot Print:
+//     Bitmap Data    :   264 Bytes
+//     Glyph Table    :   760 Bytes
+//     GFXfont Struct :    10 Bytes
+//     Total          :  1034 Bytes
+
 #include <stdint.h>
 
 #ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER

@@ -1,4 +1,13 @@
+WORD_SIZE = 2
+
+
+def align_to_word_size(size: int) -> int:
+    return (size + WORD_SIZE - 1) // WORD_SIZE * WORD_SIZE
+
+
 class GFXglyph:
+    STRUCT_SIZE = align_to_word_size(2 + 1 + 1 + 1 + 1 + 1)
+
     def __init__(
         self,
         bitmap_offset: int,
@@ -7,19 +16,27 @@ class GFXglyph:
         x_advance: int,
         x_offset: int,
         y_offset: int,
+        orig_bmp_width: int,
+        orig_bmp_height: int,
     ):
-        self.bitmap_offset = bitmap_offset
-        self.width = width
-        self.height = height
-        self.x_advance = x_advance
-        self.x_offset = x_offset
-        self.y_offset = y_offset
+        self.bitmap_offset = bitmap_offset  # uint16_t
+        self.width = width  # uint8_t
+        self.height = height  # uint8_t
+        self.x_advance = x_advance  # uint8_t
+        self.x_offset = x_offset  # uint8_t
+        self.y_offset = y_offset  # uint8_t
+
+        # for statistics
+        self.orig_bmp_width = orig_bmp_width
+        self.orig_bmp_height = orig_bmp_height
 
     def generate_struct_initializer(self) -> str:
         return f"{{ {self.bitmap_offset}, {self.width}, {self.height}, {self.x_advance}, {self.x_offset}, {self.y_offset} }}"
 
 
 class GFXfont:
+    STRUCT_SIZE = align_to_word_size(2 + 2 + 2 + 2 + 1)
+
     def __init__(
         self,
         name: str,
@@ -30,14 +47,35 @@ class GFXfont:
         y_advance: int,
     ):
         self.name = name
-        self.bitmap = bitmap
-        self.glyphs = glyphs
-        self.first = first
-        self.last = last
-        self.y_advance = y_advance
+        self.bitmap = bitmap  # uint8_t *
+        self.glyphs = glyphs  # GFXglyph *
+        self.first = first  # uint16_t
+        self.last = last  # uint16_t
+        self.y_advance = y_advance  # uint8_t
 
     def generate_header(self) -> str:
-        header = "#pragma once\n\n"
+        original_bmp_pixels = 0
+        shrinked_bmp_pixels = 0
+        for glyph in self.glyphs:
+            original_bmp_pixels += glyph.orig_bmp_width * glyph.orig_bmp_height
+            shrinked_bmp_pixels += glyph.width * glyph.height
+
+        bitmap_array_size = len(self.bitmap)
+        glyph_array_size = len(self.glyphs) * GFXglyph.STRUCT_SIZE
+        total_size = bitmap_array_size + glyph_array_size + GFXfont.STRUCT_SIZE
+
+        header = "#pragma once\n"
+        header += "\n"
+        header += "// Generated from ShapoFont\n"
+        header += "//   Pixel Count:\n"
+        header += f"//     Effective: {original_bmp_pixels:5d} px\n"
+        header += f"//     Shrinked : {shrinked_bmp_pixels:5d} px\n"
+        header += "//   Estimated Foot Print:\n"
+        header += f"//     Bitmap Data    : {bitmap_array_size:5d} Bytes\n"
+        header += f"//     Glyph Table    : {glyph_array_size:5d} Bytes\n"
+        header += f"//     GFXfont Struct : {GFXfont.STRUCT_SIZE:5d} Bytes\n"
+        header += f"//     Total          : {total_size:5d} Bytes\n"
+        header += "\n"
         header += "#include <stdint.h>\n"
         header += "\n"
         header += "#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER\n"
@@ -146,6 +184,8 @@ class GFXfontBuilder:
             x_advance=bmp_width + self.x_spacing,
             x_offset=x_min,
             y_offset=y_offset + y_min,
+            orig_bmp_width=bmp_width,
+            orig_bmp_height=bmp_height,
         )
 
         self.bitmaps[code] = packed_bmp
@@ -172,6 +212,8 @@ class GFXfontBuilder:
                     x_advance=0,
                     x_offset=0,
                     y_offset=0,
+                    orig_bmp_width=0,
+                    orig_bmp_height=0,
                 )
             glyphs.append(glyph)
 
