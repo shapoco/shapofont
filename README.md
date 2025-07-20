@@ -116,10 +116,6 @@ Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=
 #include "shapofont/ShapoSansP_s11c09w2a1.h"
 ```
 
-## License
-
-I'm considering what to license.
-
 ## Memo: ASCII Code Table
 
 ```
