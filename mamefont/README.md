@@ -29,7 +29,7 @@ A structure that provides information common to the entire font.
 |1|`glyphTableLen`|Number of entries of Glyph Table|
 |2|`lineDimension`|Dimension of Line|
 |1|`lutSize`|Number of bytes of LUT|
-|1|(Reserved)||
+|1|`fontFlags`||
 
 ### `lineDimension`
 
@@ -39,6 +39,15 @@ A structure that provides information common to the entire font.
 |13:8|`ySpacing`|Vertical spacing in pixels|
 |7:6|(Reserved)||
 |5:0|`glyphHeight`|Height of glyph in pixels|
+
+### `fontFlags`
+
+|Bit Range|Name|Description|
+|:--:|:--|:--|
+|7:1|(Reserved)||
+|0|`scanDirection`|0: horizontal, 1: vertical|
+
+![](./img/scan_path.svg)
 
 ## Glyph Table Entry
 
@@ -51,8 +60,7 @@ A structure that provides information common to the entire font.
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
-|15|`scanDirection`|0: horizontal, 1: vertical|
-|14|(Reserved)||
+|15:14|(Reserved)||
 |13:8|`xSpacing`|Horizontal spacing in pixels|
 |7:6|(Reserved)||
 |5:0|`glyphWidth`|Number of pixels of glyph bitmap|
@@ -177,11 +185,3 @@ buff[cursor++] = buff[cursor - 1] ^ (mask << bit);
 ```
 
 Combination of `width=2` and `bit=7` is reserved.
-
-# Rendering
-
-## Scan Path
-
-Scan direction is defined in `scanDirection` for each glyph.
-
-![](./img/scan_path.svg)
