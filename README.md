@@ -18,7 +18,7 @@
 |w|weight|1|
 |p|horizontalSpacing|1 + floor(s / 12)|
 
-## Font Design using Image Editor
+## Font Design with Paint Tool
 
 ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
 
