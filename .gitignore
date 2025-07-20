@@ -6,3 +6,5 @@ tmp.*/
 tmp.*
 a.out
 *.o
+
+tools/mamefont.py
