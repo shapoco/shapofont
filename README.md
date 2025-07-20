@@ -56,18 +56,18 @@ ShapoFonts are designed using Microsoft Paint and converted to some font formats
 2. Design your glyphs in white.
 3. Draw a red line (**position marker**) of the same width at the bottom of each glyph.
 
-      ![](./img/how_to_design.svg)
+    ![](./img/how_to_design.svg)
 
 4. Save the image as `design.png`.
 5. In a JSON5 file `shapofont.json5`, list the characters contained in the image.
 
-      ```json5
-      {
-      "codes": [
+    ```json5
+    {
+        "codes": [
             {"from": 0x20, "to": 0x7E},
-      ]
-      }
-      ```
+        ]
+    }
+    ```
 
 - The vertical positions of the position markers of the glyphs side by side must be aligned.
 - There must be at least typeSize + ascenderSpacing pixels of space above the position marker.
@@ -79,18 +79,20 @@ Create a directory for each dimension identifier under the family name directory
 
 ```
 ShapoSansP/  .................. Family Name
- +-- s20c16w3a1/  ............. Dimension Identifier
-      +-- design.png  ......... Font Design File
-      +-- shapofont.json5  .... Meta Information
++-- s20c16w3a1/  ............. Dimension Identifier
+    +-- design.png  ......... Font Design File
+    +-- shapofont.json5  .... Meta Information
 ```
 
 ### Converting to Font Files
 
 1. Create a Python virtual environment using `venv-setup.shrc`.
-      - `Pillow` and `json5` will be installed.
+    - `Pillow` and `json5` will be installed.
 2. Specify the above design directory in `tools/shapofont.py` to convert to each font format.
-      - `-i`: path to input directory (dimension identifier)
-      - `--outdir_gfx`: output directory for GFXfont format
+    - `-i`: path to input directory (dimension identifier)
+    - `--outdir_gfx`: output directory for GFXfont format
+
+Since the script extracts a family name and a dimension identifier from the directory path, they must be named correctly.
 
 #### Example:
 
