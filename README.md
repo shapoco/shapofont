@@ -1,4 +1,4 @@
-# [WIP] ShapoFont
+# ShapoFont
 
 - Bitmap fonts made primarily for embedded projects
 - a Tool for generating font files from PNG images

@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/submodules/Adafruit-GFX-Library"
+                "${workspaceFolder}/submodules/Adafruit-GFX-Library",
+                "${workspaceFolder}/mamefont/cpp/include"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu11",
