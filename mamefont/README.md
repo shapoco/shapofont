@@ -12,10 +12,10 @@ Compressed font format definitions and tools for small-footprint embedded projec
 
 ## Blob Structure
 
-|Size [Bytes]|Name|
+|Size \[Bytes\]|Name|
 |:--:|:--|
 |8|Font Header|
-|`glyphEntryStride` \* `glyphTableLen`|Character Table|
+|4 \* `glyphTableLen`|Character Table|
 |`lutSize`|Lookup Table (LUT)|
 |(Variable)|Microcode Blocks|
 
@@ -23,15 +23,15 @@ Compressed font format definitions and tools for small-footprint embedded projec
 
 A structure that provides information common to the entire font.
 
-|Size [Bytes]|Name|Description|
+|Size \[Bytes\]|Name|Description|
 |:--|:--|:--|
 |1|`formatVersion`|0x01|
-|1|`glyphEntryStride`|Number of bytes of each Glyph Table Entry. Always 4 at version 1|
-|1|`codeOffset`|ASCII code of the first entry of Glyph Table|
+|1|`firstCode`|ASCII code of the first entry of Glyph Table|
 |1|`glyphTableLen`|Number of entries of Glyph Table|
-|2|`lineDimension`|Dimension of Line|
 |1|`lutSize`|Number of bytes of LUT|
+|2|`lineDimension`|Dimension of Line|
 |1|`fontFlags`||
+|1|(Reserved)||
 
 ### `lineDimension`
 
@@ -46,14 +46,14 @@ A structure that provides information common to the entire font.
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
-|7:1|(Reserved)||
-|0|`scanDirection`|0: horizontal, 1: vertical|
+|7|`scanDirection`|0: horizontal, 1: vertical|
+|6:0|(Reserved)||
 
 ![](./img/scan_path.svg)
 
 ## Glyph Table Entry
 
-|Size [Bytes]|Name|Description|
+|Size \[Bytes\]|Name|Description|
 |:--:|:--|:--|
 |2|`entryPoint`|Offset from start of Microcode Block in bytes|
 |2|`glyphDimension`|Dimension of glyph bitmap|
@@ -69,7 +69,7 @@ A structure that provides information common to the entire font.
 
 ## Microcode Block
 
-|Size [Bytes]|Description|
+|Size \[Bytes\]|Description|
 |:--:|:--|
 |(Variable)|Array of instructions|
 
