@@ -1,7 +1,7 @@
 # [WIP] ShapoFont
 
 - Bitmap fonts made primarily for embedded projects
-- Tools for generating font files from PNG images
+- a Tool for generating font files from PNG images
 
 ## Font Naming Rule
 
@@ -20,7 +20,7 @@
 
 ## Font Design using Image Editor
 
-ShapoFonts are designed using Microsoft Paint and converted to various font formats by Python scripts.
+ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
 
 ![](./img/designing_with_mspaint.png)
 
@@ -33,13 +33,21 @@ ShapoFonts are designed using Microsoft Paint and converted to various font form
 
 ![](./img/how_to_design.svg)
 
-- The position marker do not need to be aligned.
+```json
+{
+    "codes": [
+        {"from": 0x20, "to": 0x7E},
+    ]
+}
+```
+
+- The vertical positions of the position markers of the glyphs side by side must be aligned.
 - There must be at least typeSize + ascenderSpacing pixels of space above the position marker.
 - The order of characters in the image must exactly match the order of characters listed in the meta information.
 
 ### Directory Structure
 
-Create a directory for each dimension identifier under the family name directory and place the design images and meta information in it.
+Create a directory for each dimension identifier under the family name directory and place a design image and meta information in it.
 
 ```
 ShapoSansP/  .................. Family Name
