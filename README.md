@@ -18,6 +18,32 @@
 |w|weight|1|
 |p|horizontalSpacing|1 + floor(s / 12)|
 
+## Fonts
+
+### ShapoSansP
+
+#### s05
+
+![](./bitmap/ShapoSansP/s05/design.png)
+
+#### s06c05a1
+
+![](./bitmap/ShapoSansP/s06c05a1/design.png)
+
+#### s11c09w2a1
+
+![](./bitmap/ShapoSansP/s11c09w2a1/design.png)
+
+#### s20c16w3a1
+
+![](./bitmap/ShapoSansP/s20c16w3a1/design.png)
+
+### ShapoSansDigitP
+
+#### s16c14w2
+
+![](./bitmap/ShapoSansDigitP/s16c14w2/design.png)
+
 ## Font Design with Paint Tool
 
 ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
