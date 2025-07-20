@@ -1,6 +1,8 @@
 # [WIP] MameFont
 
-Compressed font format definitions and tools for embedded projects.
+Compressed font format definitions and tools for small-footprint embedded projects.
+
+"Mame" (まめ, 豆) means "bean(s)" in Japanese.
 
 # Flow
 
