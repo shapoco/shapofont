@@ -16,6 +16,8 @@ OFST_GLYPH_DIMENSION = 2
 
 SHIFT_MAX_SIZE = 4
 SHIFT_MAX_REPEAT = 4
+REPEAT_MAX = 16
+COPY_MAX_LENGTH = 16
 
 MAX_LUT_SIZE = 64
 
@@ -82,37 +84,36 @@ class Operation:
         self.cost = cost
 
     def __repr__(self) -> str:
-        ret =""
+        ret = ""
         op_code = self.microcode[0]
-        if (op_code & 0xc0) == OpCode.LKP:
-            index = op_code & 0x3f
+        if (op_code & 0xC0) == OpCode.LKP:
+            index = op_code & 0x3F
             ret += f"LKP({index})"
-        elif (op_code & 0xc0) == OpCode.SLC:
-            shift_size = (op_code & 0x0c) >> 2
+        elif (op_code & 0xC0) == OpCode.SLC:
+            shift_size = (op_code & 0x0C) >> 2
             repeat_count = op_code & 0x03
-            if (op_code & 0xf0) == OpCode.SLC:
+            if (op_code & 0xF0) == OpCode.SLC:
                 ret += "SLC"
-            elif (op_code & 0xf0) == OpCode.SLS:
+            elif (op_code & 0xF0) == OpCode.SLS:
                 ret += "SLS"
-            elif (op_code & 0xf0) == OpCode.SRC:
+            elif (op_code & 0xF0) == OpCode.SRC:
                 ret += "SRC"
-            elif (op_code & 0xf0) == OpCode.SRS:
+            elif (op_code & 0xF0) == OpCode.SRS:
                 ret += "SRS"
             ret += f"({shift_size + 1}, {repeat_count + 1})"
-        elif (op_code & 0xc0) == OpCode.CPY:
+        elif (op_code & 0xC0) == OpCode.CPY:
             ret += "CPY"
-        elif op_code == 0xc0:
+        elif op_code == 0xC0:
             ret += f"LDI(0x{self.microcode[1]:02x})"
-        elif (op_code & 0xe0) == OpCode.REV:
+        elif (op_code & 0xE0) == OpCode.REV:
             ret += "REV"
-        elif (op_code & 0xf0) == OpCode.RPT:
+        elif (op_code & 0xF0) == OpCode.RPT:
             ret += "RPT"
-        elif op_code == 0xff:
+        elif op_code == 0xFF:
             ret += "(reserved)"
         else:
             ret += "XOR"
-        
-            
+
         return ret
 
 
@@ -247,7 +248,7 @@ class MameFontBuilder:
             bit_reverse=self.bit_reverse,
         )
         segments.insert(0, 0x00)  # pivot segment
-        
+
         num_segments = len(segments)
 
         if VERBOSE:
@@ -275,6 +276,9 @@ class MameFontBuilder:
             cands: list[Operation] = []
             cands += try_ldi(i_src, i_dst)
             cands += try_shift(i_src, i_dst)
+            cands += try_rpt(i_src, i_dst)
+            cands += try_xor(i_src, i_dst)
+            cands += try_cpy(i_src, i_dst)
 
             best_cand: Operation | None = None
             best_cost = float("inf")
@@ -285,6 +289,32 @@ class MameFontBuilder:
                     best_cand = cand
 
             return best_cand
+
+        def try_cpy(i_src: int, i_dst: int) -> list[Operation]:
+            length = i_dst - i_src
+            if length < 1 or length > COPY_MAX_LENGTH:
+                return []
+
+            offset_range = range(0, 4)
+
+            for offset in offset_range:
+                if i_src - length - offset < 0:
+                    continue
+
+                success = True
+                for i in range(i_src + 1, i_dst + 1):
+                    if segments[i - length - offset] != segments[i]:
+                        success = False
+                        break
+
+                if success:
+                    op_code = OpCode.CPY
+                    op_code |= offset << 4
+                    op_code |= length - 1
+                    cost = costs[OpCode.CPY]
+                    return [Operation([op_code], cost)]
+
+            return []
 
         def try_ldi(i_src: int, i_dst: int) -> list[Operation]:
             if i_src + 1 == i_dst:
@@ -299,20 +329,20 @@ class MameFontBuilder:
             if repeat_count < 1 or repeat_count > SHIFT_MAX_REPEAT:
                 return []
 
-            shift_dir = [ShiftDir.LEFT, ShiftDir.RIGHT]
-            shift_size = range(1, SHIFT_MAX_SIZE + 1)
-            post_op = [ShiftPostOp.CLR, ShiftPostOp.SET]
+            shift_dir_range = [ShiftDir.LEFT, ShiftDir.RIGHT]
+            shift_size_range = range(1, SHIFT_MAX_SIZE + 1)
+            post_op_range = [ShiftPostOp.CLR, ShiftPostOp.SET]
 
             for shift_dir, shift_size, post_op in product(
-                shift_dir, shift_size, post_op
+                shift_dir_range, shift_size_range, post_op_range
             ):
                 success = True
                 modifier = (1 << shift_size) - 1
                 if shift_dir != 0:
-                    modifier <<= (8 - shift_size)
+                    modifier <<= 8 - shift_size
                 if post_op == 0:
-                    modifier = modifier ^ 0xff
-                
+                    modifier = modifier ^ 0xFF
+
                 work = segments[i_src]
                 for i_step in range(i_src, i_dst):
                     if shift_dir == ShiftDir.LEFT:
@@ -341,6 +371,39 @@ class MameFontBuilder:
                     cost = costs[op_code]
                     op_code |= (shift_size - 1) << 2
                     op_code |= repeat_count - 1
+                    return [Operation([op_code], cost)]
+
+            return []
+
+        def try_rpt(i_src: int, i_dst: int) -> list[Operation]:
+            repeat_count = i_dst - i_src
+            if repeat_count < 1 or repeat_count > REPEAT_MAX:
+                return []
+
+            work = segments[i_src]
+            for i_step in range(i_src, i_dst):
+                if segments[i_src] != segments[i_step + 1]:
+                    return []
+
+            op_code = OpCode.RPT | (repeat_count - 1)
+            cost = costs[OpCode.RPT]
+            return [Operation([op_code], cost)]
+
+        def try_xor(i_src: int, i_dst: int) -> list[Operation]:
+            if i_src + 1 != i_dst:
+                return []
+
+            mask_width_range = range(1, 2)
+            mask_pos_range = range(0, 8)
+
+            for mask_width, mask_pos in product(mask_width_range, mask_pos_range):
+                mask = (1 << mask_width) - 1
+                mask <<= mask_pos
+                if segments[i_src] ^ mask == segments[i_dst]:
+                    op_code = OpCode.XOR
+                    op_code |= (mask_width - 1) << 3
+                    op_code |= mask_pos
+                    cost = costs[OpCode.XOR]
                     return [Operation([op_code], cost)]
 
             return []

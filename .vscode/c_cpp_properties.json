@@ -12,7 +12,8 @@
             "intelliSenseMode": "linux-gcc-x64",
             "defines": [
                 "SHAPOFONT_GFXFONT_INCLUDE_HEADER",
-                "MAMEFONT_STM_VERBOSE=1"
+                "MAMEFONT_STM_VERBOSE=1",
+                "TEST_FONT_NAME=ShapoSansP_s11c09w2a1"
             ]
         }
     ],

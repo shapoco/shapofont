@@ -129,16 +129,28 @@ static MAMEFONT_INLINE void opSXX(RenderContext *ctx, uint8_t inst) {
 
 static MAMEFONT_INLINE void opCPY(RenderContext *ctx, uint8_t inst) {
   uint8_t offset = (inst >> 4) & 0x3;
-  uint8_t repeat_count = (inst & 0x0f) + 1;
-  uint16_t rdPos = ctx->wrPos - repeat_count - offset;
-  for (int i = repeat_count; i != 0; i--) {
+  uint8_t length = (inst & 0x0f) + 1;
+  uint16_t rdPos = ctx->wrPos - length - offset;
+  for (int i = length; i != 0; i--) {
     ctx->write(ctx->read(rdPos++));
   }
+#if MAMEFONT_STM_VERBOSE
+  printf("    CPY(offset=%d, length=%d)\n", offset, length);
+  printf("      -->");
+  for (int i = 0; i < length; i++) {
+    printf(" 0x%02x", ctx->read(ctx->wrPos - length + i));
+  }
+  printf("\n");
+#endif
 }
 
 static MAMEFONT_INLINE void opLDI(RenderContext *ctx, uint8_t inst) {
   uint8_t seg = *(ctx->microcode++);
   ctx->write(seg);
+#if MAMEFONT_STM_VERBOSE
+  printf("    LDI(segment=0x%02x)\n", seg);
+  printf("      --> 0x%02x\n", seg);
+#endif
 }
 
 static MAMEFONT_INLINE void opRPT(RenderContext *ctx, uint8_t inst) {
@@ -146,12 +158,21 @@ static MAMEFONT_INLINE void opRPT(RenderContext *ctx, uint8_t inst) {
   for (int i = repeat_count; i != 0; i--) {
     ctx->write(ctx->last);
   }
+#if MAMEFONT_STM_VERBOSE
+  printf("    RPT(repeat_count=%d)\n", repeat_count);
+  printf("      --> 0x%02x\n", ctx->last);
+#endif
 }
 
 static MAMEFONT_INLINE void opXOR(RenderContext *ctx, uint8_t inst) {
-  uint8_t mask = (inst & 0x08) ? 0x03 : 0x01;
-  uint8_t bit = inst & 0x07;
-  ctx->write(ctx->last ^ (mask << bit));
+  uint8_t mask_width = ((inst >> 3) & 0x01) + 1;
+  uint8_t mask_pos = inst & 0x07;
+  uint8_t mask = (1 << mask_width) - 1;
+  ctx->write(ctx->last ^ (mask << mask_pos));
+#if MAMEFONT_STM_VERBOSE
+  printf("    XOR(mask_width=%d, mask_pos=%d)\n", mask_width, mask_pos);
+  printf("      --> 0x%02x\n", ctx->last);
+#endif
 }
 
 class Font {
@@ -269,7 +290,7 @@ class Font {
         case 0x30:  // LKP
           seg = lut[inst & 0x3f];
 #if MAMEFONT_STM_VERBOSE
-          printf("    LKP(index=%02x)\n", inst & 0x3f);
+          printf("    LKP(index=%d)\n", inst & 0x3f);
           printf("      --> 0x%02x\n", seg);
 #endif
           ctx->write(seg);
@@ -297,6 +318,8 @@ class Font {
             // REV
             return Status::UNKNOWN_OPCODE;
           }
+          break;
+          ;
 
         case 0xe0:  // RPT
           opRPT(ctx, inst);
