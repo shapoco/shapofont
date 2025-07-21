@@ -5,10 +5,10 @@
 //     Effective:  1360 px
 //     Shrinked :  1094 px
 //   Estimated Foot Print:
-//     Bitmap Data    :   139 Bytes
+//     Bitmap Data    :   139 Bytes (12.64 Bytes/glyph)
 //     Glyph Table    :    88 Bytes
 //     GFXfont Struct :    10 Bytes
-//     Total          :   237 Bytes
+//     Total          :   237 Bytes (21.55 Bytes/glyph)
 
 #include <stdint.h>
 

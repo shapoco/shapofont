@@ -6,10 +6,12 @@ import re
 import math
 import argparse
 import gfxfont
-from design import Bitmap, Marker
+import mamefont
+from design import GrayBitmap, Marker
+
 
 class BitmapGlyph:
-    def __init__(self, code: int, bmp: Bitmap):
+    def __init__(self, code: int, bmp: GrayBitmap):
         self.code = code
         self.bmp = bmp
 
@@ -19,7 +21,7 @@ class BitmapFont:
 
     def __init__(self, dir_path: str):
         dir_path = dir_path.rstrip(path.sep)
-        
+
         self.path = dir_path
 
         self.family_name = path.basename(path.dirname(dir_path))
@@ -37,18 +39,18 @@ class BitmapFont:
 
         # Parse options
         if not "s" in dic:
-            raise ValueError(f"Missing 's' option in directory name: '{self.dim_identifier}'")
+            raise ValueError(
+                f"Missing 's' option in directory name: '{self.dim_identifier}'"
+            )
         self.type_size = dic["s"]
         self.cap_height = dic.get("c", self.type_size)
         self.weight = dic.get("w", 1)
         self.line_height = dic.get("h", math.ceil(self.type_size * 1.2))
         self.ascender_spacing = dic.get("a", 0)
-        self.normal_x_spacing = dic.get(
-            "p", 1 + math.floor(self.type_size / 12)
-        )
+        self.normal_x_spacing = dic.get("p", 1 + math.floor(self.type_size / 12))
 
         # Load the image
-        self.bmp = Bitmap.from_file(path.join(dir_path, "design.png"))
+        self.bmp = GrayBitmap.from_file(path.join(dir_path, "design.png"))
 
         # Default ASCII range
         self.codes = list(range(0x20, 0x7F))
@@ -64,8 +66,8 @@ class BitmapFont:
                 self.codes = []
                 code_ranges = json_data["codes"]
                 for code_range in code_ranges:
-                    start_code = int(code_range['from'])
-                    end_code = int(code_range['to'])
+                    start_code = int(code_range["from"])
+                    end_code = int(code_range["to"])
                     self.codes.extend(range(start_code, end_code + 1))
 
         # Find Glyphs
@@ -79,7 +81,10 @@ class BitmapFont:
             found = False
             for x in range(self.bmp.width):
                 col = self.bmp.get(x, marker_y)
-                if col == Marker.VALID_BOTTOM_LINE or col == Marker.DISABLED_BOTTOM_LINE:
+                if (
+                    col == Marker.VALID_BOTTOM_LINE
+                    or col == Marker.DISABLED_BOTTOM_LINE
+                ):
                     found = True
                     break
             if not found:
@@ -133,6 +138,9 @@ class BitmapFont:
         return self.type_size + self.ascender_spacing
 
     def to_gfx_font(self, outdir: str):
+        out_file = path.join(outdir, f"{self.full_name}.h")
+        print(f"Generating GFXfont: {out_file}")
+
         builder = gfxfont.GFXfontBuilder(
             self.full_name,
             self.line_height,
@@ -145,18 +153,56 @@ class BitmapFont:
                 y_offset=-self.bitmap_height(),
             )
         gfx_font = builder.build()
-        with open(path.join(outdir, f"{self.full_name}.h"), "w") as f:
+        with open(out_file, "w") as f:
             f.write(gfx_font.generate_header())
+
+    def to_mame_font(
+        self, hpp_outdir: str, cpp_outdir: str, vertical_scan: bool, bit_reverse: bool
+    ):
+        hpp_file = path.join(hpp_outdir, f"{self.full_name}.hpp")
+        cpp_file = path.join(cpp_outdir, f"{self.full_name}.cpp")
+        print(f"Generating MameFont: {cpp_file}")
+
+        builder = mamefont.MameFontBuilder(
+            self.full_name,
+            self.bitmap_height(),
+            self.line_height,
+            self.normal_x_spacing,
+        )
+        for glyph in self.glyphs:
+            builder.add_glyph(
+                glyph.code,
+                glyph.bmp,
+            )
+
+        mame_font = builder.build()
+
+        with open(hpp_file, "w") as f:
+            f.write(mame_font.generate_header())
+        with open(cpp_file, "w") as f:
+            f.write(mame_font.generate_source())
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True)
-    parser.add_argument("--outdir_gfx", required=True)
+    parser.add_argument("--outdir_gfx")
+    parser.add_argument("--outdir_mame_hpp")
+    parser.add_argument("--outdir_mame_cpp")
     args = parser.parse_args()
 
     font = BitmapFont(args.input)
+
     if args.outdir_gfx:
         font.to_gfx_font(args.outdir_gfx)
+
+    if args.outdir_mame_hpp or args.outdir_mame_cpp:
+        font.to_mame_font(
+            args.outdir_mame_hpp,
+            args.outdir_mame_cpp,
+            vertical_scan=False,
+            bit_reverse=False,
+        )
 
 
 if __name__ == "__main__":

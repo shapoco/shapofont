@@ -1,10 +1,12 @@
 from PIL import Image
 
+
 class Marker:
     VALID_BOTTOM_LINE = -1
     DISABLED_BOTTOM_LINE = -2
 
-class Bitmap:
+
+class GrayBitmap:
 
     def __init__(self, data: list[int], w: int, h: int, offset: int, stride: int):
         self.data = data
@@ -27,10 +29,10 @@ class Bitmap:
                 else:
                     gray = (r + g + b) // 3
                     data.append(gray)
-                    
+
         pil_img.close()
 
-        return Bitmap(data, w, h, 0, w)
+        return GrayBitmap(data, w, h, 0, w)
 
     def get(self, x: int, y: int) -> Marker:
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
@@ -40,6 +42,33 @@ class Bitmap:
     def crop(self, x: int, y: int, width: int, height: int):
         if x < 0 or y < 0 or x + width > self.width or y + height > self.height:
             raise IndexError("Crop dimensions out of bounds")
-        return Bitmap(
+        return GrayBitmap(
             self.data, width, height, self.offset + y * self.stride + x, self.stride
         )
+
+    def to_byte_segments(self, vertical_scan: bool, bit_reverse: bool) -> list[int]:
+        array = []
+
+        if vertical_scan:
+            for x_coarse in range(0, self.width, 8):
+                for y in range(self.height):
+                    byte = 0
+                    mask = 0
+                    for x_fine in range(8):
+                        x = x_coarse + x_fine
+                        i_bit = 7 - x_fine if bit_reverse else x_fine
+                        if x < self.width and self.get(x, y) >= 128:
+                            byte |= 1 << i_bit
+                    array.append(byte)
+        else:
+            for y_coarse in range(0, self.height, 8):
+                for x in range(self.width):
+                    byte = 0
+                    for y_fine in range(8):
+                        y = y_coarse + y_fine
+                        i_bit = 7 - y_fine if bit_reverse else y_fine
+                        if y < self.height and self.get(x, y) >= 128:
+                            byte |= 1 << i_bit
+                    array.append(byte)
+
+        return array

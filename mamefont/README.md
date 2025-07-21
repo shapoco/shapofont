@@ -8,7 +8,7 @@ Compressed font format definitions and tools for small-footprint embedded projec
 
 ![](./img/flow.svg)
 
-# Format Definition
+# Format Specification
 
 ## Blob Structure
 
@@ -24,7 +24,7 @@ Compressed font format definitions and tools for small-footprint embedded projec
 A structure that provides information common to the entire font.
 
 |Size \[Bytes\]|Name|Description|
-|:--|:--|:--|
+|:--:|:--|:--|
 |1|`formatVersion`|0x01|
 |1|`firstCode`|ASCII code of the first entry of Glyph Table|
 |1|`glyphTableLen`|Number of entries of Glyph Table|
@@ -63,17 +63,17 @@ A structure that provides information common to the entire font.
 |Size \[Bytes\]|Name|Description|
 |:--:|:--|:--|
 |2|`entryPoint`|Offset from start of Microcode Block in bytes|
-|1|`glyphDimensionL`|Dimension of glyph bitmap|
-|2|`glyphDimensionH`|Dimension of glyph bitmap|
+|1|`glyphDimension0`|Dimension of glyph bitmap|
+|2|`glyphDimension1`|Dimension of glyph bitmap|
 
-### `glyphDimensionL`
+### `glyphDimension0`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
 |5:0|`glyphWidth`|Number of pixels of glyph bitmap|
 
-### `glyphDimensionH`
+### `glyphDimension1`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
@@ -120,28 +120,25 @@ buff[cursor++] = lut[index];
 |7:6|0b01|
 |5|`shift_dir` (0: Left, 1: Right)|
 |4|`post_op` (0: Clear, 1: Set)|
-|3|`shift_size - 1`|
-|2:0|`len - 1`|
+|3:2|`shift_size - 1`|
+|1:0|`len - 1`|
 
 ```c
+uint8_t mask = (1 << shift_size) - 1;
+if (shift_dir != 0) mask <<= (8 - shift_size);
+if (post_op == 0) mask = ~mask;
 for (int i = 0; i < len; i++) {
     if (shift_dir == 0) {
         buff[cursor] = buff[cursor - 1] << shift_size;
-        if (post_op == 0) {
-            buff[cursor] &= 0xfe;
-        }
-        else {
-            buff[cursor] |= 0x01;
-        }
     }
     else {
         buff[cursor] = buff[cursor - 1] >> shift_size;
-        if (post_op == 0) {
-            buff[cursor] &= 0x7f;
-        }
-        else {
-            buff[cursor] |= 0x80;
-        }
+    }
+    if (post_op == 0) {
+        buff[cursor] &= ~mask;
+    }
+    else {
+        buff[cursor] |= mask;
     }
     cursor++;
 }
@@ -160,7 +157,7 @@ memcpy(buff + cursor, buff + (cursor - len - offset), len);
 cursor += len;
 ```
 
-### Put Immediate (`IMM`)
+### Put Immediate (`LDI`)
 
 |Bit Range|Value|
 |:--:|:--|

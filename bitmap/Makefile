@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all gfx mame gfx_distclean mame_distclean distclean
 
 REPO_DIR := ..
 
@@ -6,6 +6,8 @@ TOOLS_DIR = $(REPO_DIR)/tools
 BUILD_DIR = $(REPO_DIR)/build
 BITMAP_DIR = .
 GFX_FONT_INC_DIR = $(REPO_DIR)/gfxfont/include/shapofont
+MAME_FONT_SRC_DIR = $(REPO_DIR)/mamefont/cpp/src
+MAME_FONT_INC_DIR = $(REPO_DIR)/mamefont/cpp/include/mamefont
 
 CMD_SHAPOFONT := $(TOOLS_DIR)/shapofont.py
 CMD_PYTHON := $(REPO_DIR)/venv/bin/python3
@@ -20,13 +22,35 @@ FONT_JSON_LIST = \
 GFX_FONT_LIST = \
 	$(patsubst $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5,$(GFX_FONT_INC_DIR)/$(TARGET_FAMILY)_%.h,$(FONT_JSON_LIST))
 
-all: $(GFX_FONT_LIST)
-	@echo TARGET_FAMILY=$(TARGET_FAMILY)
-	@echo $(FONT_JSON_LIST)
-	@echo $(GFX_FONT_LIST)
+MAME_FONT_HPP_LIST = \
+	$(patsubst $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5,$(MAME_FONT_INC_DIR)/$(TARGET_FAMILY)_%.hpp,$(FONT_JSON_LIST))
+
+MAME_FONT_SRC_LIST = \
+	$(patsubst $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5,$(MAME_FONT_SRC_DIR)/$(TARGET_FAMILY)_%.cpp,$(FONT_JSON_LIST))
+
+all: gfx 
+gfx: $(GFX_FONT_LIST)
+mame: $(MAME_FONT_SRC_LIST)
 
 $(GFX_FONT_INC_DIR)/$(TARGET_FAMILY)_%.h: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/design.png $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5 $(EXTRA_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
 		-i $(dir $<) \
 		--outdir_gfx $(dir $@)
+
+$(MAME_FONT_SRC_DIR)/$(TARGET_FAMILY)_%.cpp: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/design.png $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5 $(EXTRA_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
+		-i $(dir $<) \
+		--outdir_mame_cpp $(dir $@) \
+		--outdir_mame_hpp $(dir $(patsubst $(MAME_FONT_SRC_DIR)/%.cpp,$(MAME_FONT_INC_DIR)/%.hpp,$@))
+
+distclean: gfx_distclean mame_distclean
+
+gfx_distclean:
+	rm -f $(GFX_FONT_INC_DIR)/$(TARGET_FAMILY)_*.h
+
+mame_distclean:
+	rm -f $(MAME_FONT_SRC_DIR)/$(TARGET_FAMILY)_*.cpp
+	rm -f $(MAME_FONT_INC_DIR)/$(TARGET_FAMILY)_*.hpp
+

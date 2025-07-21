@@ -1,4 +1,4 @@
-from design import Bitmap
+from design import GrayBitmap
 
 WORD_SIZE = 2
 
@@ -56,6 +56,8 @@ class GFXfont:
         self.y_advance = y_advance  # uint8_t
 
     def generate_header(self) -> str:
+        num_glyphs = len(self.glyphs)
+
         original_bmp_pixels = 0
         shrinked_bmp_pixels = 0
         for glyph in self.glyphs:
@@ -63,63 +65,65 @@ class GFXfont:
             shrinked_bmp_pixels += glyph.width * glyph.height
 
         bitmap_array_size = len(self.bitmap)
-        glyph_array_size = len(self.glyphs) * GFXglyph.STRUCT_SIZE
+        bitmap_per_glyph = bitmap_array_size / num_glyphs
+        glyph_array_size = num_glyphs * GFXglyph.STRUCT_SIZE
         total_size = bitmap_array_size + glyph_array_size + GFXfont.STRUCT_SIZE
+        total_size_per_glyph = total_size / num_glyphs
 
-        header = "#pragma once\n"
-        header += "\n"
-        header += "// Generated from ShapoFont\n"
-        header += "//   Pixel Count:\n"
-        header += f"//     Effective: {original_bmp_pixels:5d} px\n"
-        header += f"//     Shrinked : {shrinked_bmp_pixels:5d} px\n"
-        header += "//   Estimated Foot Print:\n"
-        header += f"//     Bitmap Data    : {bitmap_array_size:5d} Bytes\n"
-        header += f"//     Glyph Table    : {glyph_array_size:5d} Bytes\n"
-        header += f"//     GFXfont Struct : {GFXfont.STRUCT_SIZE:5d} Bytes\n"
-        header += f"//     Total          : {total_size:5d} Bytes\n"
-        header += "\n"
-        header += "#include <stdint.h>\n"
-        header += "\n"
-        header += "#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER\n"
-        header += "#include <gfxfont.h>\n"
-        header += "#endif\n"
-        header += "\n"
-        header += "#ifndef SHAPOFONT_GFXFONT_NAMESPACE\n"
-        header += "#define SHAPOFONT_GFXFONT_NAMESPACE\n"
-        header += "#endif\n"
-        header += "\n"
-        header += "#ifndef PROGMEM\n"
-        header += "#define PROGMEM\n"
-        header += "#endif\n"
-        header += "\n"
-        header += f"const uint8_t {self.name}Bitmaps[] PROGMEM = {{\n"
+        code = "#pragma once\n"
+        code += "\n"
+        code += "// Generated from ShapoFont\n"
+        code += "//   Pixel Count:\n"
+        code += f"//     Effective: {original_bmp_pixels:5d} px\n"
+        code += f"//     Shrinked : {shrinked_bmp_pixels:5d} px\n"
+        code += "//   Estimated Foot Print:\n"
+        code += f"//     Bitmap Data    : {bitmap_array_size:5d} Bytes ({bitmap_per_glyph:.2f} Bytes/glyph)\n"
+        code += f"//     Glyph Table    : {glyph_array_size:5d} Bytes\n"
+        code += f"//     GFXfont Struct : {GFXfont.STRUCT_SIZE:5d} Bytes\n"
+        code += f"//     Total          : {total_size:5d} Bytes ({total_size_per_glyph:.2f} Bytes/glyph)\n"
+        code += "\n"
+        code += "#include <stdint.h>\n"
+        code += "\n"
+        code += "#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER\n"
+        code += "#include <gfxfont.h>\n"
+        code += "#endif\n"
+        code += "\n"
+        code += "#ifndef SHAPOFONT_GFXFONT_NAMESPACE\n"
+        code += "#define SHAPOFONT_GFXFONT_NAMESPACE\n"
+        code += "#endif\n"
+        code += "\n"
+        code += "#ifndef PROGMEM\n"
+        code += "#define PROGMEM\n"
+        code += "#endif\n"
+        code += "\n"
+        code += f"const uint8_t {self.name}Bitmaps[] PROGMEM = {{\n"
         cols = 8
         for i, b in enumerate(self.bitmap):
             if i % cols == 0:
-                header += "  "
-            header += f"0x{b:02X},"
+                code += "  "
+            code += f"0x{b:02X},"
             if (i + 1) % cols == 0 or (i + 1) == len(self.bitmap):
-                header += "\n"
+                code += "\n"
             else:
-                header += " "
-        header += "};\n\n"
+                code += " "
+        code += "};\n\n"
 
-        header += f"const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph {self.name}Glyphs[] PROGMEM = {{\n"
+        code += f"const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph {self.name}Glyphs[] PROGMEM = {{\n"
         for glyph in self.glyphs:
-            header += f"  {glyph.generate_struct_initializer()},\n"
-        header += "};\n\n"
+            code += f"  {glyph.generate_struct_initializer()},\n"
+        code += "};\n\n"
 
-        header += (
+        code += (
             f"const SHAPOFONT_GFXFONT_NAMESPACE GFXfont {self.name} PROGMEM = {{\n"
         )
-        header += f"  (uint8_t*){self.name}Bitmaps,\n"
-        header += f"  (GFXglyph*){self.name}Glyphs,\n"
-        header += f"  0x{self.first:02X},\n"
-        header += f"  0x{self.last:02X},\n"
-        header += f"  {self.y_advance}\n"
-        header += "};\n"
+        code += f"  (uint8_t*){self.name}Bitmaps,\n"
+        code += f"  (GFXglyph*){self.name}Glyphs,\n"
+        code += f"  0x{self.first:02X},\n"
+        code += f"  0x{self.last:02X},\n"
+        code += f"  {self.y_advance}\n"
+        code += "};\n"
 
-        return header
+        return code
 
 
 class GFXfontBuilder:
@@ -133,7 +137,7 @@ class GFXfontBuilder:
     def add_glyph(
         self,
         code: int,
-        bmp: Bitmap,
+        bmp: GrayBitmap,
         y_offset: int,
     ):
         # Cropping
