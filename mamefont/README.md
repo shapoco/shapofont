@@ -16,7 +16,7 @@ Compressed font format definitions and tools for small-footprint embedded projec
 |:--:|:--|
 |8|Font Header|
 |4 \* `glyphTableLen`|Character Table|
-|`lutSize`|Lookup Table (LUT)|
+|`lutSize`|Segment Lookup Table (LUT)|
 |(Variable)|Microcode Blocks|
 
 ## Font Header
@@ -121,13 +121,13 @@ buff[cursor++] = lut[index];
 |5|`shift_dir` (0: Left, 1: Right)|
 |4|`post_op` (0: Clear, 1: Set)|
 |3:2|`shift_size - 1`|
-|1:0|`len - 1`|
+|1:0|`repeat_count - 1`|
 
 ```c
-uint8_t mask = (1 << shift_size) - 1;
-if (shift_dir != 0) mask <<= (8 - shift_size);
-if (post_op == 0) mask = ~mask;
-for (int i = 0; i < len; i++) {
+uint8_t modifier = (1 << shift_size) - 1;
+if (shift_dir != 0) modifier <<= (8 - shift_size);
+if (post_op == 0) modifier = ~modifier;
+for (int i = 0; i < repeat_count; i++) {
     if (shift_dir == 0) {
         buff[cursor] = buff[cursor - 1] << shift_size;
     }
@@ -135,10 +135,10 @@ for (int i = 0; i < len; i++) {
         buff[cursor] = buff[cursor - 1] >> shift_size;
     }
     if (post_op == 0) {
-        buff[cursor] &= ~mask;
+        buff[cursor] &= modifier;
     }
     else {
-        buff[cursor] |= mask;
+        buff[cursor] |= modifier;
     }
     cursor++;
 }
@@ -150,11 +150,11 @@ for (int i = 0; i < len; i++) {
 |:--:|:--|
 |7:6|0b10|
 |5:4|`offset`|
-|3:0|`len - 1`|
+|3:0|`repeat_count - 1`|
 
 ```c
-memcpy(buff + cursor, buff + (cursor - len - offset), len);
-cursor += len;
+memcpy(buff + cursor, buff + (cursor - repeat_count - offset), repeat_count);
+cursor += repeat_count;
 ```
 
 ### Put Immediate (`LDI`)
@@ -173,15 +173,15 @@ buff[cursor++] = microcode[pc++];
 |:--:|:--|
 |7:5|0b110|
 |4|`offset - 1`|
-|3:0|`len - 1`|
+|3:0|`repeat_count - 1`|
 
-Combination of `offset=1` and `len=1` (`0xc0`) is reserved for `LDI`.
+Combination of `offset=1` and `repeat_count=1` (`0xc0`) is reserved for `LDI`.
 
 ```c
-for (int i = 0; i < len; i++) {
+for (int i = 0; i < repeat_count; i++) {
     buff[cursor + i] = buff[cursor - offset - i];
 }
-cursor += len;
+cursor += repeat_count;
 ```
 
 ### Repeat Previous Byte (`RPT`)
@@ -189,24 +189,24 @@ cursor += len;
 |Bit Range|Value|
 |:--:|:--|
 |7:4|0b1110|
-|3:0|`len - 1`|
+|3:0|`repeat_count - 1`|
 
 ```c
-memset(buff + cursor, buff[cursor - 1], len);
-cursor += len;
+memset(buff + cursor, buff[cursor - 1], repeat_count);
+cursor += repeat_count;
 ```
 
-### XOR Previous Byte and Immediate (`XOR`)
+### XOR Previous Byte with Mask (`XOR`)
 
 |Bit Range|Value|
 |:--:|:--|
 |7:4|0b1111|
-|3|`width - 1`|
-|2:0|`bit`|
+|3|`mask_width - 1`|
+|2:0|`mask_pos`|
 
-Combination of `width=2` and `bit=7` (`0xff`) is reserved.
+Combination of `mask_width=2` and `mask_pos=7` (`0xff`) is reserved.
 
 ```c
-int mask = width == 1 ? 0x01 : 0x03;
-buff[cursor++] = buff[cursor - 1] ^ (mask << bit);
+int mask = (1 << mask_width) - 1;
+buff[cursor++] = buff[cursor - 1] ^ (mask << mask_pos);
 ```

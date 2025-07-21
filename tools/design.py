@@ -53,7 +53,6 @@ class GrayBitmap:
             for x_coarse in range(0, self.width, 8):
                 for y in range(self.height):
                     byte = 0
-                    mask = 0
                     for x_fine in range(8):
                         x = x_coarse + x_fine
                         i_bit = 7 - x_fine if bit_reverse else x_fine
