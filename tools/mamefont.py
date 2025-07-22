@@ -198,6 +198,8 @@ class MameFont:
         pc = OFST_GLYPH_TABLE + glyph_table_size + lut_size
         stats_inst_size = {}
         stats_orig_size = {}
+        total_inst_size = 0
+        total_orig_size = 0
         while pc < blob_size:
             (op_code, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
             stats_inst_size[op_code.mnemonic] = (
@@ -206,7 +208,10 @@ class MameFont:
             stats_orig_size[op_code.mnemonic] = (
                 stats_orig_size.get(op_code.mnemonic, 0) + orig_size
             )
+            total_inst_size += inst_size
+            total_orig_size += orig_size
             pc += inst_size
+        total_delta_size = total_inst_size - total_orig_size
 
         code = ""
         code += "// Generated from ShapoFont\n"
@@ -219,11 +224,16 @@ class MameFont:
         code += f"//     Lookup Table  : {lut_size:4d} Bytes ({lut_usage_percent:.2f}% used)\n"
         code += f"//     Microcodes    : {microcode_size:4d} Bytes ({microcode_per_glyph:.2f} Bytes/glyph)\n"
         code += f"//     Total         : {total_size:4d} Bytes ({total_size_per_glyph:.2f} Bytes/glyph)\n"
-        code += "//   Instruction Usage:\n"
-        for inst, inst_size in stats_inst_size.items():
+        code += "//   Compression Performance:\n"
+        inst_sorted = sorted(stats_inst_size.keys())
+        total_comp_ratio = total_delta_size / total_orig_size * 100
+        for inst in inst_sorted:
+            inst_size = stats_inst_size[inst]
             orig_size = stats_orig_size[inst]
-            comp_ratio = ((inst_size * 100) / orig_size - 100) if orig_size > 0 else 0
-            code += f"//     {inst:4s}: {orig_size:4d} --> {inst_size:4d} ({comp_ratio:+7.2f}%)\n"
+            delta_size = inst_size - orig_size
+            comp_ratio = delta_size / total_orig_size * 100
+            code += f"//     {inst:5s}: {orig_size:4d} --> {inst_size:4d} ({comp_ratio:+7.2f}%)\n"
+        code += f"//     Total: {total_orig_size:4d} --> {total_inst_size:4d} ({total_comp_ratio:+7.2f}%)\n"
         code += "\n"
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"

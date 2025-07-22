@@ -8,15 +8,16 @@
 //     Lookup Table  :   28 Bytes (43.75% used)
 //     Microcodes    :  307 Bytes (3.23 Bytes/glyph)
 //     Total         :  723 Bytes (7.61 Bytes/glyph)
-//   Instruction Usage:
-//     RPT :   42 -->   36 ( -14.29%)
-//     LKP :  178 -->  178 (  +0.00%)
-//     SLS :   11 -->   11 (  +0.00%)
-//     SRC :   13 -->   10 ( -23.08%)
-//     CPY :   17 -->   14 ( -17.65%)
-//     XOR :   35 -->   35 (  +0.00%)
-//     REV :   30 -->   15 ( -50.00%)
-//     SLC :   12 -->    8 ( -33.33%)
+//   Compression Performance:
+//     CPY  :   17 -->   14 (  -0.89%)
+//     LKP  :  178 -->  178 (  +0.00%)
+//     REV  :   30 -->   15 (  -4.44%)
+//     RPT  :   42 -->   36 (  -1.78%)
+//     SLC  :   12 -->    8 (  -1.18%)
+//     SLS  :   11 -->   11 (  +0.00%)
+//     SRC  :   13 -->   10 (  -0.89%)
+//     XOR  :   35 -->   35 (  +0.00%)
+//     Total:  338 -->  307 (  -9.17%)
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
