@@ -137,8 +137,9 @@ def parse_instruction(
 
 
 class Operation:
-    def __init__(self, microcode: list[int], cost: float):
+    def __init__(self, microcode: list[int], orig_seq: list[int], cost: float):
         self.microcode = microcode
+        self.orig_seq = orig_seq
         self.cost = cost
 
     def operator(self) -> Operator:
@@ -299,6 +300,7 @@ class MameFontBuilder:
         self.vertical_scan = False
         self.bit_reverse = False
         self.glyphs: dict[int, MameGlyph] = {}
+        self.duplication_count: dict[int, int] = {}
 
     def add_glyph(
         self,
@@ -310,6 +312,13 @@ class MameFontBuilder:
             bit_reverse=self.bit_reverse,
         )
         sequence.insert(0, 0x00)  # TODO: remove pivot byte
+
+        # Detect frequent byte duplications
+        last_byte = -1
+        for curr_byte in sequence:
+            if last_byte == curr_byte:
+                self.duplication_count[curr_byte] = self.duplication_count.get(curr_byte, 0) + 1
+            last_byte = curr_byte
 
         num_segments = len(sequence)
 
@@ -335,12 +344,14 @@ class MameFontBuilder:
                         self.next_ops[i_next] = cand
 
         def suggest_operation(i_src: int, i_dst: int) -> Operation | None:
+            orig_seq = sequence[i_src + 1 : i_dst + 1]
+
             cands: list[Operation] = []
-            cands += try_shift(i_src, i_dst)
-            cands += try_cpy_rev(i_src, i_dst)
-            cands += try_ldi(i_src, i_dst)
-            cands += try_rpt(i_src, i_dst)
-            cands += try_xor(i_src, i_dst)
+            cands += try_shift(i_src, i_dst, orig_seq)
+            cands += try_cpy_rev(i_src, i_dst, orig_seq)
+            cands += try_ldi(i_src, i_dst, orig_seq)
+            cands += try_rpt(i_src, i_dst, orig_seq)
+            cands += try_xor(i_src, i_dst, orig_seq)
 
             best_cand: Operation | None = None
             best_cost = float("inf")
@@ -352,7 +363,8 @@ class MameFontBuilder:
 
             return best_cand
 
-        def try_cpy_rev(i_src: int, i_dst: int) -> list[Operation]:
+        def try_cpy_rev(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
+
             length = i_dst - i_src
             if length < 1 or length > COPY_MAX_LENGTH:
                 return []
@@ -393,17 +405,17 @@ class MameFontBuilder:
 
                     op = REV if reverse else CPY
                     inst_code = op.code | (offset << 3) | (length - 1)
-                    return [Operation([inst_code], op.cost)]
+                    return [Operation([inst_code], orig_seq, op.cost)]
 
             return []
 
-        def try_ldi(i_src: int, i_dst: int) -> list[Operation]:
+        def try_ldi(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
             if i_src + 1 == i_dst:
-                return [Operation([LDI.code, sequence[i_dst]], LDI.cost)]
+                return [Operation([LDI.code, sequence[i_dst]], orig_seq, LDI.cost)]
             else:
                 return []
 
-        def try_shift(i_src: int, i_dst: int) -> list[Operation]:
+        def try_shift(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
             repeat_count = i_dst - i_src
             if repeat_count < 1 or repeat_count > SHIFT_MAX_REPEAT:
                 return []
@@ -450,11 +462,11 @@ class MameFontBuilder:
                     else:
                         op = SRS
                 inst_code = op.code | ((shift_size - 1) << 2) | (repeat_count - 1)
-                return [Operation([inst_code], op.cost)]
+                return [Operation([inst_code], orig_seq, op.cost)]
 
             return []
 
-        def try_rpt(i_src: int, i_dst: int) -> list[Operation]:
+        def try_rpt(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
             repeat_count = i_dst - i_src
             if repeat_count < 1 or repeat_count > REPEAT_MAX:
                 return []
@@ -464,9 +476,9 @@ class MameFontBuilder:
                     return []
 
             inst_code = RPT.code | (repeat_count - 1)
-            return [Operation([inst_code], RPT.cost)]
+            return [Operation([inst_code], orig_seq, RPT.cost)]
 
-        def try_xor(i_src: int, i_dst: int) -> list[Operation]:
+        def try_xor(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
             if i_src + 1 != i_dst:
                 return []
 
@@ -478,7 +490,7 @@ class MameFontBuilder:
                 mask <<= mask_pos
                 if sequence[i_src] ^ mask == sequence[i_dst]:
                     inst_code = XOR.code | ((mask_width - 1) << 3) | mask_pos
-                    return [Operation([inst_code], XOR.cost)]
+                    return [Operation([inst_code], orig_seq, XOR.cost)]
 
             return []
 
@@ -533,33 +545,37 @@ class MameFontBuilder:
         codes = sorted(self.glyphs.keys())
 
         # Generate Lookup Table
-        segment_count: dict[int, int] = {}
+        byte_ref_count: dict[int, int] = {}
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
                 if LDI.match(op.microcode[0]):
-                    seg = op.microcode[1]
-                    segment_count[seg] = segment_count.get(seg, 0) + 1
+                    byte = op.microcode[1]
+                    byte_ref_count[byte] = byte_ref_count.get(byte, 0) + 1
         lut = sorted(
-            segment_count.keys(), key=lambda item: segment_count[item], reverse=True
+            byte_ref_count.keys(), key=lambda item: byte_ref_count[item], reverse=True
         )
         if len(lut) > MAX_LUT_SIZE:
             lut = lut[:MAX_LUT_SIZE]
 
+        # Replace instructions with LKP as possible
+        for code in codes:
+            glyph = self.glyphs[code]
+            for op in glyph.operations:
+                byte = -1
+                if len(op.orig_seq) == 1:
+                    byte = op.orig_seq[0]
+                elif LDI.match(op.microcode[0]):
+                    byte = op.microcode[1]
+                if byte >= 0 and byte in lut:
+                    op.microcode = [LKP.code | lut.index(byte)]
+
+        # Construct microcode block
         microcodes: list[int] = []
         for code in codes:
             glyph = self.glyphs[code]
-            print(
-                f"code: {format_char(code)}, glyph.width: {glyph.glyphWidth}, x_advance: {glyph.x_advance}"
-            )
             glyph.entry_point = len(microcodes)
             for op in glyph.operations:
-                # Replace LDI with LKP if the byte is in the LUT
-                if LDI.match(op.microcode[0]):
-                    seg = op.microcode[1]
-                    if seg in lut:
-                        op.microcode = [LKP.code | lut.index(seg)]
-                # Append microcode
                 microcodes += op.microcode
 
         code_first = codes[0]

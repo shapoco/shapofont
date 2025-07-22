@@ -90,11 +90,11 @@ A structure that provides information common to the entire font.
 
 |Byte0|Byte1|Mnemonic|Description|
 |:--:|:--:|:--:|:--|
-|0x00-3F|-|`LKP`|Load from LUT|
-|0x40-4F|-|`SLC`|Shift Left Previous Byte and Clear LSB|
-|0x50-5F|-|`SLS`|Shift Left Previous Byte and Set LSB|
-|0x60-6F|-|`SRC`|Shift Right Previous Byte and Clear MSB|
-|0x70-7F|-|`SRS`|Shift Right Previous Byte and Set MSB|
+|0x00-3F|-|`LKP`|Single Lookup|
+|0x40-4F|-|`SLC`|Shift Left Previous Byte and Clear Lower Bits|
+|0x50-5F|-|`SLS`|Shift Left Previous Byte and Set Lower Bits|
+|0x60-6F|-|`SRC`|Shift Right Previous Byte and Clear Upper Bits|
+|0x70-7F|-|`SRS`|Shift Right Previous Byte and Set Upper Bits|
 |0x80|Byte Data|`LDI`|Load Immediate|
 |0x81-9F|-|`BLK`|Block Lookup|
 |0xA0||-|(Reserved)|
@@ -108,10 +108,10 @@ A structure that provides information common to the entire font.
 |0xD8||-|(Reserved)|
 |0xD9-DF|-|`REV`|Reverse Previous Sequence|
 |0xE0-EF|-|`RPT`|Repeat Previous Byte|
-|0xF0-FE|-|`XOR`|XOR Previous Byte and Immediate|
+|0xF0-FE|-|`XOR`|XOR Previous Byte with Mask|
 |0xff||-|(Reserved)|
 
-### Lookup (`LKP`)
+### Single Lookup (`LKP`)
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
@@ -159,7 +159,7 @@ cursor += repeat_count;
 
 ![](./img/inst_rpt.svg)
 
-### Shift Previous Byte and Clear/Set (`SLC`, `SLS`, `SRC`, `SRS`)
+### Shift Previous Byte and Clear/Set Lower/Upper Bits (`SLC`, `SLS`, `SRC`, `SRS`)
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
