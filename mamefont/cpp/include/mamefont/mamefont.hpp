@@ -130,7 +130,7 @@ struct StateMachine {
     write(seg);
 #if MAMEFONT_STM_VERBOSE
     char buff[64];
-    snprintf(buff, sizeof(buff), "LDI(segment=0x%02x)", seg);
+    snprintf(buff, sizeof(buff), "LDI(byte=0x%02x)", seg);
     printf("    %-40s --> 0x%02x\n", buff, seg);
 #endif
   }

@@ -117,7 +117,7 @@ def parse_instruction(
             {"shift_size": shift_size, "repeat_count": repeat_count},
         )
     elif operator == LDI:
-        return (LDI, 2, 1, {"segment": microcode[offset + 1]})
+        return (LDI, 2, 1, {"byte": microcode[offset + 1]})
     elif operator == CPY:
         offset = (byte1 >> 2) & 0x3
         length = (byte1 & 0x03) + 1
@@ -296,18 +296,18 @@ class MameFontBuilder:
         code: int,
         bmp: GrayBitmap,
     ):
-        segments = bmp.to_byte_segments(
+        sequence = bmp.to_byte_segments(
             vertical_scan=self.vertical_scan,
             bit_reverse=self.bit_reverse,
         )
-        segments.insert(0, 0x00)  # TODO: remove pivot segment
+        sequence.insert(0, 0x00)  # TODO: remove pivot byte
 
-        num_segments = len(segments)
+        num_segments = len(sequence)
 
         if VERBOSE:
             print(f"Compiling: {format_char(code)}")
             print(f"  segs: ", end="")
-            for seg in segments:
+            for seg in sequence:
                 print(f"0x{seg:02x}", end=" ")
             print()
 
@@ -320,7 +320,7 @@ class MameFontBuilder:
                 self.best_prev: State | None = None
 
                 # Find next available operations
-                for i_next in range(i_pos + 1, len(segments)):
+                for i_next in range(i_pos + 1, len(sequence)):
                     cand = suggest_operation(i_pos, i_next)
                     if cand is not None:
                         self.next_ops[i_next] = cand
@@ -373,9 +373,9 @@ class MameFontBuilder:
                         if i_copy_from < 0:
                             copy_segment = 0x00
                         else:
-                            copy_segment = segments[i_copy_from]
+                            copy_segment = sequence[i_copy_from]
 
-                        if copy_segment != segments[i_src + 1 + i]:
+                        if copy_segment != sequence[i_src + 1 + i]:
                             fail = True
                             break
 
@@ -390,7 +390,7 @@ class MameFontBuilder:
 
         def try_ldi(i_src: int, i_dst: int) -> list[Operation]:
             if i_src + 1 == i_dst:
-                return [Operation([LDI.code, segments[i_dst]], LDI.cost)]
+                return [Operation([LDI.code, sequence[i_dst]], LDI.cost)]
             else:
                 return []
 
@@ -413,7 +413,7 @@ class MameFontBuilder:
                 if post_op == 0:
                     modifier = modifier ^ 0xFF
 
-                work = segments[i_src]
+                work = sequence[i_src]
                 for i_step in range(i_src, i_dst):
                     if shift_dir == ShiftDir.LEFT:
                         work = work << shift_size
@@ -423,7 +423,7 @@ class MameFontBuilder:
                         work |= modifier
                     else:
                         work &= modifier
-                    if work != segments[i_step + 1]:
+                    if work != sequence[i_step + 1]:
                         fail = True
                         break
 
@@ -451,7 +451,7 @@ class MameFontBuilder:
                 return []
 
             for i_step in range(i_src, i_dst):
-                if segments[i_src] != segments[i_step + 1]:
+                if sequence[i_src] != sequence[i_step + 1]:
                     return []
 
             inst_code = RPT.code | (repeat_count - 1)
@@ -467,7 +467,7 @@ class MameFontBuilder:
             for mask_width, mask_pos in product(mask_width_range, mask_pos_range):
                 mask = (1 << mask_width) - 1
                 mask <<= mask_pos
-                if segments[i_src] ^ mask == segments[i_dst]:
+                if sequence[i_src] ^ mask == sequence[i_dst]:
                     inst_code = XOR.code | ((mask_width - 1) << 3) | mask_pos
                     return [Operation([inst_code], XOR.cost)]
 
@@ -545,7 +545,7 @@ class MameFontBuilder:
             )
             glyph.entry_point = len(microcodes)
             for op in glyph.operations:
-                # Replace LDI with LKP if the segment is in the LUT
+                # Replace LDI with LKP if the byte is in the LUT
                 if LDI.match(op.microcode[0]):
                     seg = op.microcode[1]
                     if seg in lut:

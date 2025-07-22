@@ -16,7 +16,7 @@ Compressed font format definitions and tools for small-footprint embedded projec
 |:--:|:--|
 |8|Font Header|
 |4 \* `glyphTableLen`|Character Table|
-|`lutSize`|Segment Lookup Table (LUT)|
+|`lutSize`|Byte Lookup Table (LUT)|
 |(Variable)|Microcode Blocks|
 
 ## Font Header
@@ -91,11 +91,11 @@ A structure that provides information common to the entire font.
 |Byte0|Byte1|Mnemonic|Description|
 |:--:|:--:|:--:|:--|
 |0x00-3f|-|`LKP`|Load from LUT|
-|0x40-4f|-|`SLC`|Shift Previous Byte Left and Clear LSB|
-|0x50-5f|-|`SLS`|Shift Previous Byte Left and Set LSB|
-|0x60-6f|-|`SRC`|Shift Previous Byte Right and Clear MSB|
-|0x70-7f|-|`SRS`|Shift Previous Byte Right and Set MSB|
-|0x80|Segment Data|`LDI`|Load Immediate|
+|0x40-4f|-|`SLC`|Shift Left Previous Byte and Clear LSB|
+|0x50-5f|-|`SLS`|Shift Left Previous Byte and Set LSB|
+|0x60-6f|-|`SRC`|Shift Right Previous Byte and Clear MSB|
+|0x70-7f|-|`SRS`|Shift Right Previous Byte and Set MSB|
+|0x80|Byte Data|`LDI`|Load Immediate|
 |0x81-bf|-|`CPY`|Copy Previous Sequence|
 |0xc0||-|(Reserved)|
 |0xc1-cf|-|`REV`|Reverse Previous Sequence|
@@ -112,7 +112,7 @@ A structure that provides information common to the entire font.
 |1st.|7:6|0b00|
 ||5:0|`index`|
 
-The state machine simply copies the byte in the LUT to the glyph buffer. If reverseBitOrder=1 is set, the segment data in the LUT must also have its bit order reversed.
+The state machine simply copies the byte in the LUT to the glyph buffer. If reverseBitOrder=1 is set, the byte data in the LUT must also have its bit order reversed.
 
 ```c
 buff[cursor++] = lut[index];
@@ -124,10 +124,10 @@ buff[cursor++] = lut[index];
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
-|1st.|7:0|0b11000000|
-|2nd.|7:0|Segment Data|
+|1st.|7:0|0x80|
+|2nd.|7:0|Byte Data|
 
-The state machine simply copies the second byte of the instruction code into the glyph buffer. If reverseBitOrder=1 is set, the segment data in the instruction code must also have its bit order reversed.
+The state machine simply copies the second byte of the instruction code into the glyph buffer. If reverseBitOrder=1 is set, the byte data in the instruction code must also have its bit order reversed.
 
 ```c
 buff[cursor++] = microcode[pc++];
@@ -159,7 +159,7 @@ cursor += repeat_count;
 ||3:2|`shift_size - 1`|
 ||1:0|`repeat_count - 1`|
 
-`SLx` shifts the segment data towards the Near Bit direction, `SRx` does the opposite.
+`SLx` shifts the byte towards the Near Bit direction, `SRx` does the opposite.
 
 |`scanDirection`|`reverseBitOrder`|`SLx` Shift Direction|`SRx` Shift Direction|
 |:--:|:--:|:--:|:--:|
