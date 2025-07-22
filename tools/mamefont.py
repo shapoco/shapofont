@@ -17,8 +17,7 @@ OFST_GLYPH_DIMENSION = 2
 SHIFT_MAX_SIZE = 4
 SHIFT_MAX_REPEAT = 4
 REPEAT_MAX = 16
-COPY_MAX_LENGTH = 16
-REVERSE_MAX_LENGTH = 16
+COPY_MAX_LENGTH = 8
 
 MAX_LUT_SIZE = 64
 
@@ -119,12 +118,12 @@ def parse_instruction(
     elif operator == LDI:
         return (LDI, 2, 1, {"byte": microcode[offset + 1]})
     elif operator == CPY:
-        offset = (byte1 >> 2) & 0x3
-        length = (byte1 & 0x03) + 1
+        offset = (byte1 >> 3) & 0x3
+        length = (byte1 & 0x07) + 1
         return (CPY, 1, length, {"offset": offset, "length": length})
     elif operator == REV:
-        offset = (byte1 >> 2) & 0x1
-        length = (byte1 & 0x03) + 1
+        offset = (byte1 >> 3) & 0x1
+        length = (byte1 & 0x07) + 1
         return (REV, 1, length, {"offset": offset, "length": length})
     elif operator == RPT:
         repeat_count = (byte1 & 0x0F) + 1
@@ -349,7 +348,7 @@ class MameFontBuilder:
                 return []
 
             for reverse in [False, True]:
-                offset_range = range(0, 2) if reverse else range(0, 4)
+                offset_range = range(0, 4)
 
                 for offset in offset_range:
                     if i_src - length - offset < 0:
@@ -383,7 +382,7 @@ class MameFontBuilder:
                         continue
 
                     op = REV if reverse else CPY
-                    inst_code = op.code | (offset << 4) | (length - 1)
+                    inst_code = op.code | (offset << 3) | (length - 1)
                     return [Operation([inst_code], op.cost)]
 
             return []

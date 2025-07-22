@@ -39,7 +39,7 @@ A structure that provides information common to the entire font.
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
-|5:0|`glyphHeight`|Height of glyph in pixels|
+|5:0|`fontHeight`|Height of glyph in pixels|
 
 ### `fontDimension1`
 
@@ -90,22 +90,43 @@ A structure that provides information common to the entire font.
 
 |Byte0|Byte1|Mnemonic|Description|
 |:--:|:--:|:--:|:--|
-|0x00-3f|-|`LKP`|Load from LUT|
-|0x40-4f|-|`SLC`|Shift Left Previous Byte and Clear LSB|
-|0x50-5f|-|`SLS`|Shift Left Previous Byte and Set LSB|
-|0x60-6f|-|`SRC`|Shift Right Previous Byte and Clear MSB|
-|0x70-7f|-|`SRS`|Shift Right Previous Byte and Set MSB|
+|0x00-3F|-|`LKP`|Load from LUT|
+|0x40-4F|-|`SLC`|Shift Left Previous Byte and Clear LSB|
+|0x50-5F|-|`SLS`|Shift Left Previous Byte and Set LSB|
+|0x60-6F|-|`SRC`|Shift Right Previous Byte and Clear MSB|
+|0x70-7F|-|`SRS`|Shift Right Previous Byte and Set MSB|
 |0x80|Byte Data|`LDI`|Load Immediate|
-|0x81-bf|-|`CPY`|Copy Previous Sequence|
-|0xc0||-|(Reserved)|
-|0xc1-cf|-|`REV`|Reverse Previous Sequence|
-|0xd0||-|(Reserved)|
-|0xd1-df|-|`REV`|Reverse Previous Sequence|
-|0xe0-ef|-|`RPT`|Repeat Previous Byte|
-|0xf0-fe|-|`XOR`|XOR Previous Byte and Immediate|
+|0x81-9F|-|`BLK`|Block Lookup|
+|0xA0||-|(Reserved)|
+|0xA1-BF|-|`CPY`|Copy Previous Sequence|
+|0xC0||-|(Reserved)|
+|0xC1-C7|-|`REV`|Reverse Previous Sequence|
+|0xC8||-|(Reserved)|
+|0xC9-CF|-|`REV`|Reverse Previous Sequence|
+|0xD0||-|(Reserved)|
+|0xD1-D7|-|`REV`|Reverse Previous Sequence|
+|0xD8||-|(Reserved)|
+|0xD9-DF|-|`REV`|Reverse Previous Sequence|
+|0xE0-EF|-|`RPT`|Repeat Previous Byte|
+|0xF0-FE|-|`XOR`|XOR Previous Byte and Immediate|
 |0xff||-|(Reserved)|
 
 ### Lookup (`LKP`)
+
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:6|0b00|
+||5:0|`index`|
+
+The state machine simply copies the byte in the LUT to the glyph buffer. If reverseBitOrder=1 is set, the byte data in the LUT must also have its bit order reversed.
+
+```c
+buff[cursor++] = lut[index];
+```
+
+![](./img/inst_lkp.svg)
+
+### Block Lookup (`BLK`)
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
@@ -199,7 +220,7 @@ for (int i = 0; i < repeat_count; i++) {
 ||3|`mask_width - 1`|
 ||2:0|`mask_pos`|
 
-Combination of `mask_width=2` and `mask_pos=7` (`0xff`) is reserved.
+Combination of `mask_width=2` and `mask_pos=7` (0xFF) is reserved.
 
 ```c
 int mask = (1 << mask_width) - 1;
@@ -212,9 +233,11 @@ buff[cursor++] = buff[cursor - 1] ^ (mask << mask_pos);
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
-|1st.|7:6|0b10|
-||5:4|`offset`|
-||3:0|`length - 1`|
+|1st.|7:5|0b101|
+||4:3|`offset`|
+||2:0|`length - 1`|
+
+Combination of `offset=0` and `length=1` (0xA0) is reserved for `LDI`.
 
 ```c
 memcpy(buff + cursor, buff + (cursor - length - offset), length);
@@ -228,12 +251,10 @@ cursor += length;
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
 |1st.|7:5|0b110|
-||4|`offset`|
-||3:0|`length - 1`|
+||4:3|`offset`|
+||2:0|`length - 1`|
 
-- Following combination is reserved.
-    - `offset=0, length=1` (`0xc0`) is reserved for `LDI`
-    - `offset=1, length=1` (`0xd0`) is reserved for future use.
+`length=1` (0xC0, 0xC8, 0xD0, 0xD8) is reserved for future use.
 
 ```c
 for (int i = 0; i < length; i++) {
@@ -243,3 +264,9 @@ cursor += length;
 ```
 
 ![](./img/inst_rev.svg)
+
+# Rendering
+
+## Buffer Model
+
+![](./img/buffer_model.svg)

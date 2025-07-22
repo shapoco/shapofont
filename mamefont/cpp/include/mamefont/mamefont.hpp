@@ -99,8 +99,8 @@ struct StateMachine {
   }
 
   MAMEFONT_INLINE void CPY_REV(uint8_t inst, bool reverse = false) {
-    uint8_t offset = (inst >> 4) & (reverse ? 0x1 : 0x3);
-    uint8_t length = (inst & 0x0f) + 1;
+    uint8_t offset = (inst >> 3) & 0x3;
+    uint8_t length = (inst & 0x07) + 1;
     if (reverse) {
       int16_t rdPos = wrPos - offset;
       for (int8_t i = length; i != 0; i--) {
@@ -243,7 +243,7 @@ class Font {
 
   MAMEFONT_INLINE uint8_t lutSize() const { return blob[OFST_LUT_SIZE]; }
 
-  MAMEFONT_INLINE uint8_t glyphHeight() const {
+  MAMEFONT_INLINE uint8_t fontHeight() const {
     return blob[OFST_FONT_DIMENSION_0] & 0x3f;
   }
 
@@ -296,7 +296,7 @@ class Font {
 
   MAMEFONT_INLINE int16_t calcGlyphBufferSize(const Glyph *glyph) const {
     int16_t w = glyph->width();
-    int16_t h = glyphHeight();
+    int16_t h = fontHeight();
     if (verticalScanEnabled()) {
       return ((w + 7) / 8) * h;
     } else {
