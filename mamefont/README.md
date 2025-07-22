@@ -128,18 +128,7 @@ buff[cursor++] = lut[index];
 
 ### Block Lookup (`BLK`)
 
-|Byte|Bit Range|Value|
-|:--:|:--:|:--|
-|1st.|7:6|0b00|
-||5:0|`index`|
-
-The state machine simply copies the byte in the LUT to the glyph buffer. If reverseBitOrder=1 is set, the byte data in the LUT must also have its bit order reversed.
-
-```c
-buff[cursor++] = lut[index];
-```
-
-![](./img/inst_lkp.svg)
+T.B.D.
 
 ### Load Immediate (`LDI`)
 
