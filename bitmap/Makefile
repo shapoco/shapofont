@@ -6,8 +6,8 @@ TOOLS_DIR = $(REPO_DIR)/tools
 BUILD_DIR = $(REPO_DIR)/build
 BITMAP_DIR = .
 GFX_FONT_INC_DIR = $(REPO_DIR)/gfxfont/include/shapofont
-MAME_FONT_SRC_DIR = $(REPO_DIR)/mamefont/cpp/src
-MAME_FONT_INC_DIR = $(REPO_DIR)/mamefont/cpp/include/mamefont
+MAME_FONT_SRC_DIR = $(REPO_DIR)/mamefont/cpp/src/shapofont
+MAME_FONT_INC_DIR = $(REPO_DIR)/mamefont/cpp/include/mamefont/shapofont
 
 CMD_SHAPOFONT := $(TOOLS_DIR)/shapofont.py
 CMD_PYTHON := $(REPO_DIR)/venv/bin/python3
@@ -33,13 +33,14 @@ gfx: $(GFX_FONT_LIST)
 mame: $(MAME_FONT_SRC_LIST)
 
 $(GFX_FONT_INC_DIR)/$(TARGET_FAMILY)_%.h: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/design.png $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5 $(EXTRA_DEPENDENCIES)
-	@mkdir -p $(dir $@)
+	@mkdir -p $(GFX_FONT_INC_DIR)
 	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
 		-i $(dir $<) \
 		--outdir_gfx $(dir $@)
 
 $(MAME_FONT_SRC_DIR)/$(TARGET_FAMILY)_%.cpp: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/design.png $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5 $(EXTRA_DEPENDENCIES)
-	@mkdir -p $(dir $@)
+	@mkdir -p $(MAME_FONT_INC_DIR)
+	@mkdir -p $(MAME_FONT_SRC_DIR)
 	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
 		-i $(dir $<) \
 		--outdir_mame_cpp $(dir $@) \

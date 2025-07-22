@@ -18,6 +18,7 @@ SHIFT_MAX_SIZE = 4
 SHIFT_MAX_REPEAT = 4
 REPEAT_MAX = 16
 COPY_MAX_LENGTH = 16
+REVERSE_MAX_LENGTH = 16
 
 MAX_LUT_SIZE = 64
 
@@ -35,32 +36,46 @@ def verbose_print(s: str = "") -> None:
     print(s)
 
 
-class OpCode(enum.IntEnum):
-    LKP = 0x00
-    SLC = 0x40
-    SLS = 0x50
-    SRC = 0x60
-    SRS = 0x70
-    CPY = 0x80
-    LDI = 0xC0
-    REV = 0xC1
-    RPT = 0xE0
-    XOR = 0xF0
-    HDR = -1
+class Operator:
+    def __init__(
+        self, mnemonic, base_code: int, ranges: list[tuple[int, int]], cost: int
+    ):
+        self.mnemonic = mnemonic
+        self.code = base_code
+        self.ranges = ranges if ranges is not None else []
+        self.cost = cost
+
+    def match(self, target: int) -> bool:
+        for start, end in self.ranges:
+            if start <= target <= end:
+                return True
+        return False
 
 
-costs = {
-    OpCode.RPT: 10001,
-    OpCode.XOR: 10002,
-    OpCode.SLC: 10003,
-    OpCode.SRC: 10003,
-    OpCode.SLS: 10003,
-    OpCode.SRS: 10003,
-    OpCode.CPY: 10004,
-    OpCode.REV: 10005,
-    OpCode.LKP: 10006,
-    OpCode.LDI: 10007,
-}
+RPT = Operator("RPT", 0xE0, [(0xE0, 0xEF)], 1001)
+CPY = Operator("CPY", 0x80, [(0x81, 0xBF)], 1002)
+REV = Operator("REV", 0xC0, [(0xC1, 0xCF), (0xD1, 0xDF)], 1003)
+XOR = Operator("XOR", 0xF0, [(0xF0, 0xFE)], 1004)
+SLC = Operator("SLC", 0x40, [(0x40, 0x4F)], 1005)
+SLS = Operator("SLS", 0x50, [(0x50, 0x5F)], 1005)
+SRC = Operator("SRC", 0x60, [(0x60, 0x6F)], 1005)
+SRS = Operator("SRS", 0x70, [(0x70, 0x7F)], 1005)
+LKP = Operator("LKP", 0x00, [(0x00, 0x3F)], 1006)
+LDI = Operator("LDI", 0x80, [(0x80, 0x80)], 1009)
+UNKNOWN = Operator("(unknown)", -1, [], 999999)
+
+opcodes = [
+    RPT,
+    CPY,
+    REV,
+    XOR,
+    SLC,
+    SLS,
+    SRC,
+    SRS,
+    LKP,
+    LDI,
+]
 
 
 class ScanDirection(enum.IntEnum):
@@ -78,42 +93,66 @@ class ShiftPostOp(enum.IntEnum):
     SET = 1
 
 
+def parse_opcode(target: int) -> Operator:
+    for opcode in opcodes:
+        if opcode.match(target):
+            return opcode
+    return Operator.UNKNOWN
+
+
+def parse_instruction(
+    microcode: list[int], offset: int
+) -> tuple[Operator, int, int, dict[str, int]]:
+    byte1 = microcode[offset]
+    operator = parse_opcode(byte1)
+    if operator == LKP:
+        return (LKP, 1, 1, {"index": byte1 & 0x3F})
+    elif operator == SLC or operator == SLS or operator == SRC or operator == SRS:
+        shift_size = ((byte1 & 0x0C) >> 2) + 1
+        repeat_count = (byte1 & 0x03) + 1
+        return (
+            operator,
+            1,
+            repeat_count,
+            {"shift_size": shift_size, "repeat_count": repeat_count},
+        )
+    elif operator == LDI:
+        return (LDI, 2, 1, {"segment": microcode[offset + 1]})
+    elif operator == CPY:
+        offset = (byte1 >> 2) & 0x3
+        length = (byte1 & 0x03) + 1
+        return (CPY, 1, length, {"offset": offset, "length": length})
+    elif operator == REV:
+        offset = (byte1 >> 2) & 0x1
+        length = (byte1 & 0x03) + 1
+        return (REV, 1, length, {"offset": offset, "length": length})
+    elif operator == RPT:
+        repeat_count = (byte1 & 0x0F) + 1
+        return (RPT, 1, repeat_count, {"repeat_count": repeat_count})
+    elif operator == XOR:
+        mask_width = ((byte1 >> 3) & 0x01) + 1
+        mask_pos = byte1 & 0x07
+        return (XOR, 1, 1, {"mask_width": mask_width, "mask_pos": mask_pos})
+    else:
+        return (UNKNOWN, 0, 0, {})
+
+
 class Operation:
     def __init__(self, microcode: list[int], cost: float):
         self.microcode = microcode
         self.cost = cost
 
-    def __repr__(self) -> str:
-        ret = ""
-        op_code = self.microcode[0]
-        if (op_code & 0xC0) == OpCode.LKP:
-            index = op_code & 0x3F
-            ret += f"LKP({index})"
-        elif (op_code & 0xC0) == OpCode.SLC:
-            shift_size = (op_code & 0x0C) >> 2
-            repeat_count = op_code & 0x03
-            if (op_code & 0xF0) == OpCode.SLC:
-                ret += "SLC"
-            elif (op_code & 0xF0) == OpCode.SLS:
-                ret += "SLS"
-            elif (op_code & 0xF0) == OpCode.SRC:
-                ret += "SRC"
-            elif (op_code & 0xF0) == OpCode.SRS:
-                ret += "SRS"
-            ret += f"({shift_size + 1}, {repeat_count + 1})"
-        elif (op_code & 0xC0) == OpCode.CPY:
-            ret += "CPY"
-        elif op_code == 0xC0:
-            ret += f"LDI(0x{self.microcode[1]:02x})"
-        elif (op_code & 0xE0) == OpCode.REV:
-            ret += "REV"
-        elif (op_code & 0xF0) == OpCode.RPT:
-            ret += "RPT"
-        elif op_code == 0xFF:
-            ret += "(reserved)"
-        else:
-            ret += "XOR"
+    def operator(self) -> Operator:
+        (op, _, _) = parse_instruction(self.microcode, 0)
+        return op
 
+    def __repr__(self) -> str:
+        (op, _, _, params) = parse_instruction(self.microcode, 0)
+        ret = f"{op.mnemonic}("
+        for key, value in params.items():
+            ret += f"{key}={value}, "
+        ret = ret.rstrip(", ")
+        ret += ")"
         return ret
 
 
@@ -147,19 +186,28 @@ class MameFont:
         return code
 
     def generate_source(self) -> str:
+        blob_size = len(self.blob)
         num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN]
         glyph_table_size = num_glyphs * GLYPH_TABLE_ENTRY_SIZE
-        microcode_size = (
-            len(self.blob)
-            - self.blob[OFST_LUT_SIZE]
-            - glyph_table_size
-            - OFST_GLYPH_TABLE
-        )
-        microcode_per_glyph = microcode_size / num_glyphs
         lut_size = self.blob[OFST_LUT_SIZE]
+        microcode_size = blob_size - OFST_GLYPH_TABLE - glyph_table_size - lut_size
+        microcode_per_glyph = microcode_size / num_glyphs
         lut_usage_percent = lut_size * 100 / MAX_LUT_SIZE
-        total_size = len(self.blob)
+        total_size = blob_size
         total_size_per_glyph = total_size / num_glyphs
+
+        pc = OFST_GLYPH_TABLE + glyph_table_size + lut_size
+        stats_inst_size = {}
+        stats_orig_size = {}
+        while pc < blob_size:
+            (op_code, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
+            stats_inst_size[op_code.mnemonic] = (
+                stats_inst_size.get(op_code.mnemonic, 0) + inst_size
+            )
+            stats_orig_size[op_code.mnemonic] = (
+                stats_orig_size.get(op_code.mnemonic, 0) + orig_size
+            )
+            pc += inst_size
 
         code = ""
         code += "// Generated from ShapoFont\n"
@@ -168,10 +216,15 @@ class MameFont:
         code += f"//   Glyph Count   : {num_glyphs}\n"
         code += "//   Estimated Footprint:\n"
         code += f"//     Header        : {OFST_GLYPH_TABLE:4d} Bytes\n"
-        code += f"//     Glyph Table   : {glyph_table_size:4d} Bytes\n"
+        code += f"//     Glyph Table   : {glyph_table_size:4d} Bytes ({GLYPH_TABLE_ENTRY_SIZE} Bytes/glyph)\n"
         code += f"//     Lookup Table  : {lut_size:4d} Bytes ({lut_usage_percent:.2f}% used)\n"
         code += f"//     Microcodes    : {microcode_size:4d} Bytes ({microcode_per_glyph:.2f} Bytes/glyph)\n"
         code += f"//     Total         : {total_size:4d} Bytes ({total_size_per_glyph:.2f} Bytes/glyph)\n"
+        code += "//   Instruction Usage:\n"
+        for inst, inst_size in stats_inst_size.items():
+            orig_size = stats_orig_size[inst]
+            comp_ratio = ((inst_size * 100) / orig_size - 100) if orig_size > 0 else 0
+            code += f"//     {inst:4s}: {orig_size:4d} --> {inst_size:4d} ({comp_ratio:+7.2f}%)\n"
         code += "\n"
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"
@@ -247,7 +300,7 @@ class MameFontBuilder:
             vertical_scan=self.vertical_scan,
             bit_reverse=self.bit_reverse,
         )
-        segments.insert(0, 0x00)  # pivot segment
+        segments.insert(0, 0x00)  # TODO: remove pivot segment
 
         num_segments = len(segments)
 
@@ -274,11 +327,11 @@ class MameFontBuilder:
 
         def suggest_operation(i_src: int, i_dst: int) -> Operation | None:
             cands: list[Operation] = []
-            cands += try_ldi(i_src, i_dst)
             cands += try_shift(i_src, i_dst)
+            cands += try_cpy_rev(i_src, i_dst)
+            cands += try_ldi(i_src, i_dst)
             cands += try_rpt(i_src, i_dst)
             cands += try_xor(i_src, i_dst)
-            cands += try_cpy(i_src, i_dst)
 
             best_cand: Operation | None = None
             best_cost = float("inf")
@@ -290,37 +343,54 @@ class MameFontBuilder:
 
             return best_cand
 
-        def try_cpy(i_src: int, i_dst: int) -> list[Operation]:
+        def try_cpy_rev(i_src: int, i_dst: int) -> list[Operation]:
             length = i_dst - i_src
             if length < 1 or length > COPY_MAX_LENGTH:
                 return []
 
-            offset_range = range(0, 4)
+            for reverse in [False, True]:
+                offset_range = range(0, 2) if reverse else range(0, 4)
 
-            for offset in offset_range:
-                if i_src - length - offset < 0:
-                    continue
+                for offset in offset_range:
+                    if i_src - length - offset < 0:
+                        continue
 
-                success = True
-                for i in range(i_src + 1, i_dst + 1):
-                    if segments[i - length - offset] != segments[i]:
-                        success = False
-                        break
+                    if reverse and length == 1:
+                        # Reserved for other instructions
+                        continue
 
-                if success:
-                    op_code = OpCode.CPY
-                    op_code |= offset << 4
-                    op_code |= length - 1
-                    cost = costs[OpCode.CPY]
-                    return [Operation([op_code], cost)]
+                    if not reverse and length == 1 and offset == 0:
+                        # Reserved for other instructions
+                        continue
+
+                    fail = False
+                    for i in range(length):
+                        if reverse:
+                            i_copy_from = i_src - offset - i
+                        else:
+                            i_copy_from = i_src - offset - length + 1 + i
+
+                        if i_copy_from < 0:
+                            copy_segment = 0x00
+                        else:
+                            copy_segment = segments[i_copy_from]
+
+                        if copy_segment != segments[i_src + 1 + i]:
+                            fail = True
+                            break
+
+                    if fail:
+                        continue
+
+                    op = REV if reverse else CPY
+                    inst_code = op.code | (offset << 4) | (length - 1)
+                    return [Operation([inst_code], op.cost)]
 
             return []
 
         def try_ldi(i_src: int, i_dst: int) -> list[Operation]:
             if i_src + 1 == i_dst:
-                op_code = OpCode.LDI
-                cost = costs[op_code]
-                return [Operation([op_code, segments[i_dst]], cost)]
+                return [Operation([LDI.code, segments[i_dst]], LDI.cost)]
             else:
                 return []
 
@@ -336,7 +406,7 @@ class MameFontBuilder:
             for shift_dir, shift_size, post_op in product(
                 shift_dir_range, shift_size_range, post_op_range
             ):
-                success = True
+                fail = False
                 modifier = (1 << shift_size) - 1
                 if shift_dir != 0:
                     modifier <<= 8 - shift_size
@@ -354,24 +424,24 @@ class MameFontBuilder:
                     else:
                         work &= modifier
                     if work != segments[i_step + 1]:
-                        success = False
+                        fail = True
                         break
 
-                if success:
-                    if shift_dir == ShiftDir.LEFT:
-                        if post_op == ShiftPostOp.CLR:
-                            op_code = OpCode.SLC
-                        else:
-                            op_code = OpCode.SLS
+                if fail:
+                    continue
+
+                if shift_dir == ShiftDir.LEFT:
+                    if post_op == ShiftPostOp.CLR:
+                        op = SLC
                     else:
-                        if post_op == ShiftPostOp.CLR:
-                            op_code = OpCode.SRC
-                        else:
-                            op_code = OpCode.SRS
-                    cost = costs[op_code]
-                    op_code |= (shift_size - 1) << 2
-                    op_code |= repeat_count - 1
-                    return [Operation([op_code], cost)]
+                        op = SLS
+                else:
+                    if post_op == ShiftPostOp.CLR:
+                        op = SRC
+                    else:
+                        op = SRS
+                inst_code = op.code | ((shift_size - 1) << 2) | (repeat_count - 1)
+                return [Operation([inst_code], op.cost)]
 
             return []
 
@@ -380,14 +450,12 @@ class MameFontBuilder:
             if repeat_count < 1 or repeat_count > REPEAT_MAX:
                 return []
 
-            work = segments[i_src]
             for i_step in range(i_src, i_dst):
                 if segments[i_src] != segments[i_step + 1]:
                     return []
 
-            op_code = OpCode.RPT | (repeat_count - 1)
-            cost = costs[OpCode.RPT]
-            return [Operation([op_code], cost)]
+            inst_code = RPT.code | (repeat_count - 1)
+            return [Operation([inst_code], RPT.cost)]
 
         def try_xor(i_src: int, i_dst: int) -> list[Operation]:
             if i_src + 1 != i_dst:
@@ -400,11 +468,8 @@ class MameFontBuilder:
                 mask = (1 << mask_width) - 1
                 mask <<= mask_pos
                 if segments[i_src] ^ mask == segments[i_dst]:
-                    op_code = OpCode.XOR
-                    op_code |= (mask_width - 1) << 3
-                    op_code |= mask_pos
-                    cost = costs[OpCode.XOR]
-                    return [Operation([op_code], cost)]
+                    inst_code = XOR.code | ((mask_width - 1) << 3) | mask_pos
+                    return [Operation([inst_code], XOR.cost)]
 
             return []
 
@@ -424,7 +489,7 @@ class MameFontBuilder:
 
             for i_next, op in curr.next_ops.items():
                 next_cost = curr.best_cost + op.cost
-                if nodes[i_next].best_cost > next_cost:
+                if next_cost < nodes[i_next].best_cost:
                     nodes[i_next].best_cost = next_cost
                     nodes[i_next].best_prev = curr
                     nodes[i_next].best_op = op
@@ -463,7 +528,7 @@ class MameFontBuilder:
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
-                if op.microcode[0] == OpCode.LDI:
+                if LDI.match(op.microcode[0]):
                     seg = op.microcode[1]
                     segment_count[seg] = segment_count.get(seg, 0) + 1
         lut = sorted(
@@ -481,10 +546,10 @@ class MameFontBuilder:
             glyph.entry_point = len(microcodes)
             for op in glyph.operations:
                 # Replace LDI with LKP if the segment is in the LUT
-                if op.microcode[0] == OpCode.LDI:
+                if LDI.match(op.microcode[0]):
                     seg = op.microcode[1]
                     if seg in lut:
-                        op.microcode = [OpCode.LKP | lut.index(seg)]
+                        op.microcode = [LKP.code | lut.index(seg)]
                 # Append microcode
                 microcodes += op.microcode
 

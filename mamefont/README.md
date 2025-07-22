@@ -95,33 +95,78 @@ A structure that provides information common to the entire font.
 |0x50-5f|-|`SLS`|Shift Previous Byte Left and Set LSB|
 |0x60-6f|-|`SRC`|Shift Previous Byte Right and Clear MSB|
 |0x70-7f|-|`SRS`|Shift Previous Byte Right and Set MSB|
-|0x80-bf|-|`CPY`|Copy Previous Sequence|
-|0xc0|any|`LDI`|Load Immediate|
-|0xc1-df|-|`REV`|Reverse Previous Sequence|
+|0x80|Segment Data|`LDI`|Load Immediate|
+|0x81-bf|-|`CPY`|Copy Previous Sequence|
+|0xc0||-|(Reserved)|
+|0xc1-cf|-|`REV`|Reverse Previous Sequence|
+|0xd0||-|(Reserved)|
+|0xd1-df|-|`REV`|Reverse Previous Sequence|
 |0xe0-ef|-|`RPT`|Repeat Previous Byte|
 |0xf0-fe|-|`XOR`|XOR Previous Byte and Immediate|
-|0xff|-|-|(Reserved)|
+|0xff||-|(Reserved)|
 
 ### Lookup (`LKP`)
 
-|Bit Range|Value|
-|:--:|:--|
-|7:6|0b00|
-|5:0|`index`|
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:6|0b00|
+||5:0|`index`|
+
+The state machine simply copies the byte in the LUT to the glyph buffer. If reverseBitOrder=1 is set, the segment data in the LUT must also have its bit order reversed.
 
 ```c
 buff[cursor++] = lut[index];
 ```
 
+![](./img/inst_lkp.svg)
+
+### Load Immediate (`LDI`)
+
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:0|0b11000000|
+|2nd.|7:0|Segment Data|
+
+The state machine simply copies the second byte of the instruction code into the glyph buffer. If reverseBitOrder=1 is set, the segment data in the instruction code must also have its bit order reversed.
+
+```c
+buff[cursor++] = microcode[pc++];
+```
+
+![](./img/inst_ldi.svg)
+
+### Repeat Previous Byte (`RPT`)
+
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:4|0b1110|
+||3:0|`repeat_count - 1`|
+
+```c
+memset(buff + cursor, buff[cursor - 1], repeat_count);
+cursor += repeat_count;
+```
+
+![](./img/inst_rpt.svg)
+
 ### Shift Previous Byte and Clear/Set (`SLC`, `SLS`, `SRC`, `SRS`)
 
-|Bit Range|Value|
-|:--:|:--|
-|7:6|0b01|
-|5|`shift_dir` (0: Left, 1: Right)|
-|4|`post_op` (0: Clear, 1: Set)|
-|3:2|`shift_size - 1`|
-|1:0|`repeat_count - 1`|
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:6|0b01|
+||5|`shift_dir` (0: Left, 1: Right)|
+||4|`post_op` (0: Clear, 1: Set)|
+||3:2|`shift_size - 1`|
+||1:0|`repeat_count - 1`|
+
+`SLx` shifts the segment data towards the Near Bit direction, `SRx` does the opposite.
+
+|`scanDirection`|`reverseBitOrder`|`SLx` Shift Direction|`SRx` Shift Direction|
+|:--:|:--:|:--:|:--:|
+|0 (Horizontal)|0 (Normal)|Up|Down|
+|0 (Horizontal)|1 (Reversed)|Down|Up|
+|1 (Vertical)|0 (Normal)|Left|Right|
+|1 (Vertical)|1 (Reversed)|Right|Left|
 
 ```c
 uint8_t modifier = (1 << shift_size) - 1;
@@ -144,65 +189,15 @@ for (int i = 0; i < repeat_count; i++) {
 }
 ```
 
-### Copy Previous Sequence (`CPY`)
-
-|Bit Range|Value|
-|:--:|:--|
-|7:6|0b10|
-|5:4|`offset`|
-|3:0|`repeat_count - 1`|
-
-```c
-memcpy(buff + cursor, buff + (cursor - repeat_count - offset), repeat_count);
-cursor += repeat_count;
-```
-
-### Put Immediate (`LDI`)
-
-|Bit Range|Value|
-|:--:|:--|
-|7:0|0b11000000|
-
-```c
-buff[cursor++] = microcode[pc++];
-```
-
-### Reverse Previous Sequence (`REV`)
-
-|Bit Range|Value|
-|:--:|:--|
-|7:5|0b110|
-|4|`offset - 1`|
-|3:0|`repeat_count - 1`|
-
-Combination of `offset=1` and `repeat_count=1` (`0xc0`) is reserved for `LDI`.
-
-```c
-for (int i = 0; i < repeat_count; i++) {
-    buff[cursor + i] = buff[cursor - offset - i];
-}
-cursor += repeat_count;
-```
-
-### Repeat Previous Byte (`RPT`)
-
-|Bit Range|Value|
-|:--:|:--|
-|7:4|0b1110|
-|3:0|`repeat_count - 1`|
-
-```c
-memset(buff + cursor, buff[cursor - 1], repeat_count);
-cursor += repeat_count;
-```
+![](./img/inst_sxx.svg)
 
 ### XOR Previous Byte with Mask (`XOR`)
 
-|Bit Range|Value|
-|:--:|:--|
-|7:4|0b1111|
-|3|`mask_width - 1`|
-|2:0|`mask_pos`|
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:4|0b1111|
+||3|`mask_width - 1`|
+||2:0|`mask_pos`|
 
 Combination of `mask_width=2` and `mask_pos=7` (`0xff`) is reserved.
 
@@ -210,3 +205,41 @@ Combination of `mask_width=2` and `mask_pos=7` (`0xff`) is reserved.
 int mask = (1 << mask_width) - 1;
 buff[cursor++] = buff[cursor - 1] ^ (mask << mask_pos);
 ```
+
+![](./img/inst_xor.svg)
+
+### Copy Previous Sequence (`CPY`)
+
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:6|0b10|
+||5:4|`offset`|
+||3:0|`length - 1`|
+
+```c
+memcpy(buff + cursor, buff + (cursor - length - offset), length);
+cursor += length;
+```
+
+![](./img/inst_cpy.svg)
+
+### Reverse Previous Sequence (`REV`)
+
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:5|0b110|
+||4|`offset`|
+||3:0|`length - 1`|
+
+- Following combination is reserved.
+    - `offset=0, length=1` (`0xc0`) is reserved for `LDI`
+    - `offset=1, length=1` (`0xd0`) is reserved for future use.
+
+```c
+for (int i = 0; i < length; i++) {
+    buff[cursor + i] = buff[cursor - offset - i];
+}
+cursor += length;
+```
+
+![](./img/inst_rev.svg)
