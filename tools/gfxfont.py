@@ -35,7 +35,7 @@ class GFXglyph:
         self.orig_bmp_height = orig_bmp_height
 
     def generate_struct_initializer(self) -> str:
-        return f"{{ {self.bitmap_offset}, {self.width}, {self.height}, {self.x_advance}, {self.x_offset}, {self.y_offset} }}"
+        return f"{{ 0x{self.bitmap_offset:04X}, {self.width:2d}, {self.height:2d}, {self.x_advance:2d}, {self.x_offset:2d}, {self.y_offset:3d} }}"
 
 
 class GFXfont:
@@ -67,9 +67,10 @@ class GFXfont:
             shrinked_bmp_pixels += glyph.width * glyph.height
 
         bitmap_array_size = len(self.bitmap)
-        bitmap_per_glyph = bitmap_array_size / num_glyphs
-        glyph_array_size = num_glyphs * GFXglyph.STRUCT_SIZE
-        total_size = bitmap_array_size + glyph_array_size + GFXfont.STRUCT_SIZE
+        bitmap_size_per_glyph = bitmap_array_size / num_glyphs
+        glyph_table_size = num_glyphs * GFXglyph.STRUCT_SIZE
+        glyph_table_size_per_glyph = glyph_table_size / num_glyphs
+        total_size = bitmap_array_size + glyph_table_size + GFXfont.STRUCT_SIZE
         total_size_per_glyph = total_size / num_glyphs
 
         code = "#pragma once\n"
@@ -79,10 +80,10 @@ class GFXfont:
         code += f"//     Effective: {original_bmp_pixels:5d} px\n"
         code += f"//     Shrinked : {shrinked_bmp_pixels:5d} px\n"
         code += "//   Estimated Foot Print:\n"
-        code += f"//     Bitmap Data    : {bitmap_array_size:5d} Bytes ({bitmap_per_glyph:.2f} Bytes/glyph)\n"
-        code += f"//     Glyph Table    : {glyph_array_size:5d} Bytes\n"
+        code += f"//     Bitmap Data    : {bitmap_array_size:5d} Bytes ({bitmap_size_per_glyph:6.2f} Bytes/glyph)\n"
+        code += f"//     Glyph Table    : {glyph_table_size:5d} Bytes ({glyph_table_size_per_glyph:6.2f} Bytes/glyph)\n"
         code += f"//     GFXfont Struct : {GFXfont.STRUCT_SIZE:5d} Bytes\n"
-        code += f"//     Total          : {total_size:5d} Bytes ({total_size_per_glyph:.2f} Bytes/glyph)\n"
+        code += f"//     Total          : {total_size:5d} Bytes ({total_size_per_glyph:6.2f} Bytes/glyph)\n"
         code += "\n"
         code += "#include <stdint.h>\n"
         code += "\n"
@@ -99,7 +100,7 @@ class GFXfont:
         code += "#endif\n"
         code += "\n"
         code += f"const uint8_t {self.name}Bitmaps[] PROGMEM = {{\n"
-        cols = 8
+        cols = 16
         for i, b in enumerate(self.bitmap):
             if i % cols == 0:
                 code += "  "
