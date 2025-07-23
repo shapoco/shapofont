@@ -18,8 +18,8 @@ struct Glyph {
     return entryPoint() != ENTRYPOINT_DUMMY;
   }
 
-  MAMEFONT_INLINE uint8_t width() const { return blob[2] & 0x3f; }
-  MAMEFONT_INLINE uint8_t xAdvance() const { return blob[3] & 0x3f; }
+  MAMEFONT_INLINE uint8_t width() const { return (blob[2] & 0x3f) + 1; }
+  MAMEFONT_INLINE uint8_t xAdvance() const { return (blob[3] & 0x3f) + 1; }
 };
 
 struct StateMachine {
@@ -76,7 +76,7 @@ struct StateMachine {
 #endif
   }
 
-  MAMEFONT_INLINE void Sxx(uint8_t inst) {
+  MAMEFONT_INLINE void SLC_SLS_SRC_SRS(uint8_t inst) {
     uint8_t shift_dir = inst & 0x20;
     uint8_t post_op = inst & 0x10;
     uint8_t shift_size = ((inst >> 2) & 0x3) + 1;
@@ -194,7 +194,7 @@ struct StateMachine {
         case 0x50:  // SLS
         case 0x60:  // SRC
         case 0x70:  // SRS
-          Sxx(inst);
+          SLC_SLS_SRC_SRS(inst);
           break;
 
         case 0x80:  // LUD
@@ -261,7 +261,7 @@ class Font {
   MAMEFONT_INLINE uint8_t lutSize() const { return blob[OFST_LUT_SIZE]; }
 
   MAMEFONT_INLINE uint8_t fontHeight() const {
-    return blob[OFST_FONT_DIMENSION_0] & 0x3f;
+    return (blob[OFST_FONT_DIMENSION_0] & 0x3f) + 1;
   }
 
   MAMEFONT_INLINE const bool verticalScanEnabled() const {

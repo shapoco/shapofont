@@ -39,14 +39,14 @@ A structure that provides information common to the entire font.
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
-|5:0|`fontHeight`|Height of glyph in pixels|
+|5:0|`fontHeight - 1`|Height of glyph in pixels|
 
 ### `fontDimension1`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
-|5:0|`yAdvance`|Vertical spacing in pixels|
+|5:0|`yAdvance - 1`|Vertical spacing in pixels|
 
 ### `fontFlags`
 
@@ -71,14 +71,14 @@ A structure that provides information common to the entire font.
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
-|5:0|`glyphWidth`|Number of pixels of glyph bitmap|
+|5:0|`glyphWidth - 1`|Number of pixels of glyph bitmap|
 
 ### `glyphDimension1`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
-|5:0|`xAdvance`|Horizontal spacing in pixels|
+|5:0|`xAdvance - 1`|Horizontal spacing in pixels|
 
 ## Microcode Block
 

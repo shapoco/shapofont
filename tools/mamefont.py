@@ -28,6 +28,7 @@ LUD_INDEX_RANGE = 16
 
 VERBOSE = True
 
+
 def format_char(c: int) -> str:
     if c >= 0x20 and c <= 0x7E:
         return f"'{chr(c)}' (0x{c:x})"
@@ -544,7 +545,9 @@ class MameFontBuilder:
             curr = curr.best_prev
 
         t_elapsed = time.time() - t_start
-        verbose_print(f"    {len(ops)} instructions generated ({t_elapsed * 1000:.2f} ms).")
+        verbose_print(
+            f"    {len(ops)} instructions generated ({t_elapsed * 1000:.2f} ms)."
+        )
 
         self.glyphs[code] = MameGlyph(
             code=code,
@@ -571,7 +574,9 @@ class MameFontBuilder:
             byte_ref_count.keys(), key=lambda item: byte_ref_count[item], reverse=True
         )
         if len(lut) > MAX_LUT_SIZE:
-            verbose_print(f"  Lookup Table shrunk: {len(lut)} --> {MAX_LUT_SIZE} bytes.")
+            verbose_print(
+                f"  Lookup Table shrunk: {len(lut)} --> {MAX_LUT_SIZE} bytes."
+            )
             lut = lut[:MAX_LUT_SIZE]
 
         verbose_print(f"[{LIB_NAME}] Optimizing Lookup Table...")
@@ -814,8 +819,8 @@ class MameFontBuilder:
         code_first = codes[0]
         code_last = codes[-1]
 
-        font_dimension_0 = self.glyph_height & 0x3F
-        font_dimension_1 = self.y_advance & 0x3F
+        font_dimension_0 = (self.glyph_height - 1) & 0x3F
+        font_dimension_1 = (self.y_advance - 1) & 0x3F
         font_flags = 0
         if self.vertical_scan:
             font_flags |= 0x80
@@ -839,8 +844,8 @@ class MameFontBuilder:
         # Glyph Table
         for code in codes:
             glyph = self.glyphs[code]
-            glyph_dimension_0 = glyph.glyphWidth & 0x3F
-            glyph_dimension_1 = glyph.x_advance & 0x3F
+            glyph_dimension_0 = (glyph.glyphWidth - 1) & 0x3F
+            glyph_dimension_1 = (glyph.x_advance - 1) & 0x3F
 
             blob.append(glyph.entry_point & 0xFF)
             blob.append((glyph.entry_point >> 8) & 0xFF)
