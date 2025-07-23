@@ -9,16 +9,16 @@
 //     Microcodes    :  259 Bytes (2.73 Bytes/glyph)
 //     Total         :  675 Bytes (7.11 Bytes/glyph)
 //   Compression Performance:
-//     CPY  :    9 -->    6 (  -1.03%)
-//     LUD  :   48 -->   48 (  +0.00%)
+//     CPY  :    9 -->    6 (  -0.89%)
+//     LUD  :   96 -->   48 ( -14.20%)
 //     LUS  :  169 -->  169 (  +0.00%)
-//     REV  :   30 -->   15 (  -5.17%)
-//     RPT  :   12 -->    6 (  -2.07%)
-//     SLC  :    6 -->    2 (  -1.38%)
+//     REV  :   30 -->   15 (  -4.44%)
+//     RPT  :   12 -->    6 (  -1.78%)
+//     SLC  :    6 -->    2 (  -1.18%)
 //     SLS  :    4 -->    4 (  +0.00%)
-//     SRC  :    6 -->    3 (  -1.03%)
+//     SRC  :    6 -->    3 (  -0.89%)
 //     XOR  :    6 -->    6 (  +0.00%)
-//     Total:  290 -->  259 ( -10.69%)
+//     Total:  338 -->  259 ( -23.37%)
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>

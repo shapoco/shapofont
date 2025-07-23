@@ -117,7 +117,7 @@ def parse_instruction(
     if operator == LUS:
         return (LUS, 1, 1, {"index": byte1 & 0x3F})
     elif operator == LUD:
-        return (LUD, 1, 1, {"index": byte1 & 0x0F, "step": (byte1 >> 4) & 0x01})
+        return (LUD, 1, 2, {"index": byte1 & 0x0F, "step": (byte1 >> 4) & 0x01})
     elif operator == SLC or operator == SLS or operator == SRC or operator == SRS:
         repeat_count = (byte1 & 0x03) + 1
         params = {
