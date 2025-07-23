@@ -15,8 +15,10 @@ Compressed font format definitions and tools for small-footprint embedded projec
 |Size \[Bytes\]|Name|
 |:--:|:--|
 |8|Font Header|
-|4 \* `glyphTableLen`|Character Table|
+|`(4 or 2) * glyphTableLen`|Character Table|
+|0 or 2|Padding|
 |`lutSize`|Byte Lookup Table (LUT)|
+|0...3|Padding|
 |(Variable)|Microcode Blocks|
 
 ## Font Header
@@ -27,8 +29,8 @@ A structure that provides information common to the entire font.
 |:--:|:--|:--|
 |1|`formatVersion`|0x01|
 |1|`firstCode`|ASCII code of the first entry of Glyph Table|
-|1|`glyphTableLen`|Number of entries of Glyph Table|
-|1|`lutSize`|Number of bytes of LUT|
+|1|`glyphTableLen - 1`|Number of entries of Glyph Table|
+|1|`lutSize / 4 - 1`|Number of bytes of LUT|
 |1|`fontDimension0`|Dimension of Font|
 |1|`fontDimension1`|Dimension of Font|
 |1|(Reserved)||
@@ -54,11 +56,14 @@ A structure that provides information common to the entire font.
 |:--:|:--|:--|
 |7|`scanDirection`|0: horizontal, 1: vertical|
 |6|`reverseBitOrder`|0: LSB=nearBit, 1: LSB=farBit|
-|5:0|(Reserved)||
+|5|`shrinkedGlyphTable`|0: Normal Format, 1: Shrinked Format|
+|4:0|(Reserved)||
 
 ![](./img/scan_path.svg)
 
-## Glyph Table Entry
+## Glyph Table
+
+### Normal Table Entry (4 Byte)
 
 |Size \[Bytes\]|Name|Description|
 |:--:|:--|:--|
@@ -79,6 +84,31 @@ A structure that provides information common to the entire font.
 |:--:|:--|:--|
 |7:6|(Reserved)||
 |5:0|`xAdvance - 1`|Horizontal spacing in pixels|
+
+### Shrinked Table Entry (2 Byte)
+
+The Shrink Format of the Glyph Table can be applied when all glyphWidth and xAdvance in
+the font are 16 or less, and the total size of the microcode block is 1kByte or less.
+In this case, all microcode entry points must be aligned to 4-byte boundaries.
+
+If the total size does not reach a 4-byte boundary, padding is added after the table.
+
+|Size \[Bytes\]|Name|
+|:--:|:--|:--|
+|1|`entryPoint >> 2`|
+|1|`shrinkedGriphDimension`|
+
+### `shrinkedGriphDimension`
+
+|Bit Range|Name|Description|
+|:--:|:--|:--|
+|7:4|`glyphWidth - 1`|Number of pixels of glyph bitmap|
+|3:0|`xAdvance - 1`|Horizontal spacing in pixels|
+
+## Lookup Table
+
+If the total size does not reach a 4-byte boundary,
+dummy entries must be added to the end of the table to make it 4-byte units.
 
 ## Microcode Block
 

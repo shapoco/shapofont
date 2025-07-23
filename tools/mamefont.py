@@ -205,9 +205,9 @@ class MameFont:
         verbose_print(f"[{LIB_NAME}] Generating C++ source...")
 
         blob_size = len(self.blob)
-        num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN]
+        num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN] + 1
         glyph_table_size = num_glyphs * GLYPH_TABLE_ENTRY_SIZE
-        lut_size = self.blob[OFST_LUT_SIZE]
+        lut_size = (self.blob[OFST_LUT_SIZE] + 1) * 4
         microcode_size = blob_size - OFST_GLYPH_TABLE - glyph_table_size - lut_size
         microcode_per_glyph = microcode_size / num_glyphs
         lut_usage_percent = lut_size * 100 / MAX_LUT_SIZE
@@ -803,6 +803,10 @@ class MameFontBuilder:
         verbose_print("  LUT After Reorder:")
         report_lut_score()
 
+        # Align LUT to 4-byte boundary
+        while len(lut) % 4 != 0:
+            lut.append(0x00)
+
         # Construct microcode block
         verbose_print(f"[{LIB_NAME}] Constructing microcode block...")
         microcodes: list[int] = []
@@ -834,8 +838,8 @@ class MameFontBuilder:
         # Font Header
         blob.append(format_version)
         blob.append(code_first)
-        blob.append(code_last - code_first + 1)
-        blob.append(len(lut))
+        blob.append(code_last - code_first)
+        blob.append((len(lut) + 3) // 4 - 1)
         blob.append(font_dimension_0)
         blob.append(font_dimension_1)
         blob.append(0)  # reserved flags

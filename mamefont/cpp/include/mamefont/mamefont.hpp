@@ -251,14 +251,16 @@ class Font {
   MAMEFONT_INLINE uint8_t firstCode() const { return blob[OFST_FIRST_CODE]; }
 
   MAMEFONT_INLINE uint8_t glyphTableLen() const {
-    return blob[OFST_GLYPH_TABLE_LEN];
+    return blob[OFST_GLYPH_TABLE_LEN] + 1;
   }
 
   MAMEFONT_INLINE uint8_t lastCode() const {
     return firstCode() + glyphTableLen() - 1;
   }
 
-  MAMEFONT_INLINE uint8_t lutSize() const { return blob[OFST_LUT_SIZE]; }
+  MAMEFONT_INLINE uint8_t lutSize() const {
+    return (blob[OFST_LUT_SIZE] + 1) * 4;
+  }
 
   MAMEFONT_INLINE uint8_t fontHeight() const {
     return (blob[OFST_FONT_DIMENSION_0] & 0x3f) + 1;
