@@ -52,11 +52,11 @@ struct StateMachine {
     return buff[pos];
   }
 
-  MAMEFONT_INLINE void LKP(uint8_t inst) {
+  MAMEFONT_INLINE void LUS(uint8_t inst) {
     uint8_t seg = lut[inst & 0x3f];
 #if MAMEFONT_STM_VERBOSE
     char buff[64];
-    snprintf(buff, sizeof(buff), "LKP(index=%d)", inst & 0x3f);
+    snprintf(buff, sizeof(buff), "LUS(index=%d)", inst & 0x3f);
     printf("    %-40s --> 0x%02x\n", buff, seg);
 #endif
     write(seg);
@@ -169,11 +169,11 @@ struct StateMachine {
       uint8_t inst = *(microcode++);
       uint8_t seg;
       switch (inst & 0xf0) {
-        case 0x00:  // LKP
-        case 0x10:  // LKP
-        case 0x20:  // LKP
-        case 0x30:  // LKP
-          LKP(inst);
+        case 0x00:  // LUS
+        case 0x10:  // LUS
+        case 0x20:  // LUS
+        case 0x30:  // LUS
+          LUS(inst);
           break;
 
         case 0x40:  // SLC

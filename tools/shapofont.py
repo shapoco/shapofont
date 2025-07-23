@@ -178,9 +178,9 @@ class BitmapFont:
         mame_font = builder.build()
 
         with open(hpp_file, "w") as f:
-            f.write(mame_font.generate_header())
+            f.write(mame_font.generate_cpp_header())
         with open(cpp_file, "w") as f:
-            f.write(mame_font.generate_source())
+            f.write(mame_font.generate_cpp_source())
 
 
 def main():

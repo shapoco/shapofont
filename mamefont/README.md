@@ -90,13 +90,13 @@ A structure that provides information common to the entire font.
 
 |Byte0|Byte1|Mnemonic|Description|
 |:--:|:--:|:--:|:--|
-|0x00-3F|-|`LKP`|Single Lookup|
+|0x00-3F|-|`LUS`|Single Lookup|
 |0x40-4F|-|`SLC`|Shift Left Previous Byte and Clear Lower Bits|
 |0x50-5F|-|`SLS`|Shift Left Previous Byte and Set Lower Bits|
 |0x60-6F|-|`SRC`|Shift Right Previous Byte and Clear Upper Bits|
 |0x70-7F|-|`SRS`|Shift Right Previous Byte and Set Upper Bits|
 |0x80|Byte Data|`LDI`|Load Immediate|
-|0x81-9F|-|`BLK`|Block Lookup|
+|0x81-9F|-|`LUD`|Double Lookup|
 |0xA0||-|(Reserved)|
 |0xA1-BF|-|`CPY`|Copy Previous Sequence|
 |0xC0||-|(Reserved)|
@@ -111,7 +111,7 @@ A structure that provides information common to the entire font.
 |0xF0-FE|-|`XOR`|XOR Previous Byte with Mask|
 |0xff||-|(Reserved)|
 
-### Single Lookup (`LKP`)
+### Single Lookup (`LUS`)
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
@@ -126,7 +126,7 @@ buff[cursor++] = lut[index];
 
 ![](./img/inst_lkp.svg)
 
-### Block Lookup (`BLK`)
+### Double Lookup (`LUD`)
 
 T.B.D.
 

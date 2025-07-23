@@ -44,7 +44,8 @@ $(MAME_FONT_SRC_DIR)/$(TARGET_FAMILY)_%.cpp: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/de
 	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
 		-i $(dir $<) \
 		--outdir_mame_cpp $(dir $@) \
-		--outdir_mame_hpp $(dir $(patsubst $(MAME_FONT_SRC_DIR)/%.cpp,$(MAME_FONT_INC_DIR)/%.hpp,$@))
+		--outdir_mame_hpp $(dir $(patsubst $(MAME_FONT_SRC_DIR)/%.cpp,$(MAME_FONT_INC_DIR)/%.hpp,$@)) \
+		2>&1 | tee $<.mamefont.log
 
 distclean: gfx_distclean mame_distclean
 

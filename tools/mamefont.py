@@ -1,6 +1,10 @@
 import enum
 from design import GrayBitmap
 from itertools import product
+import time
+import math
+
+LIB_NAME = "MameFont"
 
 OFST_FORMAT_VERSION = 0
 OFST_FIRST_CODE = 1
@@ -20,6 +24,7 @@ REPEAT_MAX = 16
 COPY_MAX_LENGTH = 8
 
 MAX_LUT_SIZE = 64
+LUD_INDEX_RANGE = 16
 
 VERBOSE = True
 
@@ -59,7 +64,7 @@ SLC = Operator("SLC", 0x40, [(0x40, 0x4F)], 1005)
 SLS = Operator("SLS", 0x50, [(0x50, 0x5F)], 1005)
 SRC = Operator("SRC", 0x60, [(0x60, 0x6F)], 1005)
 SRS = Operator("SRS", 0x70, [(0x70, 0x7F)], 1005)
-LKP = Operator("LKP", 0x00, [(0x00, 0x3F)], 1006)
+LUS = Operator("LUS", 0x00, [(0x00, 0x3F)], 1006)
 LDI = Operator("LDI", 0x80, [(0x80, 0x80)], 1009)
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
 
@@ -72,7 +77,7 @@ opcodes = [
     SLS,
     SRC,
     SRS,
-    LKP,
+    LUS,
     LDI,
 ]
 
@@ -104,8 +109,8 @@ def parse_instruction(
 ) -> tuple[Operator, int, int, dict[str, int]]:
     byte1 = microcode[offset]
     operator = parse_opcode(byte1)
-    if operator == LKP:
-        return (LKP, 1, 1, {"index": byte1 & 0x3F})
+    if operator == LUS:
+        return (LUS, 1, 1, {"index": byte1 & 0x3F})
     elif operator == SLC or operator == SLS or operator == SRC or operator == SRS:
         shift_size = ((byte1 & 0x0C) >> 2) + 1
         repeat_count = (byte1 & 0x03) + 1
@@ -148,7 +153,7 @@ class Operation:
 
     def __repr__(self) -> str:
         (op, _, _, params) = parse_instruction(self.microcode, 0)
-        ret = f"{op.mnemonic}("
+        ret = f"{op.mnemonic} ("
         for key, value in params.items():
             ret += f"{key}={value}, "
         ret = ret.rstrip(", ")
@@ -172,7 +177,10 @@ class MameFont:
         self.name = name
         self.blob = blob
 
-    def generate_header(self) -> str:
+    def generate_cpp_header(self) -> str:
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Generating C++ header...")
+
         code = ""
         code += "#pragma once\n"
         code += "\n"
@@ -185,7 +193,10 @@ class MameFont:
         code += "\n"
         return code
 
-    def generate_source(self) -> str:
+    def generate_cpp_source(self) -> str:
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Generating C++ source...")
+
         blob_size = len(self.blob)
         num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN]
         glyph_table_size = num_glyphs * GLYPH_TABLE_ENTRY_SIZE
@@ -300,7 +311,6 @@ class MameFontBuilder:
         self.vertical_scan = False
         self.bit_reverse = False
         self.glyphs: dict[int, MameGlyph] = {}
-        self.duplication_count: dict[int, int] = {}
 
     def add_glyph(
         self,
@@ -311,23 +321,23 @@ class MameFontBuilder:
             vertical_scan=self.vertical_scan,
             bit_reverse=self.bit_reverse,
         )
-        sequence.insert(0, 0x00)  # TODO: remove pivot byte
-
-        # Detect frequent byte duplications
-        last_byte = -1
-        for curr_byte in sequence:
-            if last_byte == curr_byte:
-                self.duplication_count[curr_byte] = self.duplication_count.get(curr_byte, 0) + 1
-            last_byte = curr_byte
-
-        num_segments = len(sequence)
 
         if VERBOSE:
-            print(f"Compiling: {format_char(code)}")
-            print(f"  segs: ", end="")
-            for seg in sequence:
-                print(f"0x{seg:02x}", end=" ")
-            print()
+            print(f"[{LIB_NAME}] Glyph added: {format_char(code)}")
+            print(f"  Bytes:")
+            for i, byte in enumerate(sequence):
+                if i % 16 == 0:
+                    print("    ", end="")
+                print(f"0x{byte:02x} ", end="")
+                if (i + 1) % 16 == 0 or i == len(sequence) - 1:
+                    print()
+
+        sequence.insert(0, 0x00)  # TODO: remove pivot byte
+        num_bytes = len(sequence)
+
+        if VERBOSE:
+            print(f"  Generating Instructions...")
+            t_start = time.time()
 
         class State:
             def __init__(self, i_pos: int):
@@ -495,10 +505,10 @@ class MameFontBuilder:
             return []
 
         # Solve with Dijkstra's algorithm
-        nodes = [State(i) for i in range(num_segments)]
+        nodes = [State(i) for i in range(num_bytes)]
         q = nodes.copy()
         q[0].best_cost = 0
-        for i in range(1, num_segments):
+        for i in range(1, num_bytes):
             q[i].best_cost = 999999
         while len(q) > 0:
             q.sort(key=lambda n: n.best_cost)
@@ -527,10 +537,8 @@ class MameFontBuilder:
             curr = curr.best_prev
 
         if VERBOSE:
-            print("  ops: ", end="")
-            for op in ops:
-                print(op, end=" ")
-            print()
+            t_elapsed = time.time() - t_start
+            print(f"    {len(ops)} instructions generated ({t_elapsed * 1000:.2f} ms).")
 
         self.glyphs[code] = MameGlyph(
             code=code,
@@ -545,37 +553,201 @@ class MameFontBuilder:
         codes = sorted(self.glyphs.keys())
 
         # Generate Lookup Table
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Generating Lookup Table...")
         byte_ref_count: dict[int, int] = {}
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
                 if LDI.match(op.microcode[0]):
-                    byte = op.microcode[1]
-                    byte_ref_count[byte] = byte_ref_count.get(byte, 0) + 1
+                    this_byte = op.microcode[1]
+                    byte_ref_count[this_byte] = byte_ref_count.get(this_byte, 0) + 1
         lut = sorted(
             byte_ref_count.keys(), key=lambda item: byte_ref_count[item], reverse=True
         )
         if len(lut) > MAX_LUT_SIZE:
+            if VERBOSE:
+                print(f"  Lookup Table shrunk: {len(lut)} --> {MAX_LUT_SIZE} bytes.")
             lut = lut[:MAX_LUT_SIZE]
 
-        # Replace instructions with LKP as possible
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Optimizing Lookup Table...")
+            print("  Detecting frequent two-byte sequences...")
+        byte_seq_count: dict[int, dict[int, int]] = {}
+        for byte1 in lut:
+            byte_seq_count[byte1] = {}
+            for byte2 in lut:
+                byte_seq_count[byte1][byte2] = 0
+        for code in codes:
+            glyph = self.glyphs[code]
+            byte1 = -1
+            for op in glyph.operations:
+                if len(op.orig_seq) == 1 and op.orig_seq[0] in lut:
+                    byte2 = op.orig_seq[0]
+                    if byte1 >= 0:
+                        byte_seq_count[byte1][byte2] += 1
+                    byte1 = byte2
+
+        if VERBOSE:
+            print("  Detecting most referenced bytes...")
+        byte_ref_by_seq_count: dict[int, int] = {}
+        for byte in lut:
+            byte_ref_by_seq_count[byte] = 0
+        for byte1, dic in byte_seq_count.items():
+            for byte2, count in dic.items():
+                byte_ref_by_seq_count[byte1] += 1
+                byte_ref_by_seq_count[byte2] += 1
+
+        most_freq_byte_seq: list[tuple[int, int]] = []
+        for byte1, dic in byte_seq_count.items():
+            for byte2, count in dic.items():
+                most_freq_byte_seq.append((byte1, byte2))
+        most_freq_byte_seq = sorted(
+            most_freq_byte_seq,
+            key=lambda item: byte_seq_count[item[0]][item[1]],
+            reverse=True,
+        )
+
+        if VERBOSE:
+            print("  Most frequent two-byte sequences:")
+
+            for seq in most_freq_byte_seq[:10]:
+                (byte1, byte2) = seq
+                count = byte_seq_count[byte1][byte2]
+                print(f"    {byte1:02X}-->{byte2:02X} : {count:4}")
+            print("  Most referenced bytes in sequences:")
+            tmp = sorted(
+                byte_ref_by_seq_count.items(), key=lambda item: item[1], reverse=True
+            )
+            for byte in tmp[:10]:
+                (key, count) = byte
+                print(f"    {key:02X} : {count:4}")
+
+        def report_lut_score():
+            tmp = lut[:16]
+
+            last_byte = -1
+            rpt_count = []
+            seq_count = []
+            total_score = 0
+            print("    Content    :", end="")
+            for curr_byte in tmp:
+                key = (curr_byte << 8) | curr_byte
+                byte_score = byte_seq_count[curr_byte][curr_byte]
+                rpt_count.append(byte_score)
+
+                seq_score = 0
+                if last_byte >= 0:
+                    key = (last_byte << 8) | curr_byte
+                    seq_score += byte_seq_count[last_byte][curr_byte]
+                last_byte = curr_byte
+                seq_count.append(seq_score)
+
+                total_score += byte_score + seq_score
+
+                print("-->" if seq_score > 0 else "   ", end="")
+                print(f"{curr_byte:02X}", end="")
+            print()
+
+            print("    Byte Score :", end="")
+            for score in rpt_count:
+                if score > 0:
+                    print(f"{score:5d}", end="")
+                else:
+                    print("     ", end="")
+            print()
+
+            print("    Seq. Score :", end="")
+            for score in seq_count:
+                if score > 0:
+                    print(f"{score:5d}", end="")
+                else:
+                    print("     ", end="")
+            print()
+
+            print(f"    Estimated Effect of LUD: {total_score} ")
+
+        # Reorder LUT
+        if VERBOSE:
+            print("  LUT Before Reorder:")
+            report_lut_score()
+            print("  Reordering LUT...")
+
+        seq_buff: list[list[int]] = []
+        seq_buff_size = 0
+        for byte1, byte2 in most_freq_byte_seq:
+            changed = False
+            if byte1 in lut and byte2 not in lut:
+                for seq in seq_buff:
+                    if seq[0] == byte2:
+                        lut.remove(byte1)
+                        seq.insert(0, byte1)
+                        seq_buff_size += 1
+                        changed = True
+                        break
+            elif byte1 not in lut and byte2 in lut:
+                for seq in seq_buff:
+                    if seq[-1] == byte1:
+                        lut.remove(byte2)
+                        seq.append(byte2)
+                        seq_buff_size += 1
+                        changed = True
+                        break
+            elif byte1 in lut and byte2 in lut:
+                if byte1 == byte2:
+                    lut.remove(byte1)
+                    seq_buff.append([byte1])
+                    seq_buff_size += 1
+                else:
+                    lut.remove(byte1)
+                    lut.remove(byte2)
+                    seq_buff.append([byte1, byte2])
+                    seq_buff_size += 2
+                changed = True
+
+            if not changed:
+                continue
+
+            print("      ", end="")
+            for seq in seq_buff:
+                print(f"[{' '.join(f'{b:02X}' for b in seq)}] ", end="")
+            print()
+
+            if seq_buff_size >= LUD_INDEX_RANGE:
+                break
+
+        new_lut = []
+        for seq in seq_buff:
+            new_lut += seq
+        lut = new_lut + lut
+
+        # Replace instructions with LUS as possible
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
-                byte = -1
+                this_byte = -1
                 if len(op.orig_seq) == 1:
-                    byte = op.orig_seq[0]
-                elif LDI.match(op.microcode[0]):
-                    byte = op.microcode[1]
-                if byte >= 0 and byte in lut:
-                    op.microcode = [LKP.code | lut.index(byte)]
+                    this_byte = op.orig_seq[0]
+                if this_byte >= 0 and this_byte in lut:
+                    op.microcode = [LUS.code | lut.index(this_byte)]
+
+        if VERBOSE:
+            print("  LUT After Reorder:")
+            report_lut_score()
 
         # Construct microcode block
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Constructing microcode block...")
         microcodes: list[int] = []
         for code in codes:
+            if VERBOSE:
+                print(f"  {format_char(code)}:")
             glyph = self.glyphs[code]
             glyph.entry_point = len(microcodes)
             for op in glyph.operations:
+                if VERBOSE:
+                    inst_code_str = " ".join(f"0x{b:02X}" for b in op.microcode)
+                    print(f"    {inst_code_str:<10s} {op}")
                 microcodes += op.microcode
 
         code_first = codes[0]
@@ -588,6 +760,9 @@ class MameFontBuilder:
             font_flags |= 0x80
         if self.bit_reverse:
             font_flags |= 0x40
+
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Generating blob...")
 
         blob: list[int] = []
 
