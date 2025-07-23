@@ -23,11 +23,16 @@ static constexpr uint8_t OFST_FONT_DIMENSION_1 = 5;
 static constexpr uint8_t OFST_FONT_FLAGS = 7;
 
 static constexpr uint8_t OFST_GLYPH_TABLE = 8;
-static constexpr uint8_t GLYPH_TABLE_ENTRY_SIZE = 4;
 
 static constexpr uint8_t OFST_ENTRY_POINT = 0;
 static constexpr uint8_t OFST_GLYPH_DIMENSION_0 = 2;
 static constexpr uint8_t OFST_GLYPH_DIMENSION_1 = 3;
+
+enum FontFlags : uint8_t {
+  VERTICAL_SCAN = 0x80,
+  BIT_REVERSE = 0x40,
+  SHRINKED_GLYPH_TABLE = 0x20,
+};
 
 enum class Status {
   SUCCESS = 0,

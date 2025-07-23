@@ -6,20 +6,39 @@ namespace mamefont {
 
 struct Glyph {
   const uint8_t *blob;
+  bool isShrinked;
 
-  Glyph() : blob(nullptr) {}
-  Glyph(const uint8_t *data) : blob(data) {}
+  Glyph() : blob(nullptr), isShrinked(false) {}
+  Glyph(const uint8_t *data, bool isShrinked)
+      : blob(data), isShrinked(isShrinked) {}
 
   MAMEFONT_INLINE int16_t entryPoint() const {
-    return reinterpret_cast<const int16_t *>(blob)[0];
+    if (isShrinked) {
+      return static_cast<int16_t>(blob[0]) << 1;
+    } else {
+      return reinterpret_cast<const int16_t *>(blob)[0];
+    }
   }
 
   MAMEFONT_INLINE bool isValid() const {
-    return entryPoint() != ENTRYPOINT_DUMMY;
+    return blob[0] != 0xff && blob[1] != 0xff;
   }
 
-  MAMEFONT_INLINE uint8_t width() const { return (blob[2] & 0x3f) + 1; }
-  MAMEFONT_INLINE uint8_t xAdvance() const { return (blob[3] & 0x3f) + 1; }
+  MAMEFONT_INLINE uint8_t width() const {
+    if (isShrinked) {
+      return (blob[1] & 0x0f) + 1;
+    } else {
+      return (blob[2] & 0x3f) + 1;
+    }
+  }
+
+  MAMEFONT_INLINE uint8_t xAdvance() const {
+    if (isShrinked) {
+      return ((blob[1] >> 4) & 0x0f) + 1;
+    } else {
+      return (blob[3] & 0x3f) + 1;
+    }
+  }
 };
 
 struct StateMachine {
@@ -248,6 +267,14 @@ class Font {
 
   Font(const uint8_t *blob) : blob(blob) {}
 
+  MAMEFONT_INLINE bool isShrinkedGlyphTable() const {
+    return !!(blob[OFST_FONT_FLAGS] & FontFlags::SHRINKED_GLYPH_TABLE);
+  }
+
+  MAMEFONT_INLINE uint8_t glyphTableEntrySize() const {
+    return isShrinkedGlyphTable() ? 2 : 4;
+  }
+
   MAMEFONT_INLINE uint8_t firstCode() const { return blob[OFST_FIRST_CODE]; }
 
   MAMEFONT_INLINE uint8_t glyphTableLen() const {
@@ -258,9 +285,7 @@ class Font {
     return firstCode() + glyphTableLen() - 1;
   }
 
-  MAMEFONT_INLINE uint8_t lutSize() const {
-    return (blob[OFST_LUT_SIZE] + 1) * 4;
-  }
+  MAMEFONT_INLINE uint8_t lutSize() const { return blob[OFST_LUT_SIZE] + 1; }
 
   MAMEFONT_INLINE uint8_t fontHeight() const {
     return (blob[OFST_FONT_DIMENSION_0] & 0x3f) + 1;
@@ -271,7 +296,9 @@ class Font {
   }
 
   MAMEFONT_INLINE const Glyph glyphTableEntry(uint8_t index) const {
-    return Glyph(blob + OFST_GLYPH_TABLE + index * GLYPH_TABLE_ENTRY_SIZE);
+    const uint8_t *ptr = blob + OFST_GLYPH_TABLE;
+    ptr += isShrinkedGlyphTable() ? (index << 1) : (index << 2);
+    return Glyph(ptr, isShrinkedGlyphTable());
   }
 
   Status getGlyph(uint8_t c, Glyph *glyph) const {
@@ -287,7 +314,11 @@ class Font {
   }
 
   MAMEFONT_INLINE int16_t lutOffset() const {
-    return OFST_GLYPH_TABLE + glyphTableLen() * GLYPH_TABLE_ENTRY_SIZE;
+    if (isShrinkedGlyphTable()) {
+      return OFST_GLYPH_TABLE + glyphTableLen() * 2;
+    } else {
+      return OFST_GLYPH_TABLE + glyphTableLen() * 4;
+    }
   }
 
   MAMEFONT_INLINE int16_t microCodeOffset() const {

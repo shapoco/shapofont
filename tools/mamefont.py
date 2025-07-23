@@ -12,11 +12,14 @@ OFST_GLYPH_TABLE_LEN = 2
 OFST_LUT_SIZE = 3
 OFST_FONT_DIMENSION_0 = 4
 OFST_FONT_DIMENSION_1 = 5
-OFST_FONT_FLAGS = 6
+OFST_FONT_FLAGS = 7
 OFST_GLYPH_TABLE = 8
-GLYPH_TABLE_ENTRY_SIZE = 4
 OFST_ENTRY_POINT = 0
 OFST_GLYPH_DIMENSION = 2
+
+FONT_FLAG_VERTICAL_SCAN = 0x80
+FONT_FLAG_BIT_REVERSE = 0x40
+FONT_FLAG_SHRINKED_GLYPH_TABLE = 0x20
 
 SHIFT_MAX_SIZE = 4
 SHIFT_MAX_REPEAT = 4
@@ -27,6 +30,12 @@ MAX_LUT_SIZE = 64
 LUD_INDEX_RANGE = 16
 
 VERBOSE = True
+
+ALIGN_SIZE = 2
+
+
+def roundup_size(size: int) -> int:
+    return (size + (ALIGN_SIZE - 1)) & ~(ALIGN_SIZE - 1)
 
 
 def format_char(c: int) -> str:
@@ -205,43 +214,96 @@ class MameFont:
         verbose_print(f"[{LIB_NAME}] Generating C++ source...")
 
         blob_size = len(self.blob)
+
+        font_flags = self.blob[OFST_FONT_FLAGS]
+        vertical_scan = 0 != (font_flags & FONT_FLAG_VERTICAL_SCAN)
+        bit_reverse = 0 != (font_flags & FONT_FLAG_BIT_REVERSE)
+        shrinked_glyph_table = 0 != (font_flags & FONT_FLAG_SHRINKED_GLYPH_TABLE)
+
+        font_height = (self.blob[OFST_FONT_DIMENSION_0] & 0x3F) + 1
+
+        first_code = self.blob[OFST_FIRST_CODE]
         num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN] + 1
-        glyph_table_size = num_glyphs * GLYPH_TABLE_ENTRY_SIZE
-        lut_size = (self.blob[OFST_LUT_SIZE] + 1) * 4
-        microcode_size = blob_size - OFST_GLYPH_TABLE - glyph_table_size - lut_size
+        glyph_table_entry_size = 2 if shrinked_glyph_table else 4
+        glyph_table_size = num_glyphs * glyph_table_entry_size
+        lut_size = self.blob[OFST_LUT_SIZE] + 1
+
+        microcode_offset = OFST_GLYPH_TABLE
+        microcode_offset += roundup_size(glyph_table_size)
+        microcode_offset += roundup_size(lut_size)
+        microcode_size = blob_size - microcode_offset
         microcode_per_glyph = microcode_size / num_glyphs
         lut_usage_percent = lut_size * 100 / MAX_LUT_SIZE
         total_size = blob_size
         total_size_per_glyph = total_size / num_glyphs
 
-        pc = OFST_GLYPH_TABLE + glyph_table_size + lut_size
         stats_inst_size = {}
         stats_orig_size = {}
         total_inst_size = 0
         total_orig_size = 0
-        while pc < blob_size:
-            (opr, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
-            stats_inst_size[opr.mnemonic] = (
-                stats_inst_size.get(opr.mnemonic, 0) + inst_size
+        for glyph_code in range(first_code, first_code + num_glyphs):
+            table_entry_offset = (
+                OFST_GLYPH_TABLE + (glyph_code - first_code) * glyph_table_entry_size
             )
-            stats_orig_size[opr.mnemonic] = (
-                stats_orig_size.get(opr.mnemonic, 0) + orig_size
-            )
-            total_inst_size += inst_size
-            total_orig_size += orig_size
-            if inst_size <= 0:
-                raise RuntimeError(f"Unknown instruction: 0x{self.blob[pc]:02x} {opr}")
-            pc += inst_size
+            if (
+                self.blob[table_entry_offset] == 0xFF
+                and self.blob[table_entry_offset + 1] == 0xFF
+            ):
+                # Ignore missing glyph
+                continue
+
+            if shrinked_glyph_table:
+                glyph_width = (self.blob[table_entry_offset + 1] & 0xF) + 1
+            else:
+                glyph_width = (self.blob[table_entry_offset + 2] & 0x3F) + 1
+
+            if vertical_scan:
+                glyph_size_in_bytes = math.ceil(glyph_width / 8) * font_height
+            else:
+                glyph_size_in_bytes = glyph_width * math.ceil(font_height / 8)
+
+            pc = microcode_offset
+            if shrinked_glyph_table:
+                verbose_print(f"  PC= {pc}")
+                pc += self.blob[table_entry_offset] * ALIGN_SIZE
+                verbose_print(f"  PC= {pc}")
+            else:
+                pc += self.blob[table_entry_offset]
+                pc += self.blob[table_entry_offset + 1] << 8
+
+            num_remaining_bytes = glyph_size_in_bytes
+            while num_remaining_bytes > 0:
+                (opr, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
+                stats_inst_size[opr.mnemonic] = (
+                    stats_inst_size.get(opr.mnemonic, 0) + inst_size
+                )
+                stats_orig_size[opr.mnemonic] = (
+                    stats_orig_size.get(opr.mnemonic, 0) + orig_size
+                )
+                total_inst_size += inst_size
+                total_orig_size += orig_size
+                if inst_size <= 0:
+                    raise RuntimeError(
+                        f"Unknown instruction: 0x{self.blob[pc]:02x} {opr}"
+                    )
+                pc += inst_size
+                num_remaining_bytes -= orig_size
         total_delta_size = total_inst_size - total_orig_size
 
         code = ""
         code += "// Generated from ShapoFont\n"
         code += f"//   Format Version: {self.blob[OFST_FORMAT_VERSION]}\n"
-        code += f"//   First Code    : {self.blob[OFST_FIRST_CODE]}\n"
-        code += f"//   Glyph Count   : {num_glyphs}\n"
+        code += f"//   First Code      : {first_code}\n"
+        code += f"//   Glyph Count     : {num_glyphs}\n"
+        code += f"//   Font Height     : {font_height}\n"
+        code += (
+            f"//   Scan Direction  : {"Vertical" if vertical_scan else "Horizontal"}\n"
+        )
+        code += f"//   Bit Reverse     : {"Yes" if bit_reverse else "No"}\n"
+        code += f"//   Shrinked Format : {"Yes" if shrinked_glyph_table else "No"}\n"
         code += "//   Estimated Footprint:\n"
         code += f"//     Header        : {OFST_GLYPH_TABLE:4d} Bytes\n"
-        code += f"//     Glyph Table   : {glyph_table_size:4d} Bytes ({GLYPH_TABLE_ENTRY_SIZE} Bytes/glyph)\n"
+        code += f"//     Glyph Table   : {glyph_table_size:4d} Bytes ({glyph_table_entry_size} Bytes/glyph)\n"
         code += f"//     Lookup Table  : {lut_size:4d} Bytes ({lut_usage_percent:.2f}% used)\n"
         code += f"//     Microcodes    : {microcode_size:4d} Bytes ({microcode_per_glyph:.2f} Bytes/glyph)\n"
         code += f"//     Total         : {total_size:4d} Bytes ({total_size_per_glyph:.2f} Bytes/glyph)\n"
@@ -803,9 +865,28 @@ class MameFontBuilder:
         verbose_print("  LUT After Reorder:")
         report_lut_score()
 
-        # Align LUT to 4-byte boundary
-        while len(lut) % 4 != 0:
+        # Align LUT to 2-byte boundary
+        while len(lut) % ALIGN_SIZE != 0:
             lut.append(0x00)
+
+        # Determine to apply Shrinked Glyph Table or not
+        shrinked_glyph_table = True
+        total_microcode_size = 0
+        for code in codes:
+            # Check glyph dimensions
+            glyph = self.glyphs[code]
+            if glyph.glyphWidth > 16 or glyph.x_advance > 16:
+                shrinked_glyph_table = False
+                break
+
+            # Check microcode size
+            for op in glyph.operations:
+                total_microcode_size += len(op.microcode)
+            while total_microcode_size % ALIGN_SIZE != 0:
+                total_microcode_size += 1
+            if total_microcode_size > (ALIGN_SIZE * 256):
+                shrinked_glyph_table = False
+                break
 
         # Construct microcode block
         verbose_print(f"[{LIB_NAME}] Constructing microcode block...")
@@ -819,6 +900,15 @@ class MameFontBuilder:
                     inst_code_str = " ".join(f"0x{b:02X}" for b in op.microcode)
                     print(f"    {inst_code_str:<10s} {op}")
                 microcodes += op.microcode
+            if shrinked_glyph_table:
+                while len(microcodes) % ALIGN_SIZE != 0:
+                    microcodes.append(0x00)
+
+        verbose_print(f"[{LIB_NAME}] Generating blob...")
+        if shrinked_glyph_table:
+            verbose_print("  Using Shrinked Glyph Table format.")
+        else:
+            verbose_print("  Using Normal Glyph Table format.")
 
         code_first = codes[0]
         code_last = codes[-1]
@@ -830,8 +920,8 @@ class MameFontBuilder:
             font_flags |= 0x80
         if self.bit_reverse:
             font_flags |= 0x40
-
-        verbose_print(f"[{LIB_NAME}] Generating blob...")
+        if shrinked_glyph_table:
+            font_flags |= 0x20
 
         blob: list[int] = []
 
@@ -839,22 +929,43 @@ class MameFontBuilder:
         blob.append(format_version)
         blob.append(code_first)
         blob.append(code_last - code_first)
-        blob.append((len(lut) + 3) // 4 - 1)
+        blob.append(len(lut) - 1)
         blob.append(font_dimension_0)
         blob.append(font_dimension_1)
         blob.append(0)  # reserved flags
         blob.append(font_flags)
 
         # Glyph Table
-        for code in codes:
-            glyph = self.glyphs[code]
-            glyph_dimension_0 = (glyph.glyphWidth - 1) & 0x3F
-            glyph_dimension_1 = (glyph.x_advance - 1) & 0x3F
+        for code in range(code_first, code_last + 1):
+            if code not in self.glyphs:
+                # Dummy Entry for missing glyphs
+                if shrinked_glyph_table:
+                    blob.append(0xFF)
+                    blob.append(0xFF)
+                else:
+                    blob.append(0xFF)
+                    blob.append(0xFF)
+                    blob.append(0xFF)
+                    blob.append(0xFF)
+                continue
 
-            blob.append(glyph.entry_point & 0xFF)
-            blob.append((glyph.entry_point >> 8) & 0xFF)
-            blob.append(glyph_dimension_0)
-            blob.append(glyph_dimension_1)
+            glyph = self.glyphs[code]
+            if shrinked_glyph_table:
+                shrinked_glyph_dimension = 0
+                shrinked_glyph_dimension |= (glyph.glyphWidth - 1) & 0xF
+                shrinked_glyph_dimension |= ((glyph.x_advance - 1) & 0xF) << 4
+                blob.append((glyph.entry_point // 2) & 0xFF)
+                blob.append(shrinked_glyph_dimension)
+            else:
+                glyph_dimension_0 = (glyph.glyphWidth - 1) & 0x3F
+                glyph_dimension_1 = (glyph.x_advance - 1) & 0x3F
+                blob.append(glyph.entry_point & 0xFF)
+                blob.append((glyph.entry_point >> 8) & 0xFF)
+                blob.append(glyph_dimension_0)
+                blob.append(glyph_dimension_1)
+
+        while len(blob) % 2 != 0:
+            blob.append(0x00)
 
         # LUT
         blob += lut

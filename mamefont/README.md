@@ -16,9 +16,7 @@ Compressed font format definitions and tools for small-footprint embedded projec
 |:--:|:--|
 |8|Font Header|
 |`(4 or 2) * glyphTableLen`|Character Table|
-|0 or 2|Padding|
 |`lutSize`|Byte Lookup Table (LUT)|
-|0...3|Padding|
 |(Variable)|Microcode Blocks|
 
 ## Font Header
@@ -88,27 +86,25 @@ A structure that provides information common to the entire font.
 ### Shrinked Table Entry (2 Byte)
 
 The Shrink Format of the Glyph Table can be applied when all glyphWidth and xAdvance in
-the font are 16 or less, and the total size of the microcode block is 1kByte or less.
-In this case, all microcode entry points must be aligned to 4-byte boundaries.
-
-If the total size does not reach a 4-byte boundary, padding is added after the table.
+the font are 16 pixel or less, and the total size of the microcode block is 512 Byte or less.
+In this case, all microcode entry points must be aligned to 2-Byte boundaries.
 
 |Size \[Bytes\]|Name|
 |:--:|:--|:--|
-|1|`entryPoint >> 2`|
+|1|`entryPoint >> 1`|
 |1|`shrinkedGriphDimension`|
 
 ### `shrinkedGriphDimension`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
-|7:4|`glyphWidth - 1`|Number of pixels of glyph bitmap|
-|3:0|`xAdvance - 1`|Horizontal spacing in pixels|
+|7:4|`xAdvance - 1`|Horizontal spacing in pixels|
+|3:0|`glyphWidth - 1`|Number of pixels of glyph bitmap|
 
 ## Lookup Table
 
-If the total size does not reach a 4-byte boundary,
-dummy entries must be added to the end of the table to make it 4-byte units.
+If the total size does not reach a 2-Byte boundary, a dummy entry must be appended.
+`lutSize` includes this dummy byte.
 
 ## Microcode Block
 
