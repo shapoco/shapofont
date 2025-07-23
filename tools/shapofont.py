@@ -166,8 +166,8 @@ class BitmapFont:
         builder = mamefont.MameFontBuilder(
             self.full_name,
             self.bitmap_height(),
-            self.line_height,
             self.normal_x_spacing,
+            self.line_height,
         )
         for glyph in self.glyphs:
             builder.add_glyph(
