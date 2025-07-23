@@ -1,6 +1,8 @@
 from design import GrayBitmap
 
 WORD_SIZE = 2
+LIB_NAME = "ShapoFont"
+VERBOSE = True
 
 
 def align_to_word_size(size: int) -> int:
@@ -113,9 +115,7 @@ class GFXfont:
             code += f"  {glyph.generate_struct_initializer()},\n"
         code += "};\n\n"
 
-        code += (
-            f"const SHAPOFONT_GFXFONT_NAMESPACE GFXfont {self.name} PROGMEM = {{\n"
-        )
+        code += f"const SHAPOFONT_GFXFONT_NAMESPACE GFXfont {self.name} PROGMEM = {{\n"
         code += f"  (uint8_t*){self.name}Bitmaps,\n"
         code += f"  (GFXglyph*){self.name}Glyphs,\n"
         code += f"  0x{self.first:02X},\n"
@@ -197,12 +197,17 @@ class GFXfontBuilder:
 
         glyphs: list[GFXglyph] = []
 
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Generating bitmap array...")
+
         bitmap: list[int] = []
+        size_map: dict[int, int] = {}
         for code in range(code_first, code_last + 1):
             if code in self.bitmaps:
                 glyph = self.glyphs[code]
                 glyph.bitmap_offset = len(bitmap)
-                bitmap.extend(self.bitmaps[code])
+                size_map[code] = len(self.bitmaps[code])
+                bitmap += self.bitmaps[code]
             else:
                 glyph = GFXglyph(
                     bitmap_offset=0,
@@ -214,7 +219,54 @@ class GFXfontBuilder:
                     orig_bmp_width=0,
                     orig_bmp_height=0,
                 )
+                size_map[code] = 0
             glyphs.append(glyph)
+
+        # Find duplicated byte sequences
+        if VERBOSE:
+            print(f"[{LIB_NAME}] Optimizing bitmap array...")
+        size_map = sorted(size_map.items(), key=lambda x: x[1], reverse=True)
+        total_deleted = 0
+        while len(size_map) > 0:
+            code, size = size_map.pop(0)
+            if code not in self.glyphs or size <= 0:
+                continue
+
+            glyph = self.glyphs[code]
+            orig_index = glyph.bitmap_offset
+
+            new_index = -1
+            for i in range(0, orig_index - size):
+                if bitmap[i : i + size] == bitmap[orig_index : orig_index + size]:
+                    new_index = i
+                    break
+
+            if new_index < 0:
+                for i in range(orig_index + size, len(bitmap) - size + 1):
+                    if bitmap[i : i + size] == bitmap[orig_index : orig_index + size]:
+                        new_index = i
+                        break
+
+            if new_index >= 0:
+                print(
+                    f"  Duplicate bytes found: code=0x{code:02X}, orig_index={orig_index}, new_index={new_index}, size={size}."
+                )
+
+                if new_index > orig_index:
+                    new_index -= size
+
+                glyph.bitmap_offset = new_index
+                bitmap = bitmap[:orig_index] + bitmap[orig_index + size :]
+                for following_code in range(code + 1, code_last + 1):
+                    self.glyphs[following_code].bitmap_offset -= size
+
+                total_deleted += size
+
+        if VERBOSE:
+            if total_deleted > 0:
+                print(f"  Deleted {total_deleted} bytes duplications.")
+            else:
+                print(f"  No bytes duplications found.")
 
         return GFXfont(
             name=self.name,
