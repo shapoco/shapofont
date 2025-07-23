@@ -28,7 +28,6 @@ LUD_INDEX_RANGE = 16
 
 VERBOSE = True
 
-
 def format_char(c: int) -> str:
     if c >= 0x20 and c <= 0x7E:
         return f"'{chr(c)}' (0x{c:x})"
@@ -37,7 +36,8 @@ def format_char(c: int) -> str:
 
 
 def verbose_print(s: str = "") -> None:
-    print(s)
+    if VERBOSE:
+        print(s)
 
 
 class Operator:
@@ -186,8 +186,7 @@ class MameFont:
         self.blob = blob
 
     def generate_cpp_header(self) -> str:
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Generating C++ header...")
+        verbose_print(f"[{LIB_NAME}] Generating C++ header...")
 
         code = ""
         code += "#pragma once\n"
@@ -202,8 +201,7 @@ class MameFont:
         return code
 
     def generate_cpp_source(self) -> str:
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Generating C++ source...")
+        verbose_print(f"[{LIB_NAME}] Generating C++ source...")
 
         blob_size = len(self.blob)
         num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN]
@@ -345,9 +343,8 @@ class MameFontBuilder:
         sequence.insert(0, 0x00)  # TODO: remove pivot byte
         num_bytes = len(sequence)
 
-        if VERBOSE:
-            print(f"  Generating Instructions...")
-            t_start = time.time()
+        verbose_print(f"  Generating Instructions...")
+        t_start = time.time()
 
         class State:
             def __init__(self, i_pos: int):
@@ -546,9 +543,8 @@ class MameFontBuilder:
             ops.insert(0, curr.best_op)
             curr = curr.best_prev
 
-        if VERBOSE:
-            t_elapsed = time.time() - t_start
-            print(f"    {len(ops)} instructions generated ({t_elapsed * 1000:.2f} ms).")
+        t_elapsed = time.time() - t_start
+        verbose_print(f"    {len(ops)} instructions generated ({t_elapsed * 1000:.2f} ms).")
 
         self.glyphs[code] = MameGlyph(
             code=code,
@@ -563,8 +559,7 @@ class MameFontBuilder:
         codes = sorted(self.glyphs.keys())
 
         # Generate Lookup Table
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Generating Lookup Table...")
+        verbose_print(f"[{LIB_NAME}] Generating Lookup Table...")
         byte_ref_count: dict[int, int] = {}
         for code in codes:
             glyph = self.glyphs[code]
@@ -576,13 +571,11 @@ class MameFontBuilder:
             byte_ref_count.keys(), key=lambda item: byte_ref_count[item], reverse=True
         )
         if len(lut) > MAX_LUT_SIZE:
-            if VERBOSE:
-                print(f"  Lookup Table shrunk: {len(lut)} --> {MAX_LUT_SIZE} bytes.")
+            verbose_print(f"  Lookup Table shrunk: {len(lut)} --> {MAX_LUT_SIZE} bytes.")
             lut = lut[:MAX_LUT_SIZE]
 
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Optimizing Lookup Table...")
-            print("  Detecting frequent two-byte sequences...")
+        verbose_print(f"[{LIB_NAME}] Optimizing Lookup Table...")
+        verbose_print("  Detecting frequent two-byte sequences...")
         byte_seq_count: dict[int, dict[int, int]] = {}
         for byte1 in lut:
             byte_seq_count[byte1] = {}
@@ -598,8 +591,7 @@ class MameFontBuilder:
                         byte_seq_count[byte1][byte2] += 1
                     byte1 = byte2
 
-        if VERBOSE:
-            print("  Detecting most referenced bytes...")
+        verbose_print("  Detecting most referenced bytes...")
         byte_ref_by_seq_count: dict[int, int] = {}
         for byte in lut:
             byte_ref_by_seq_count[byte] = 0
@@ -634,6 +626,8 @@ class MameFontBuilder:
                 print(f"    {key:02X} : {count:4}")
 
         def report_lut_score():
+            if not VERBOSE:
+                return
             tmp = lut[:16]
 
             byte1 = -1
@@ -676,10 +670,9 @@ class MameFontBuilder:
             print(f"    Potential Effect of LUD: {total_score} ")
 
         # Reorder LUT
-        if VERBOSE:
-            print("  LUT Before Reorder:")
-            report_lut_score()
-            print("  Reordering LUT...")
+        verbose_print("  LUT Before Reorder:")
+        report_lut_score()
+        verbose_print("  Reordering LUT...")
 
         class LutSeq:
             def __init__(self, seq: list[int], frozen: bool = False):
@@ -772,8 +765,7 @@ class MameFontBuilder:
                     op.microcode = [LUS.code | index]
 
         # Replace instructions with LUD as possible
-        if VERBOSE:
-            print("  Replacing instructions LUS --> LUD as possible...")
+        verbose_print("  Replacing instructions LUS --> LUD as possible...")
         for code in codes:
             glyph = self.glyphs[code]
             index1 = -1
@@ -803,17 +795,14 @@ class MameFontBuilder:
                 index1 = index2
                 i_op += 1
 
-        if VERBOSE:
-            print("  LUT After Reorder:")
-            report_lut_score()
+        verbose_print("  LUT After Reorder:")
+        report_lut_score()
 
         # Construct microcode block
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Constructing microcode block...")
+        verbose_print(f"[{LIB_NAME}] Constructing microcode block...")
         microcodes: list[int] = []
         for code in codes:
-            if VERBOSE:
-                print(f"  {format_char(code)}:")
+            verbose_print(f"  {format_char(code)}:")
             glyph = self.glyphs[code]
             glyph.entry_point = len(microcodes)
             for op in glyph.operations:
@@ -833,8 +822,7 @@ class MameFontBuilder:
         if self.bit_reverse:
             font_flags |= 0x40
 
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Generating blob...")
+        verbose_print(f"[{LIB_NAME}] Generating blob...")
 
         blob: list[int] = []
 
