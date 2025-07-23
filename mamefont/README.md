@@ -69,14 +69,14 @@ A structure that provides information common to the entire font.
 |1|`glyphDimension0`|Dimension of glyph bitmap|
 |2|`glyphDimension1`|Dimension of glyph bitmap|
 
-### `glyphDimension0`
+#### `glyphDimension0`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:6|(Reserved)||
 |5:0|`glyphWidth - 1`|Number of pixels of glyph bitmap|
 
-### `glyphDimension1`
+#### `glyphDimension1`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
@@ -94,12 +94,23 @@ In this case, all microcode entry points must be aligned to 2-Byte boundaries.
 |1|`entryPoint >> 1`|
 |1|`shrinkedGriphDimension`|
 
-### `shrinkedGriphDimension`
+#### `shrinkedGriphDimension`
 
 |Bit Range|Name|Description|
 |:--:|:--|:--|
 |7:4|`xAdvance - 1`|Horizontal spacing in pixels|
 |3:0|`glyphWidth - 1`|Number of pixels of glyph bitmap|
+
+### Missing Glyph
+
+To express that no valid glyph is assigned to a character code, the first two bytes of the Glyph Table Entry should be 0xFFFF.
+
+This also means:
+
+- If not a Shrinked Glyph Table: entryPoint=0xFFFF cannot be used.
+- If a Shrinked Glyph Table: the combination of entryPoint=0x1FE, glyphWidth=16, xAdvance=16 cannot be used.
+
+Be careful as these can lead to corner case issues.
 
 ## Lookup Table
 
