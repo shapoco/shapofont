@@ -201,12 +201,10 @@ class GFXfontBuilder:
             print(f"[{LIB_NAME}] Generating bitmap array...")
 
         bitmap: list[int] = []
-        size_map: dict[int, int] = {}
         for code in range(code_first, code_last + 1):
             if code in self.bitmaps:
                 glyph = self.glyphs[code]
                 glyph.bitmap_offset = len(bitmap)
-                size_map[code] = len(self.bitmaps[code])
                 bitmap += self.bitmaps[code]
             else:
                 glyph = GFXglyph(
@@ -219,54 +217,134 @@ class GFXfontBuilder:
                     orig_bmp_width=0,
                     orig_bmp_height=0,
                 )
-                size_map[code] = 0
             glyphs.append(glyph)
 
         # Find duplicated byte sequences
         if VERBOSE:
             print(f"[{LIB_NAME}] Optimizing bitmap array...")
-        size_map = sorted(size_map.items(), key=lambda x: x[1], reverse=True)
-        total_deleted = 0
-        while len(size_map) > 0:
-            code, size = size_map.pop(0)
-            if code not in self.glyphs or size <= 0:
-                continue
+        total_bytes_deleted = 0
+        deleted_codes = []
+        for i_trial in range(10):
+            print(f"  Trial #{i_trial + 1}:")
+            num_deleted = 0
+            for code in range(code_first, code_last + 1):
+                if code in deleted_codes:
+                    continue
 
-            glyph = self.glyphs[code]
-            orig_index = glyph.bitmap_offset
+                if code not in self.glyphs or code not in self.bitmaps:
+                    continue
+                size = len(self.bitmaps[code])
 
-            new_index = -1
-            for i in range(0, orig_index - size):
-                if bitmap[i : i + size] == bitmap[orig_index : orig_index + size]:
-                    new_index = i
-                    break
+                if size <= 0:
+                    continue
 
-            if new_index < 0:
-                for i in range(orig_index + size, len(bitmap) - size + 1):
-                    if bitmap[i : i + size] == bitmap[orig_index : orig_index + size]:
-                        new_index = i
+                glyph = self.glyphs[code]
+                orig_offset = glyph.bitmap_offset
+
+                new_offset = -1
+                for i in range(0, orig_offset - size):
+                    if bitmap[i : i + size] == bitmap[orig_offset : orig_offset + size]:
+                        new_offset = i
                         break
 
-            if new_index >= 0:
+                if new_offset < 0:
+                    for i in range(orig_offset + size, len(bitmap) - size):
+                        found_bytes = bitmap[i : i + size]
+                        orig_bytes = bitmap[orig_offset : orig_offset + size]
+                        if found_bytes == orig_bytes:
+                            new_offset = i
+                            break
+
+                if new_offset < 0:
+                    continue
+
+                perfect_referers = []
+                partial_referers = []
+                for ref_code in range(code_first, code_last + 1):
+                    if ref_code == code:
+                        continue
+
+                    if ref_code not in self.glyphs or ref_code not in self.bitmaps:
+                        continue
+
+                    ref_glyph = self.glyphs[ref_code]
+                    if len(self.bitmaps[ref_code]) <= 0:
+                        continue
+
+                    ref_offset = ref_glyph.bitmap_offset
+                    ref_size = len(self.bitmaps[ref_code])
+
+                    overlapped = (
+                        ref_offset < orig_offset + size
+                        and orig_offset < ref_offset + ref_size
+                    )
+                    included = (
+                        orig_offset <= ref_offset
+                        and ref_offset + ref_size <= orig_offset + size
+                    )
+
+                    if included:
+                        perfect_referers.append(ref_code)
+                    elif overlapped:
+                        partial_referers.append(ref_code)
+
                 print(
-                    f"  Duplicate bytes found: code=0x{code:02X}, orig_index={orig_index}, new_index={new_index}, size={size}."
+                    f"    Duplication found: code=0x{code:02X}, offset={orig_offset}-->{new_offset}, size={ref_size}."
                 )
 
-                if new_index > orig_index:
-                    new_index -= size
+                if len(partial_referers) > 0:
+                    print(
+                        f"      But this bitmap is area referenced by {len(partial_referers)} others. Skipping..."
+                    )
+                    continue
+                
+                # Update offset
+                glyph.bitmap_offset = new_offset
 
-                glyph.bitmap_offset = new_index
-                bitmap = bitmap[:orig_index] + bitmap[orig_index + size :]
-                for following_code in range(code + 1, code_last + 1):
-                    self.glyphs[following_code].bitmap_offset -= size
+                # Update referers
+                for ref_code in perfect_referers:
+                    ref_glyph = self.glyphs[ref_code]
+                    ref_old_offset = ref_glyph.bitmap_offset
+                    ref_new_offset = ref_old_offset + (new_offset - orig_offset)
+                    ref_glyph.bitmap_offset = ref_new_offset
+                    if VERBOSE:
+                        print(
+                            f"      Referer is also updated: code=0x{ref_code:02X}, offset={ref_old_offset}-->{ref_new_offset}."
+                        )
 
-                total_deleted += size
+                # Delete bitmap block
+                bitmap = bitmap[:orig_offset] + bitmap[orig_offset + size :]
+                
+                # Update offsets of following glyphs
+                for ref_code in range(code_first, code_last + 1):
+                    if ref_code not in self.glyphs or ref_code not in self.bitmaps:
+                        continue
+
+                    ref_glyph = self.glyphs[ref_code]
+                    if len(self.bitmaps[ref_code]) <= 0:
+                        continue
+
+                    if ref_glyph.bitmap_offset >= orig_offset + size:
+                        ref_glyph.bitmap_offset -= size
+                    elif ref_glyph.bitmap_offset >= orig_offset:
+                        raise RuntimeError()
+
+                deleted_codes.append(code)
+                total_bytes_deleted += size
+                num_deleted += 1
+
+            if num_deleted == 0:
+                if VERBOSE and i_trial > 0:
+                    print(f"    No more duplications found.")
+                break
 
         if VERBOSE:
-            if total_deleted > 0:
-                print(f"  Deleted {total_deleted} bytes duplications.")
+            if total_bytes_deleted > 0:
+                print(
+                    f"  Totally {len(deleted_codes)} chars, {total_bytes_deleted} bytes duplications are deleted."
+                )
             else:
-                print(f"  No bytes duplications found.")
+                print(f"  No duplications found.")
 
         return GFXfont(
             name=self.name,
