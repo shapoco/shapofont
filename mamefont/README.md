@@ -95,9 +95,8 @@ A structure that provides information common to the entire font.
 |0x50-5F|-|`SLS`|Shift Left Previous Byte and Set Lower Bits|
 |0x60-6F|-|`SRC`|Shift Right Previous Byte and Clear Upper Bits|
 |0x70-7F|-|`SRS`|Shift Right Previous Byte and Set Upper Bits|
-|0x80|Byte Data|`LDI`|Load Immediate|
-|0x81-9F|-|`LUD`|Double Lookup|
-|0xA0||-|(Reserved)|
+|0x80-9F|-|`LUD`|Double Lookup|
+|0xA0|Byte Data|`LDI`|Load Immediate|
 |0xA1-BF|-|`CPY`|Copy Previous Sequence|
 |0xC0||-|(Reserved)|
 |0xC1-C7|-|`REV`|Reverse Previous Sequence|
@@ -124,17 +123,28 @@ The state machine simply copies the byte in the LUT to the glyph buffer. If reve
 buff[cursor++] = lut[index];
 ```
 
-![](./img/inst_lkp.svg)
+![](./img/inst_lus.svg)
 
-### Double Lookup (`LUD`)
+### Sequential Double Lookup (`LUD`)
 
-T.B.D.
+|Byte|Bit Range|Value|
+|:--:|:--:|:--|
+|1st.|7:5|0b100|
+||4|`step`|
+||3:0|`index`|
+
+```c
+buff[cursor++] = lut[index];
+buff[cursor++] = lut[index + step];
+```
+
+![](./img/inst_lud.svg)
 
 ### Load Immediate (`LDI`)
 
 |Byte|Bit Range|Value|
 |:--:|:--:|:--|
-|1st.|7:0|0x80|
+|1st.|7:0|0xA0|
 |2nd.|7:0|Byte Data|
 
 The state machine simply copies the second byte of the instruction code into the glyph buffer. If reverseBitOrder=1 is set, the byte data in the instruction code must also have its bit order reversed.

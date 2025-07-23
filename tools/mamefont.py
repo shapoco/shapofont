@@ -55,9 +55,12 @@ class Operator:
                 return True
         return False
 
+    def __repr__(self) -> str:
+        return f"Operator(mnemonic={self.mnemonic}, code=0x{self.code:02X}, ranges={self.ranges}, cost={self.cost})"
+
 
 RPT = Operator("RPT", 0xE0, [(0xE0, 0xEF)], 1001)
-CPY = Operator("CPY", 0x80, [(0x81, 0xBF)], 1002)
+CPY = Operator("CPY", 0xA0, [(0xA1, 0xBF)], 1002)
 REV = Operator("REV", 0xC0, [(0xC1, 0xCF), (0xD1, 0xDF)], 1003)
 XOR = Operator("XOR", 0xF0, [(0xF0, 0xFE)], 1004)
 SLC = Operator("SLC", 0x40, [(0x40, 0x4F)], 1005)
@@ -65,7 +68,8 @@ SLS = Operator("SLS", 0x50, [(0x50, 0x5F)], 1005)
 SRC = Operator("SRC", 0x60, [(0x60, 0x6F)], 1005)
 SRS = Operator("SRS", 0x70, [(0x70, 0x7F)], 1005)
 LUS = Operator("LUS", 0x00, [(0x00, 0x3F)], 1006)
-LDI = Operator("LDI", 0x80, [(0x80, 0x80)], 1009)
+LUD = Operator("LUD", 0x80, [(0x80, 0x9F)], 1006)
+LDI = Operator("LDI", 0xA0, [(0xA0, 0xA0)], 1009)
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
 
 opcodes = [
@@ -78,6 +82,7 @@ opcodes = [
     SRC,
     SRS,
     LUS,
+    LUD,
     LDI,
 ]
 
@@ -101,7 +106,7 @@ def parse_opcode(target: int) -> Operator:
     for opcode in opcodes:
         if opcode.match(target):
             return opcode
-    return Operator.UNKNOWN
+    return UNKNOWN
 
 
 def parse_instruction(
@@ -111,21 +116,24 @@ def parse_instruction(
     operator = parse_opcode(byte1)
     if operator == LUS:
         return (LUS, 1, 1, {"index": byte1 & 0x3F})
+    elif operator == LUD:
+        return (LUD, 1, 1, {"index": byte1 & 0x0F, "step": (byte1 >> 4) & 0x01})
     elif operator == SLC or operator == SLS or operator == SRC or operator == SRS:
-        shift_size = ((byte1 & 0x0C) >> 2) + 1
         repeat_count = (byte1 & 0x03) + 1
-        return (
-            operator,
-            1,
-            repeat_count,
-            {"shift_size": shift_size, "repeat_count": repeat_count},
-        )
+        params = {
+            "shift_size": ((byte1 & 0x0C) >> 2) + 1,
+            "repeat_count": repeat_count,
+        }
+        return (operator, 1, repeat_count, params)
     elif operator == LDI:
         return (LDI, 2, 1, {"byte": microcode[offset + 1]})
     elif operator == CPY:
-        offset = (byte1 >> 3) & 0x3
         length = (byte1 & 0x07) + 1
-        return (CPY, 1, length, {"offset": offset, "length": length})
+        params = {
+            "offset": (byte1 >> 3) & 0x3,
+            "length": length,
+        }
+        return (CPY, 1, length, params)
     elif operator == REV:
         offset = (byte1 >> 3) & 0x1
         length = (byte1 & 0x07) + 1
@@ -213,15 +221,17 @@ class MameFont:
         total_inst_size = 0
         total_orig_size = 0
         while pc < blob_size:
-            (op_code, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
-            stats_inst_size[op_code.mnemonic] = (
-                stats_inst_size.get(op_code.mnemonic, 0) + inst_size
+            (opr, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
+            stats_inst_size[opr.mnemonic] = (
+                stats_inst_size.get(opr.mnemonic, 0) + inst_size
             )
-            stats_orig_size[op_code.mnemonic] = (
-                stats_orig_size.get(op_code.mnemonic, 0) + orig_size
+            stats_orig_size[opr.mnemonic] = (
+                stats_orig_size.get(opr.mnemonic, 0) + orig_size
             )
             total_inst_size += inst_size
             total_orig_size += orig_size
+            if inst_size <= 0:
+                raise RuntimeError(f"Unknown instruction: 0x{self.blob[pc]:02x} {opr}")
             pc += inst_size
         total_delta_size = total_inst_size - total_orig_size
 
@@ -626,27 +636,25 @@ class MameFontBuilder:
         def report_lut_score():
             tmp = lut[:16]
 
-            last_byte = -1
+            byte1 = -1
             rpt_count = []
             seq_count = []
             total_score = 0
             print("    Content    :", end="")
-            for curr_byte in tmp:
-                key = (curr_byte << 8) | curr_byte
-                byte_score = byte_seq_count[curr_byte][curr_byte]
+            for byte2 in tmp:
+                byte_score = byte_seq_count[byte2][byte2]
                 rpt_count.append(byte_score)
 
                 seq_score = 0
-                if last_byte >= 0:
-                    key = (last_byte << 8) | curr_byte
-                    seq_score += byte_seq_count[last_byte][curr_byte]
-                last_byte = curr_byte
+                if byte1 >= 0:
+                    seq_score += byte_seq_count[byte1][byte2]
+                byte1 = byte2
                 seq_count.append(seq_score)
 
                 total_score += byte_score + seq_score
 
                 print("-->" if seq_score > 0 else "   ", end="")
-                print(f"{curr_byte:02X}", end="")
+                print(f"{byte2:02X}", end="")
             print()
 
             print("    Byte Score :", end="")
@@ -665,7 +673,7 @@ class MameFontBuilder:
                     print("     ", end="")
             print()
 
-            print(f"    Estimated Effect of LUD: {total_score} ")
+            print(f"    Potential Effect of LUD: {total_score} ")
 
         # Reorder LUT
         if VERBOSE:
@@ -673,63 +681,127 @@ class MameFontBuilder:
             report_lut_score()
             print("  Reordering LUT...")
 
-        seq_buff: list[list[int]] = []
+        class LutSeq:
+            def __init__(self, seq: list[int], frozen: bool = False):
+                self.array = seq
+                self.frozen = frozen
+
+            def __repr__(self):
+                return f"{'*' if self.frozen else ''}[{' '.join(f'{b:02X}' for b in self.array)}]"
+
+        # Place consecutive bytes next to each other
+        seq_buff: list[LutSeq] = []
         seq_buff_size = 0
+        head_frozen = False
         for byte1, byte2 in most_freq_byte_seq:
+            if byte_seq_count[byte1][byte2] <= 0:
+                break
+
             changed = False
             if byte1 in lut and byte2 not in lut:
                 for seq in seq_buff:
-                    if seq[0] == byte2:
-                        lut.remove(byte1)
-                        seq.insert(0, byte1)
-                        seq_buff_size += 1
-                        changed = True
+                    if seq.array[0] == byte2:
+                        if not seq.frozen:
+                            lut.remove(byte1)
+                            seq.array.insert(0, byte1)
+                            seq_buff_size += 1
+                            changed = True
                         break
             elif byte1 not in lut and byte2 in lut:
                 for seq in seq_buff:
-                    if seq[-1] == byte1:
-                        lut.remove(byte2)
-                        seq.append(byte2)
-                        seq_buff_size += 1
-                        changed = True
+                    if seq.array[-1] == byte1:
+                        if not seq.frozen:
+                            lut.remove(byte2)
+                            seq.array.append(byte2)
+                            seq_buff_size += 1
+                            changed = True
                         break
             elif byte1 in lut and byte2 in lut:
                 if byte1 == byte2:
                     lut.remove(byte1)
-                    seq_buff.append([byte1])
+                    seq_buff.append(LutSeq([byte1]))
                     seq_buff_size += 1
                 else:
                     lut.remove(byte1)
                     lut.remove(byte2)
-                    seq_buff.append([byte1, byte2])
+                    seq_buff.append(LutSeq([byte1, byte2]))
                     seq_buff_size += 2
                 changed = True
+            else:
+                seq1 = None
+                for seq in seq_buff:
+                    if seq.array[-1] == byte1 and not seq.frozen:
+                        seq1 = seq
+                        break
+                seq2 = None
+                for seq in seq_buff:
+                    if seq.array[0] == byte2 and not seq.frozen:
+                        seq2 = seq
+                        break
+                if seq1 and seq2 and seq1 != seq2:
+                    ins_pos = min(seq_buff.index(seq1), seq_buff.index(seq2))
+                    seq_buff.remove(seq1)
+                    seq_buff.remove(seq2)
+                    seq_buff.insert(ins_pos, LutSeq(seq1.array + seq2.array))
+                    changed = True
 
             if not changed:
                 continue
 
-            print("      ", end="")
-            for seq in seq_buff:
-                print(f"[{' '.join(f'{b:02X}' for b in seq)}] ", end="")
-            print()
+            if seq_buff_size >= LUD_INDEX_RANGE and not head_frozen:
+                for seq in seq_buff:
+                    seq.frozen = True
+                head_frozen = True
 
-            if seq_buff_size >= LUD_INDEX_RANGE:
-                break
+            print("    ", end="")
+            for seq in seq_buff:
+                print(f"{seq} ", end="")
+            print()
 
         new_lut = []
         for seq in seq_buff:
-            new_lut += seq
+            new_lut += seq.array
         lut = new_lut + lut
 
         # Replace instructions with LUS as possible
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
-                this_byte = -1
-                if len(op.orig_seq) == 1:
-                    this_byte = op.orig_seq[0]
-                if this_byte >= 0 and this_byte in lut:
-                    op.microcode = [LUS.code | lut.index(this_byte)]
+                if len(op.orig_seq) == 1 and op.orig_seq[0] in lut:
+                    index = lut.index(op.orig_seq[0])
+                    op.microcode = [LUS.code | index]
+
+        # Replace instructions with LUD as possible
+        if VERBOSE:
+            print("  Replacing instructions LUS --> LUD as possible...")
+        for code in codes:
+            glyph = self.glyphs[code]
+            index1 = -1
+
+            i_op = 0
+            while i_op < len(glyph.operations):
+                op = glyph.operations[i_op]
+
+                index2 = -1
+                if LUS.match(op.microcode[0]):
+                    index2 = op.microcode[0] & 0x3F
+
+                lud_applicable = (
+                    index1 >= 0
+                    and index2 >= 0
+                    and index1 < LUD_INDEX_RANGE
+                    and (index1 == index2 or index1 + 1 == index2)
+                )
+                if lud_applicable:
+                    step = 0 if index1 == index2 else 1
+                    inst_code = LUD.code | index1 | (step << 4)
+                    glyph.operations[i_op - 1].microcode = [inst_code]
+                    glyph.operations.remove(op)
+                    index1 = -1
+                    continue
+
+                index1 = index2
+                i_op += 1
 
         if VERBOSE:
             print("  LUT After Reorder:")

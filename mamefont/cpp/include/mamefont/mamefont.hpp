@@ -53,13 +53,27 @@ struct StateMachine {
   }
 
   MAMEFONT_INLINE void LUS(uint8_t inst) {
-    uint8_t seg = lut[inst & 0x3f];
+    uint8_t index = inst & 0x3f;
+    uint8_t byte = lut[index];
+    write(byte);
 #if MAMEFONT_STM_VERBOSE
     char buff[64];
-    snprintf(buff, sizeof(buff), "LUS(index=%d)", inst & 0x3f);
-    printf("    %-40s --> 0x%02x\n", buff, seg);
+    snprintf(buff, sizeof(buff), "LUS(index=%d)", index);
+    printf("    %-40s --> 0x%02x\n", buff, byte);
 #endif
-    write(seg);
+  }
+
+  MAMEFONT_INLINE void LUD(uint8_t inst) {
+    uint8_t index = inst & 0x0f;
+    uint8_t step = (inst >> 4) & 0x1;
+    write(lut[index]);
+    write(lut[index + step]);
+#if MAMEFONT_STM_VERBOSE
+    char buff[64];
+    snprintf(buff, sizeof(buff), "LUD(index=%d, step=%d)", index, step);
+    printf("    %-40s --> 0x%02x 0x%02x\n", buff, lut[index],
+           lut[index + step]);
+#endif
   }
 
   MAMEFONT_INLINE void Sxx(uint8_t inst) {
@@ -183,18 +197,21 @@ struct StateMachine {
           Sxx(inst);
           break;
 
-        case 0x80:  // CPY
-        case 0x90:  // CPY
-        case 0xa0:  // CPY
+        case 0x80:  // LUD
+        case 0x90:  // LUD
+          LUD(inst);
+          break;
+
+        case 0xa0:  // CPY or LDI
         case 0xb0:  // CPY
-          if (inst == 0x80) {
+          if (inst == 0xa0) {
             LDI(inst);
           } else {
             CPY_REV(inst, false);
           }
           break;
 
-        case 0xc0:  // REV or LDI
+        case 0xc0:  // REV
         case 0xd0:  // REV
           if (inst == 0xc0) {
             return Status::UNKNOWN_OPCODE;
@@ -332,6 +349,8 @@ class Font {
     if (xAdvance) {
       *xAdvance = (ret == Status::SUCCESS) ? glyph.xAdvance() : 0;
     }
+
+    return ret;
   }
 };
 
