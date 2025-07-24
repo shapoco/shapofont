@@ -6,9 +6,9 @@ TOOLS_DIR = $(REPO_DIR)/tools
 BUILD_DIR = $(REPO_DIR)/build
 BITMAP_DIR = .
 GFX_C_INC_DIR = $(REPO_DIR)/gfxfont/cpp/include/shapofont
-MAME_CPP_SRC_DIR = $(REPO_DIR)/mamefont/cpp/src/shapofont
+MAME_CPP_SRC_DIR = $(REPO_DIR)/mamefont/cpp/src
 MAME_CPP_INC_DIR = $(REPO_DIR)/mamefont/cpp/include/shapofont
-MAME_JS_JSON_DIR = $(REPO_DIR)/mamefont/json/shapofont
+MAME_JS_JSON_DIR = $(REPO_DIR)/mamefont/json
 
 CMD_SHAPOFONT := $(TOOLS_DIR)/shapofont.py
 CMD_PYTHON := $(REPO_DIR)/venv/bin/python3
