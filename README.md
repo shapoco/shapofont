@@ -40,9 +40,9 @@
 
 ### ShapoSansMono
 
-#### s8c7w1
+#### s8c7
 
-![](./bitmap/ShapoSansMono/s8c7w1/design.png)
+![](./bitmap/ShapoSansMono/s8c7/design.png)
 
 ### ShapoSansDigitP
 
