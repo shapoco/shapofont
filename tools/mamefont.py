@@ -946,7 +946,7 @@ class MameFontBuilder:
         report_lut_score()
 
         # Align LUT to 2-byte boundary
-        while len(lut) % ALIGN_SIZE != 0:
+        while len(lut) % ALIGN_SIZE != 0 or len(lut) == 0:
             lut.append(0x00)
 
         # Determine to apply Shrinked Glyph Table or not
