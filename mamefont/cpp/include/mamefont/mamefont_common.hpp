@@ -2,11 +2,11 @@
 
 #include <stdint.h>
 
-#if MAMEFONT_STM_VERBOSE
+#ifdef MAMEFONT_STM_VERBOSE
 #include <stdio.h>
 #endif
 
-#define MAMEFONT_INLINE inline __attribute__((always_inline))
+#define MAMEFONT_ALWAYS_INLINE inline __attribute__((always_inline))
 
 namespace mamefont {
 
@@ -40,5 +40,21 @@ enum class Status {
   GLYPH_NOT_DEFINED,
   UNKNOWN_OPCODE,
 };
+
+using fragment_t = uint8_t;
+
+#ifdef MAMEFONT_32BIT_ADDR
+using frag_index_t = int32_t;
+#elifdef MAMEFONT_8BIT_ADDR
+using frag_index_t = int8_t;
+#else
+using frag_index_t = int16_t;
+#endif
+
+#ifdef MAMEFONT_8BIT_PC
+using prog_cntr_t = uint8_t;
+#else
+using prog_cntr_t = uint16_t;
+#endif
 
 }  // namespace mamefont

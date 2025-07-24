@@ -12,7 +12,7 @@ struct Glyph {
   Glyph(const uint8_t *data, bool isShrinked)
       : blob(data), isShrinked(isShrinked) {}
 
-  MAMEFONT_INLINE int16_t entryPoint() const {
+  MAMEFONT_ALWAYS_INLINE int16_t entryPoint() const {
     if (isShrinked) {
       return static_cast<int16_t>(blob[0]) << 1;
     } else {
@@ -20,11 +20,11 @@ struct Glyph {
     }
   }
 
-  MAMEFONT_INLINE bool isValid() const {
+  MAMEFONT_ALWAYS_INLINE bool isValid() const {
     return blob[0] != 0xff && blob[1] != 0xff;
   }
 
-  MAMEFONT_INLINE uint8_t width() const {
+  MAMEFONT_ALWAYS_INLINE uint8_t width() const {
     if (isShrinked) {
       return (blob[1] & 0x0f) + 1;
     } else {
@@ -32,7 +32,7 @@ struct Glyph {
     }
   }
 
-  MAMEFONT_INLINE uint8_t xAdvance() const {
+  MAMEFONT_ALWAYS_INLINE uint8_t xAdvance() const {
     if (isShrinked) {
       return ((blob[1] >> 4) & 0x0f) + 1;
     } else {
@@ -47,39 +47,43 @@ class Font {
 
   Font(const uint8_t *blob) : blob(blob) {}
 
-  MAMEFONT_INLINE FontFlags flags() const {
+  MAMEFONT_ALWAYS_INLINE FontFlags flags() const {
     return static_cast<FontFlags>(blob[OFST_FONT_FLAGS]);
   }
 
-  MAMEFONT_INLINE bool isShrinkedGlyphTable() const {
+  MAMEFONT_ALWAYS_INLINE bool isShrinkedGlyphTable() const {
     return !!(flags() & FontFlags::SHRINKED_GLYPH_TABLE);
   }
 
-  MAMEFONT_INLINE uint8_t glyphTableEntrySize() const {
+  MAMEFONT_ALWAYS_INLINE uint8_t glyphTableEntrySize() const {
     return isShrinkedGlyphTable() ? 2 : 4;
   }
 
-  MAMEFONT_INLINE uint8_t firstCode() const { return blob[OFST_FIRST_CODE]; }
+  MAMEFONT_ALWAYS_INLINE uint8_t firstCode() const {
+    return blob[OFST_FIRST_CODE];
+  }
 
-  MAMEFONT_INLINE uint8_t glyphTableLen() const {
+  MAMEFONT_ALWAYS_INLINE uint8_t glyphTableLen() const {
     return blob[OFST_GLYPH_TABLE_LEN] + 1;
   }
 
-  MAMEFONT_INLINE uint8_t lastCode() const {
+  MAMEFONT_ALWAYS_INLINE uint8_t lastCode() const {
     return firstCode() + glyphTableLen() - 1;
   }
 
-  MAMEFONT_INLINE uint8_t lutSize() const { return blob[OFST_LUT_SIZE] + 1; }
+  MAMEFONT_ALWAYS_INLINE uint8_t lutSize() const {
+    return blob[OFST_LUT_SIZE] + 1;
+  }
 
-  MAMEFONT_INLINE uint8_t fontHeight() const {
+  MAMEFONT_ALWAYS_INLINE uint8_t fontHeight() const {
     return (blob[OFST_FONT_DIMENSION_0] & 0x3f) + 1;
   }
 
-  MAMEFONT_INLINE const bool verticalScan() const {
+  MAMEFONT_ALWAYS_INLINE const bool verticalScan() const {
     return blob[OFST_FONT_FLAGS] & 0x80;
   }
 
-  MAMEFONT_INLINE const Glyph glyphTableEntry(uint8_t index) const {
+  MAMEFONT_ALWAYS_INLINE const Glyph glyphTableEntry(uint8_t index) const {
     const uint8_t *ptr = blob + OFST_GLYPH_TABLE;
     ptr += isShrinkedGlyphTable() ? (index << 1) : (index << 2);
     return Glyph(ptr, isShrinkedGlyphTable());
@@ -97,7 +101,7 @@ class Font {
     return g.isValid() ? Status::SUCCESS : Status::GLYPH_NOT_DEFINED;
   }
 
-  MAMEFONT_INLINE int16_t lutOffset() const {
+  MAMEFONT_ALWAYS_INLINE int16_t lutOffset() const {
     if (isShrinkedGlyphTable()) {
       return OFST_GLYPH_TABLE + glyphTableLen() * 2;
     } else {
@@ -105,15 +109,16 @@ class Font {
     }
   }
 
-  MAMEFONT_INLINE int16_t microCodeOffset() const {
+  MAMEFONT_ALWAYS_INLINE int16_t microCodeOffset() const {
     return lutOffset() + lutSize();
   }
 
-  MAMEFONT_INLINE const uint8_t *getEntryPoint(const Glyph &glyph) const {
+  MAMEFONT_ALWAYS_INLINE const uint8_t *getEntryPoint(
+      const Glyph &glyph) const {
     return blob + microCodeOffset() + glyph.entryPoint();
   }
 
-  const Glyph getMaxWideGlyph() const {
+  const Glyph getWidestGlyph() const {
     uint8_t maxWidth = 0;
     Glyph maxGlyph;
     for (uint8_t i = 0; i < glyphTableLen(); i++) {
@@ -128,8 +133,8 @@ class Font {
     return maxGlyph;
   }
 
-  MAMEFONT_INLINE int16_t getRequiredGlyphBufferSize(const Glyph *glyph,
-                                                     int16_t *stride) const {
+  int16_t getRequiredGlyphBufferSize(const Glyph *glyph,
+                                     int16_t *stride) const {
     int16_t w = glyph->width();
     int16_t h = fontHeight();
     if (verticalScan()) {
@@ -141,8 +146,8 @@ class Font {
     }
   }
 
-  MAMEFONT_INLINE int16_t getRequiredGlyphBufferSize(int16_t *stride) const {
-    const Glyph maxGlyph = getMaxWideGlyph();
+  int16_t getRequiredGlyphBufferSize(int16_t *stride) const {
+    const Glyph maxGlyph = getWidestGlyph();
     return getRequiredGlyphBufferSize(&maxGlyph, stride);
   }
 };
@@ -154,30 +159,107 @@ struct GlyphBuffer {
 
 class Renderer {
  public:
+  struct AddrRule {
+    int8_t lanesPerGlyph;     // Number of lanes per glyph
+    int8_t fragsPerLane;      // Number of fragments per lane
+    frag_index_t laneStride;  // Stride to next lane in bytes
+    frag_index_t fragStride;  // Stride to next fragment in bytes
+  };
+
+  struct Cursor {
+    frag_index_t offset;      // Offset from start of glyph in bytes
+    frag_index_t laneOffset;  // Offset of first fragment of current lane
+    int8_t fragIndex;         // Distance from start of current lane in bytes
+
+    void reset() {
+      offset = 0;
+      laneOffset = 0;
+      fragIndex = 0;
+    }
+
+    void add(const AddrRule &rule, frag_index_t delta) {
+      if (delta >= 0) {
+        while (delta >= rule.fragsPerLane) {
+          delta -= rule.fragsPerLane;
+          laneOffset += rule.laneStride;
+          offset += rule.laneStride;
+        }
+        fragIndex += delta;
+        offset += delta;
+        if (fragIndex >= rule.fragsPerLane) {
+          fragIndex -= rule.fragsPerLane;
+          offset -= rule.fragsPerLane;
+          laneOffset += rule.laneStride;
+        }
+      } else {
+        delta = -delta;
+        while (delta >= rule.fragsPerLane) {
+          delta -= rule.fragsPerLane;
+          laneOffset -= rule.laneStride;
+          offset -= rule.laneStride;
+        }
+        fragIndex -= delta;
+        offset -= delta;
+        if (fragIndex < 0) {
+          laneOffset -= rule.laneStride;
+          fragIndex += rule.fragsPerLane;
+          offset += rule.fragsPerLane;
+        }
+      }
+    }
+
+    frag_index_t postIncr(const AddrRule &rule) {
+      frag_index_t oldOffset = offset;
+      offset += rule.fragStride;
+      fragIndex++;
+      if (fragIndex >= rule.fragsPerLane) {
+        fragIndex = 0;
+        laneOffset += rule.laneStride;
+        offset = laneOffset;
+      }
+      return oldOffset;
+    }
+
+    frag_index_t preDecr(const AddrRule &rule) {
+      offset -= rule.fragStride;
+      fragIndex--;
+      if (fragIndex < 0) {
+        fragIndex = rule.fragsPerLane - 1;
+        laneOffset -= rule.laneStride;
+        offset = laneOffset + fragIndex;
+      }
+      return offset;
+    }
+  };
+
   FontFlags flags;
-  const uint8_t *lut;
+  const fragment_t *lut;
   const uint8_t *microcode;
   uint8_t fontHeight;
 
   uint8_t *buffData;
-  // int16_t buffStride;
 
-  int8_t laneBytes = 0;
-  int8_t byteStride = 0;
-  int8_t laneStride = 0;
   int8_t numLanesToGlyphEnd = 0;
-  int8_t numBytesToLaneEnd = 0;
 
-  uint16_t pc = 0;
-  int16_t nextLanePos = 0;
-  int16_t writePos = 0;
-  uint8_t lastByte = 0;
+  prog_cntr_t programCounter = 0;
+  fragment_t lastFragment = 0;
+
+  AddrRule rule;
+  Cursor writeCursor;
 
   Renderer(const Font &font) {
     this->flags = font.flags();
     this->lut = font.blob + font.lutOffset();
     this->microcode = font.blob + font.microCodeOffset();
     this->fontHeight = font.fontHeight();
+
+    if (flags & FontFlags::VERTICAL_SCAN) {
+      rule.fragsPerLane = fontHeight;
+      rule.laneStride = 1;
+    } else {
+      rule.lanesPerGlyph = (fontHeight + 7) / 8;
+      rule.fragStride = 1;
+    }
   }
 
   Status render(Glyph &glyph, GlyphBuffer &buff) {
@@ -186,34 +268,30 @@ class Renderer {
 
     int8_t glyphWidth = glyph.width();
     if (flags & FontFlags::VERTICAL_SCAN) {
-      byteStride = buff.stride;
-      laneStride = 1;
-      laneBytes = fontHeight;
-      numLanesToGlyphEnd = (glyphWidth + 7) / 8 + 1;
+      rule.fragStride = buff.stride;
+      rule.lanesPerGlyph = (glyphWidth + 7) / 8;
     } else {
-      byteStride = 1;
-      laneStride = buff.stride;
-      laneBytes = glyphWidth;
-      numLanesToGlyphEnd = (fontHeight + 7) / 8 + 1;
+      rule.fragsPerLane = glyphWidth;
+      rule.laneStride = buff.stride;
     }
+    numLanesToGlyphEnd = rule.lanesPerGlyph;
 
-    nextLanePos = 0;
-    writePos = 0;
-    stepLane();
+    writeCursor.reset();
 
-    lastByte = 0x00;
-    pc = glyph.entryPoint();
+    lastFragment = 0x00;
+    programCounter = glyph.entryPoint();
 
-#if MAMEFONT_STM_VERBOSE
-    printf("    entryPoint         : %d\n", pc);
-    printf("    glyphWidth         : %d\n", glyphWidth);
-    printf("    numLanesToGlyphEnd : %d\n", numLanesToGlyphEnd);
-    printf("    numBytesToLaneEnd  : %d\n", numBytesToLaneEnd);
+#ifdef MAMEFONT_STM_VERBOSE
+    printf("  entryPoint    : %d\n", programCounter);
+    printf("  glyphWidth    : %d\n", glyphWidth);
+    printf("  fragsPerLane  : %d\n", rule.fragsPerLane);
+    printf("  lanesPerGlyph : %d\n", rule.lanesPerGlyph);
+    printf("  fragStride    : %d\n", rule.fragStride);
+    printf("  laneStride    : %d\n", rule.laneStride);
 #endif
 
     while (numLanesToGlyphEnd > 0) {
-      uint8_t inst = microcode[pc++];
-      uint8_t seg;
+      uint8_t inst = microcode[programCounter++];
       switch (inst & 0xf0) {
         case 0x00:  // LUS
         case 0x10:  // LUS
@@ -273,194 +351,144 @@ class Renderer {
     return Status::SUCCESS;
   }
 
-  MAMEFONT_INLINE void LUS(uint8_t inst) {
+#ifdef MAMEFONT_STM_VERBOSE
+
+#define MAMEFONT_BEFORE_OPERATION(fmt, ...)               \
+  char logBuff[64];                                       \
+  stamp();                                                \
+  snprintf(logBuff, sizeof(logBuff), fmt, ##__VA_ARGS__); \
+  printf("  %-32s -->", logBuff);                         \
+  Cursor dumpCursor = writeCursor;
+
+#define MAMEFONT_AFTER_OPERATION(len)                 \
+  for (int i = 0; i < len; i++) {                     \
+    printf(" %02X", read(dumpCursor.postIncr(rule))); \
+  }                                                   \
+  printf("\n");
+
+#else
+
+#define MAMEFONT_BEFORE_OPERATION(op, fmt, ...) \
+  do {                                          \
+  } while (0)
+
+#define MAMEFONT_AFTER_OPERATION(len) \
+  do {                                \
+  } while (0)
+
+#endif
+
+  MAMEFONT_ALWAYS_INLINE void LUS(uint8_t inst) {
     uint8_t index = inst & 0x3f;
-    uint8_t byte = lut[index];
-
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "LUS(index=%d)", index);
-#endif
-
+    fragment_t byte = lut[index];
+    MAMEFONT_BEFORE_OPERATION("LUS (idx=%d)", index);
     write(byte);
-
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s --> 0x%02x\n", buff, byte);
-#endif
+    MAMEFONT_AFTER_OPERATION(1);
   }
 
-  MAMEFONT_INLINE void LUD(uint8_t inst) {
+  MAMEFONT_ALWAYS_INLINE void LUD(uint8_t inst) {
     uint8_t index = inst & 0x0f;
     uint8_t step = (inst >> 4) & 0x1;
-
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "LUD(index=%d, step=%d)", index, step);
-#endif
-
+    MAMEFONT_BEFORE_OPERATION("LUD (idx=%d, step=%d)", index, step);
     write(lut[index]);
     write(lut[index + step]);
-
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s --> 0x%02x 0x%02x\n", buff, lut[index],
-           lut[index + step]);
-#endif
+    MAMEFONT_AFTER_OPERATION(2);
   }
 
-  MAMEFONT_INLINE void SLC_SLS_SRC_SRS(uint8_t inst) {
-    uint8_t shift_dir = inst & 0x20;
-    uint8_t post_op = inst & 0x10;
-    uint8_t shift_size = ((inst >> 2) & 0x3) + 1;
-    uint8_t repeat_count = (inst & 0x03) + 1;
+  MAMEFONT_ALWAYS_INLINE void SLC_SLS_SRC_SRS(uint8_t inst) {
+    uint8_t dir = inst & 0x20;
+    uint8_t postOp = inst & 0x10;
+    uint8_t size = ((inst >> 2) & 0x3) + 1;
+    uint8_t rptCount = (inst & 0x03) + 1;
 
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "S%c%c(shift_size=%1d, repeat_count=%1d)",
-             shift_dir ? 'R' : 'L', post_op ? 'S' : 'C', shift_size,
-             repeat_count);
-#endif
+    const char *mne = dir ? (postOp ? "SRS" : "SRC") : (postOp ? "SLS" : "SLC");
+    MAMEFONT_BEFORE_OPERATION("%s (size=%1d, rpt=%1d)", mne, size, rptCount);
 
-    uint8_t modifier = (1 << shift_size) - 1;
-    if (shift_dir != 0) modifier <<= (8 - shift_size);
-    if (post_op == 0) modifier = ~modifier;
-    for (int8_t i = repeat_count; i != 0; i--) {
-      if (shift_dir == 0) {
-        lastByte <<= shift_size;
+    fragment_t modifier = (1 << size) - 1;
+    if (dir != 0) modifier <<= (8 - size);
+    if (postOp == 0) modifier = ~modifier;
+    for (int8_t i = rptCount; i != 0; i--) {
+      if (dir == 0) {
+        lastFragment <<= size;
       } else {
-        lastByte >>= shift_size;
+        lastFragment >>= size;
       }
-      if (post_op) {
-        lastByte |= modifier;
+      if (postOp) {
+        lastFragment |= modifier;
       } else {
-        lastByte &= modifier;
+        lastFragment &= modifier;
       }
-      write(lastByte);
+      write(lastFragment);
     }
 
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s -->", buff);
-    for (int i = 0; i < repeat_count; i++) {
-      printf(" 0x%02x", read(writePos - repeat_count + i));
-    }
-    printf("\n");
-#endif
+    MAMEFONT_AFTER_OPERATION(rptCount);
   }
 
-  MAMEFONT_INLINE void CPY_REV(uint8_t inst, bool reverse = false) {
+  MAMEFONT_ALWAYS_INLINE void CPY_REV(uint8_t inst, bool reverse = false) {
     uint8_t offset = (inst >> 3) & 0x3;
     uint8_t length = (inst & 0x07) + 1;
 
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "%s(offset=%d, length=%d)",
-             reverse ? "REV" : "CPY", offset, length);
-#endif
+    const char *mne = reverse ? "REV" : "CPY";
+    MAMEFONT_BEFORE_OPERATION("%s (ofst=%d, len=%d)", mne, offset, length);
 
     if (reverse) {
-      int16_t rdPos = writePos - offset;
+      Cursor readCursor = writeCursor;
+      readCursor.add(rule, -offset);
       for (int8_t i = length; i != 0; i--) {
-        write(read(--rdPos));
+        write(read(readCursor.preDecr(rule)));
       }
     } else {
-      int16_t rdPos = writePos - length - offset;
+      Cursor readCursor = writeCursor;
+      readCursor.add(rule, -length - offset);
       for (int8_t i = length; i != 0; i--) {
-        write(read(rdPos++));
+        write(read(readCursor.postIncr(rule)));
       }
     }
 
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s -->", buff);
-    for (int i = 0; i < length; i++) {
-      printf(" 0x%02x", read(writePos - length + i));
+    MAMEFONT_AFTER_OPERATION(length);
+  }
+
+  MAMEFONT_ALWAYS_INLINE void LDI(uint8_t inst) {
+    fragment_t frag = microcode[programCounter++];
+    MAMEFONT_BEFORE_OPERATION("LDI (frag=0x%02X)", frag);
+    write(frag);
+    MAMEFONT_AFTER_OPERATION(1);
+  }
+
+  MAMEFONT_ALWAYS_INLINE void RPT(uint8_t inst) {
+    uint8_t repeatCount = (inst & 0x0f) + 1;
+    MAMEFONT_BEFORE_OPERATION("RPT (rpt=%d)", repeatCount);
+    for (int8_t i = repeatCount; i != 0; i--) {
+      write(lastFragment);
     }
-    printf("\n");
-#endif
+    MAMEFONT_AFTER_OPERATION(repeatCount);
   }
 
-  MAMEFONT_INLINE void LDI(uint8_t inst) {
-    uint8_t seg = microcode[pc++];
-
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "LDI(byte=0x%02x)", seg);
-#endif
-
-    write(seg);
-
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s --> 0x%02x\n", buff, seg);
-#endif
+  MAMEFONT_ALWAYS_INLINE void XOR(uint8_t inst) {
+    uint8_t width = ((inst >> 3) & 0x01) + 1;
+    uint8_t pos = inst & 0x07;
+    uint8_t mask = (1 << width) - 1;
+    MAMEFONT_BEFORE_OPERATION("XOR (width=%d, pos=%d)", width, pos);
+    write(lastFragment ^ (mask << pos));
+    MAMEFONT_AFTER_OPERATION(1);
   }
 
-  MAMEFONT_INLINE void RPT(uint8_t inst) {
-    uint8_t repeat_count = (inst & 0x0f) + 1;
-
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "RPT(repeat_count=%d)", repeat_count);
-#endif
-
-    for (int8_t i = repeat_count; i != 0; i--) {
-      write(lastByte);
-    }
-
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s -->", buff);
-    for (int i = 0; i < repeat_count; i++) {
-      printf(" 0x%02x", read(writePos - repeat_count + i));
-    }
-    printf("\n");
-#endif
-  }
-
-  MAMEFONT_INLINE void XOR(uint8_t inst) {
-    uint8_t mask_width = ((inst >> 3) & 0x01) + 1;
-    uint8_t mask_pos = inst & 0x07;
-    uint8_t mask = (1 << mask_width) - 1;
-
-#if MAMEFONT_STM_VERBOSE
-    stamp();
-    char buff[64];
-    snprintf(buff, sizeof(buff), "XOR(mask_width=%d, mask_pos=%d)", mask_width,
-             mask_pos);
-#endif
-
-    write(lastByte ^ (mask << mask_pos));
-
-#if MAMEFONT_STM_VERBOSE
-    printf("    %-40s --> 0x%02x\n", buff, lastByte);
-#endif
-  }
-
-  void stepLane() {
-    numLanesToGlyphEnd--;
-    writePos = nextLanePos;
-    nextLanePos += laneStride;
-    numBytesToLaneEnd = laneBytes;
-  }
-
-  void write(uint8_t value) {
-    buffData[writePos] = value;
-    writePos += byteStride;
-    lastByte = value;
-    if (--numBytesToLaneEnd <= 0) {
-      stepLane();
+  MAMEFONT_ALWAYS_INLINE void write(uint8_t value) {
+    buffData[writeCursor.postIncr(rule)] = value;
+    lastFragment = value;
+    if (writeCursor.fragIndex == 0) {
+      numLanesToGlyphEnd--;
     }
   }
 
-  uint8_t read(int16_t pos) const {
-    if (pos < 0) return 0;
-    return buffData[pos];
+  MAMEFONT_ALWAYS_INLINE uint8_t read(int16_t offset) const {
+    if (offset < 0) return 0;
+    return buffData[offset];
   }
 
-  MAMEFONT_INLINE void stamp() const {
-    printf("    wpos=%4d, last=0x%02x ", writePos, lastByte);
+  MAMEFONT_ALWAYS_INLINE void stamp() const {
+    printf("    ofst=%4d, last=0x%02X ", (int)writeCursor.offset,
+           (int)lastFragment);
   }
 };
 
