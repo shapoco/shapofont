@@ -3,6 +3,7 @@ from design import GrayBitmap
 from itertools import product
 import time
 import math
+import json
 
 LIB_NAME = "MameFont"
 
@@ -166,7 +167,7 @@ class Operation:
         self.cost = cost
 
     def operator(self) -> Operator:
-        (op, _, _) = parse_instruction(self.microcode, 0)
+        (op, _, _, _) = parse_instruction(self.microcode, 0)
         return op
 
     def __repr__(self) -> str:
@@ -264,9 +265,7 @@ class MameFont:
 
             pc = microcode_offset
             if shrinked_glyph_table:
-                verbose_print(f"  PC= {pc}")
                 pc += self.blob[table_entry_offset] * ALIGN_SIZE
-                verbose_print(f"  PC= {pc}")
             else:
                 pc += self.blob[table_entry_offset]
                 pc += self.blob[table_entry_offset + 1] << 8
@@ -366,6 +365,10 @@ class MameFont:
 
         return code
 
+    def generate_json(self) -> str:
+        verbose_print(f"[{LIB_NAME}] Generating JSON...")
+        return json.dumps(self.blob)
+
 
 class MameFontBuilder:
     def __init__(
@@ -374,13 +377,15 @@ class MameFontBuilder:
         glyph_height: int,
         x_spacing: int,
         y_advance: int,
+        vertical_scan: bool = False,
+        bit_reverse: bool = False,
     ):
         self.name = name
         self.glyph_height = glyph_height
         self.x_spacing = x_spacing
         self.y_advance = y_advance
-        self.vertical_scan = False
-        self.bit_reverse = False
+        self.vertical_scan = vertical_scan
+        self.bit_reverse = bit_reverse
         self.glyphs: dict[int, MameGlyph] = {}
 
     def add_glyph(
@@ -395,7 +400,7 @@ class MameFontBuilder:
 
         if VERBOSE:
             print(f"[{LIB_NAME}] Glyph added: {format_char(code)}")
-            print(f"  Bytes:")
+            print(f"  Fragments:")
             for i, byte in enumerate(sequence):
                 if i % 16 == 0:
                     print("    ", end="")
@@ -406,7 +411,7 @@ class MameFontBuilder:
         sequence.insert(0, 0x00)  # TODO: remove pivot byte
         num_bytes = len(sequence)
 
-        verbose_print(f"  Generating Instructions...")
+        verbose_print(f"  Generating Instructions with Dijkstra's algorithm...")
         t_start = time.time()
 
         class State:
@@ -576,6 +581,69 @@ class MameFontBuilder:
 
         # Solve with Dijkstra's algorithm
         nodes = [State(i) for i in range(num_bytes)]
+
+        if VERBOSE:
+            print(f"   ", end="")
+            for frag in sequence:
+                print(f"   {frag:02X}", end="")
+            print()
+
+        def dump_nodes():
+            if not VERBOSE:
+                return
+
+            node_indexes = list(range(num_bytes))
+            while len(node_indexes) > 0:
+                aa_empty_str = "|    "
+                aa_line: list[str] = []
+                for _ in range(num_bytes):
+                    aa_line.append(aa_empty_str)
+                aa_changed = False
+
+                i_byte = num_bytes - 1
+                while i_byte >= 0:
+                    if i_byte not in node_indexes:
+                        i_byte -= 1
+                        continue
+
+                    node_indexes.remove(i_byte)
+                    node = nodes[i_byte]
+                    if not node.best_prev:
+                        i_byte -= 1
+                        continue
+
+                    prev = node.best_prev
+                    op = node.best_op
+
+                    not_empty = False
+                    for i in range(prev.i_pos, node.i_pos):
+                        if aa_line[i] != aa_empty_str:
+                            not_empty = True
+                            break
+                    if not_empty:
+                        i_byte -= 1
+                        continue
+
+                    for i in range(prev.i_pos, node.i_pos):
+                        if i == prev.i_pos:
+                            arrow = op.operator().mnemonic + "-"
+                        else:
+                            arrow = "----"
+                        if i == node.i_pos - 1:
+                            arrow += ">"
+                        else:
+                            arrow += "-"
+                        aa_line[i] = arrow
+                    
+                    aa_changed = True
+
+                    i_byte = prev.i_pos
+
+                if not aa_changed:
+                    break
+
+                print(f"      {"".join(aa_line)}")
+
         q = nodes.copy()
         q[0].best_cost = 0
         for i in range(1, num_bytes):
@@ -588,12 +656,17 @@ class MameFontBuilder:
                 # No more reachable states
                 raise RuntimeError()
 
+            changed = False
             for i_next, op in curr.next_ops.items():
                 next_cost = curr.best_cost + op.cost
                 if next_cost < nodes[i_next].best_cost:
                     nodes[i_next].best_cost = next_cost
                     nodes[i_next].best_prev = curr
                     nodes[i_next].best_op = op
+                    changed = True
+            
+            if changed:
+                dump_nodes()
 
         # Construct the microcode from the last node
         ops: list[Operation] = []
@@ -747,7 +820,7 @@ class MameFontBuilder:
                 self.frozen = frozen
 
             def __repr__(self):
-                return f"{'*' if self.frozen else ''}[{' '.join(f'{b:02X}' for b in self.array)}]"
+                return f"{'*' if self.frozen else ' '}[{' '.join(f'{b:02X}' for b in self.array)}]"
 
         # Place consecutive bytes next to each other
         seq_buff: list[LutSeq] = []

@@ -157,18 +157,24 @@ class BitmapFont:
             f.write(gfx_font.generate_header())
 
     def to_mame_font(
-        self, hpp_outdir: str, cpp_outdir: str, vertical_scan: bool, bit_reverse: bool
+        self,
+        hpp_outdir: str = None,
+        cpp_outdir: str = None,
+        json_outdir: str = None,
+        vertical_scan: bool = False,
+        bit_reverse: bool = False,
     ):
-        hpp_file = path.join(hpp_outdir, f"{self.full_name}.hpp")
-        cpp_file = path.join(cpp_outdir, f"{self.full_name}.cpp")
-        print(f"Generating MameFont: {cpp_file}")
+        print(f"Generating MameFont")
 
         builder = mamefont.MameFontBuilder(
             self.full_name,
             self.bitmap_height(),
             self.normal_x_spacing,
             self.line_height,
+            vertical_scan=vertical_scan,
+            bit_reverse=bit_reverse,
         )
+
         for glyph in self.glyphs:
             builder.add_glyph(
                 glyph.code,
@@ -177,31 +183,45 @@ class BitmapFont:
 
         mame_font = builder.build()
 
-        with open(hpp_file, "w") as f:
-            f.write(mame_font.generate_cpp_header())
-        with open(cpp_file, "w") as f:
-            f.write(mame_font.generate_cpp_source())
+        if hpp_outdir:
+            hpp_file = path.join(hpp_outdir, f"{self.full_name}.hpp")
+            with open(hpp_file, "w") as f:
+                f.write(mame_font.generate_cpp_header())
+
+        if cpp_outdir:
+            cpp_file = path.join(cpp_outdir, f"{self.full_name}.cpp")
+            with open(cpp_file, "w") as f:
+                f.write(mame_font.generate_cpp_source())
+
+        if json_outdir:
+            json_file = path.join(json_outdir, f"{self.full_name}.json")
+            with open(json_file, "w") as f:
+                f.write(mame_font.generate_json())
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True)
-    parser.add_argument("--outdir_gfx")
+    parser.add_argument("--outdir_gfx_c")
     parser.add_argument("--outdir_mame_hpp")
     parser.add_argument("--outdir_mame_cpp")
+    parser.add_argument("--outdir_mame_json")
+    parser.add_argument("--mame_vertical_scan", default=False)
+    parser.add_argument("--mame_bit_reverse", default=False)
     args = parser.parse_args()
 
     font = BitmapFont(args.input)
 
-    if args.outdir_gfx:
-        font.to_gfx_font(args.outdir_gfx)
+    if args.outdir_gfx_c:
+        font.to_gfx_font(args.outdir_gfx_c)
 
-    if args.outdir_mame_hpp or args.outdir_mame_cpp:
+    if args.outdir_mame_hpp or args.outdir_mame_cpp or args.outdir_mame_json:
         font.to_mame_font(
             args.outdir_mame_hpp,
             args.outdir_mame_cpp,
-            vertical_scan=False,
-            bit_reverse=False,
+            args.outdir_mame_json,
+            vertical_scan=args.mame_vertical_scan,
+            bit_reverse=args.mame_bit_reverse,
         )
 
 
