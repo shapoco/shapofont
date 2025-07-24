@@ -5,5 +5,5 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-extern const mamefont::Font ShapoSansMono_s8c7;
+extern const mamefont::Font ShapoSansP_s08c07;
 

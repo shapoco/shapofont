@@ -30,6 +30,10 @@
 
 ![](./bitmap/ShapoSansP/s06c05a1/design.png)
 
+#### s08c07
+
+![](./bitmap/ShapoSansP/s08c07/design.png)
+
 #### s11c09w2a1
 
 ![](./bitmap/ShapoSansP/s11c09w2a1/design.png)
