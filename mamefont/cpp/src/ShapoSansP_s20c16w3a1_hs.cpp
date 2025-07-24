@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoSansP_s20c16w3a1_blob[] = {
+static const uint8_t ShapoSansP_s20c16w3a1_hs_blob[] = {
   // Font Header
   0x01, 0x20, 0x5E, 0x3F, 0x14, 0x17, 0x00, 0x00,
   // Glyph Table
@@ -149,5 +149,5 @@ static const uint8_t ShapoSansP_s20c16w3a1_blob[] = {
   0xE3, 0x61, 0x07, 0x42, 0x71, 0xE1, 0x07, 0x0F, 0x1D, 0xE1, 0x61, 0xE1, 0x0F, 0x01, 0xE7,
 };
 
-extern const mamefont::Font ShapoSansP_s20c16w3a1(ShapoSansP_s20c16w3a1_blob);
+extern const mamefont::Font ShapoSansP_s20c16w3a1_hs(ShapoSansP_s20c16w3a1_hs_blob);
 

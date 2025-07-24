@@ -183,18 +183,20 @@ class BitmapFont:
 
         mame_font = builder.build()
 
+        postfix = "vs" if vertical_scan else "hs"
+
         if hpp_outdir:
-            hpp_file = path.join(hpp_outdir, f"{self.full_name}.hpp")
+            hpp_file = path.join(hpp_outdir, f"{mame_font.full_name()}.hpp")
             with open(hpp_file, "w") as f:
                 f.write(mame_font.generate_cpp_header())
 
         if cpp_outdir:
-            cpp_file = path.join(cpp_outdir, f"{self.full_name}.cpp")
+            cpp_file = path.join(cpp_outdir, f"{mame_font.full_name()}.cpp")
             with open(cpp_file, "w") as f:
                 f.write(mame_font.generate_cpp_source())
 
         if json_outdir:
-            json_file = path.join(json_outdir, f"{self.full_name}.json")
+            json_file = path.join(json_outdir, f"{mame_font.full_name()}.json")
             with open(json_file, "w") as f:
                 f.write(mame_font.generate_json())
 
@@ -206,8 +208,6 @@ def main():
     parser.add_argument("--outdir_mame_hpp")
     parser.add_argument("--outdir_mame_cpp")
     parser.add_argument("--outdir_mame_json")
-    parser.add_argument("--mame_vertical_scan", default=False)
-    parser.add_argument("--mame_bit_reverse", default=False)
     args = parser.parse_args()
 
     font = BitmapFont(args.input)
@@ -220,8 +220,17 @@ def main():
             args.outdir_mame_hpp,
             args.outdir_mame_cpp,
             args.outdir_mame_json,
-            vertical_scan=args.mame_vertical_scan,
-            bit_reverse=args.mame_bit_reverse,
+            vertical_scan=False,
+            bit_reverse=False,
+        )
+
+    if args.outdir_mame_hpp or args.outdir_mame_cpp or args.outdir_mame_json:
+        font.to_mame_font(
+            args.outdir_mame_hpp,
+            args.outdir_mame_cpp,
+            args.outdir_mame_json,
+            vertical_scan=True,
+            bit_reverse=False,
         )
 
 

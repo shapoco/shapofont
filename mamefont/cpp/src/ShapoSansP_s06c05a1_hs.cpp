@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoSansP_s06c05a1_blob[] = {
+static const uint8_t ShapoSansP_s06c05a1_hs_blob[] = {
   // Font Header
   0x01, 0x20, 0x5E, 0x23, 0x06, 0x07, 0x00, 0x20,
   // Glyph Table
@@ -71,5 +71,5 @@ static const uint8_t ShapoSansP_s06c05a1_blob[] = {
   0x93, 0x0D, 0x1B, 0x00, 0x0D, 0x04, 0x03, 0x00, 0x03, 0x05, 0x41, 0x03,
 };
 
-extern const mamefont::Font ShapoSansP_s06c05a1(ShapoSansP_s06c05a1_blob);
+extern const mamefont::Font ShapoSansP_s06c05a1_hs(ShapoSansP_s06c05a1_hs_blob);
 

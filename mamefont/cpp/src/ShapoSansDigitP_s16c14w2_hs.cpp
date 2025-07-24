@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoSansDigitP_s16c14w2_blob[] = {
+static const uint8_t ShapoSansDigitP_s16c14w2_hs_blob[] = {
   // Font Header
   0x01, 0x2E, 0x0B, 0x1F, 0x0F, 0x13, 0x00, 0x20,
   // Glyph Table
@@ -49,5 +49,5 @@ static const uint8_t ShapoSansDigitP_s16c14w2_blob[] = {
   0xB8, 0x00,
 };
 
-extern const mamefont::Font ShapoSansDigitP_s16c14w2(ShapoSansDigitP_s16c14w2_blob);
+extern const mamefont::Font ShapoSansDigitP_s16c14w2_hs(ShapoSansDigitP_s16c14w2_hs_blob);
 

@@ -196,6 +196,13 @@ class MameFont:
         self.name = name
         self.blob = blob
 
+    def name_postfix(self) -> str:
+        vertical_scan = 0 != (self.blob[OFST_FONT_FLAGS] & FONT_FLAG_VERTICAL_SCAN)
+        return "vs" if vertical_scan else "hs"
+
+    def full_name(self) -> str:
+        return f"{self.name}_{self.name_postfix()}"
+
     def generate_cpp_header(self) -> str:
         verbose_print(f"[{LIB_NAME}] Generating C++ header...")
 
@@ -207,7 +214,7 @@ class MameFont:
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"
         code += "\n"
-        code += f"extern const mamefont::Font {self.name};\n"
+        code += f"extern const mamefont::Font {self.full_name()};\n"
         code += "\n"
         return code
 
@@ -320,7 +327,7 @@ class MameFont:
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"
         code += "\n"
-        code += f"static const uint8_t {self.name}_blob[] = {{\n"
+        code += f"static const uint8_t {self.full_name()}_blob[] = {{\n"
 
         cols = 16
         i_col = 0
@@ -360,7 +367,7 @@ class MameFont:
 
         code += "};\n"
         code += "\n"
-        code += f"extern const mamefont::Font {self.name}({self.name}_blob);\n"
+        code += f"extern const mamefont::Font {self.full_name()}({self.full_name()}_blob);\n"
         code += "\n"
 
         return code
@@ -634,7 +641,7 @@ class MameFontBuilder:
                         else:
                             arrow += "-"
                         aa_line[i] = arrow
-                    
+
                     aa_changed = True
 
                     i_byte = prev.i_pos
@@ -664,7 +671,7 @@ class MameFontBuilder:
                     nodes[i_next].best_prev = curr
                     nodes[i_next].best_op = op
                     changed = True
-            
+
             if changed:
                 dump_nodes()
 
