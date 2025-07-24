@@ -38,13 +38,27 @@
 
 ![](./bitmap/ShapoSansP/s20c16w3a1/design.png)
 
+### ShapoSansMono
+
+#### s8c7w1
+
+![](./bitmap/ShapoSansMono/s8c7w1/design.png)
+
 ### ShapoSansDigitP
 
 #### s16c14w2
 
 ![](./bitmap/ShapoSansDigitP/s16c14w2/design.png)
 
-## Font Design with Paint Tool
+#### s24c23w4
+
+![](./bitmap/ShapoSansDigitP/s24c23w4/design.png)
+
+#### s32c30w4
+
+![](./bitmap/ShapoSansDigitP/s32c30w4/design.png)
+
+## Designing Font with Painting Tool
 
 ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
 
