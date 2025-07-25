@@ -8,3 +8,4 @@ a.out
 *.o
 *.log
 .vscode/settings.json
+*Zone.Identifier
