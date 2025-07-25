@@ -8,12 +8,13 @@ import json
 LIB_NAME = "MameFont"
 
 OFST_FORMAT_VERSION = 0
-OFST_FIRST_CODE = 1
-OFST_GLYPH_TABLE_LEN = 2
-OFST_LUT_SIZE = 3
-OFST_FONT_DIMENSION_0 = 4
-OFST_FONT_DIMENSION_1 = 5
-OFST_FONT_FLAGS = 7
+OFST_FONT_FLAGS = 1
+OFST_FIRST_CODE = 2
+OFST_GLYPH_TABLE_LEN = 3
+OFST_LUT_SIZE = 4
+OFST_FONT_DIMENSION_0 = 5
+OFST_FONT_DIMENSION_1 = 6
+OFST_FONT_DIMENSION_2 = 7
 OFST_GLYPH_TABLE = 8
 OFST_ENTRY_POINT = 0
 OFST_GLYPH_DIMENSION = 2
@@ -222,6 +223,7 @@ class MameFont:
         shrinked_glyph_table = 0 != (font_flags & FONT_FLAG_SHRINKED_GLYPH_TABLE)
 
         font_height = (self.blob[OFST_FONT_DIMENSION_0] & 0x3F) + 1
+        max_glyph_width = (self.blob[OFST_FONT_DIMENSION_2] & 0x3F) + 1
 
         first_code = self.blob[OFST_FIRST_CODE]
         num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN] + 1
@@ -295,6 +297,7 @@ class MameFont:
         code += f"//   First Code      : {first_code}\n"
         code += f"//   Glyph Count     : {num_glyphs}\n"
         code += f"//   Font Height     : {font_height}\n"
+        code += f"//   Max Glyph Width : {max_glyph_width}\n"
         code += (
             f"//   Fragment Shape  : {"Vertical" if vertical_frag else "Horizontal"}\n"
         )
@@ -986,8 +989,14 @@ class MameFontBuilder:
         code_first = codes[0]
         code_last = codes[-1]
 
+        max_glyph_width = 0
+        for glyph in self.glyphs.values():
+            if glyph.glyphWidth > max_glyph_width:
+                max_glyph_width = glyph.glyphWidth
+
         font_dimension_0 = (self.glyph_height - 1) & 0x3F
         font_dimension_1 = (self.y_advance - 1) & 0x3F
+        font_dimension_2 = (max_glyph_width - 1) & 0x3F
         font_flags = 0
         if self.vertical_frag:
             font_flags |= 0x80
@@ -1000,13 +1009,13 @@ class MameFontBuilder:
 
         # Font Header
         blob.append(format_version)
+        blob.append(font_flags)
         blob.append(code_first)
         blob.append(code_last - code_first)
         blob.append(len(lut) - 1)
         blob.append(font_dimension_0)
         blob.append(font_dimension_1)
-        blob.append(0)  # reserved flags
-        blob.append(font_flags)
+        blob.append(font_dimension_2)
 
         # Glyph Table
         for code in range(code_first, code_last + 1):

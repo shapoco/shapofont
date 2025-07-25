@@ -3,6 +3,7 @@
 //   First Code      : 32
 //   Glyph Count     : 1
 //   Font Height     : 1
+//   Max Glyph Width : 1
 //   Fragment Shape  : Vertical
 //   Bit Order       : MSB First
 //   Shrinked Format : Yes
@@ -21,7 +22,7 @@
 
 static const uint8_t ShapoEmpty_s1_blob[] = {
   // Font Header
-  0x01, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00, 0xE0,
+  0x01, 0xE0, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00,
   // Glyph Table
   0x00, 0x10,
   // Lookup Table
