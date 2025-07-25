@@ -122,9 +122,9 @@ def parse_opcode(target: int) -> Operator:
 
 
 def parse_instruction(
-    microcode: list[int], offset: int
+    bytecode: list[int], offset: int
 ) -> tuple[Operator, int, int, dict[str, int]]:
-    byte1 = microcode[offset]
+    byte1 = bytecode[offset]
     operator = parse_opcode(byte1)
     if operator == LUS:
         return (LUS, 1, 1, {"index": byte1 & 0x3F})
@@ -138,7 +138,7 @@ def parse_instruction(
         }
         return (operator, 1, repeat_count, params)
     elif operator == LDI:
-        return (LDI, 2, 1, {"byte": microcode[offset + 1]})
+        return (LDI, 2, 1, {"byte": bytecode[offset + 1]})
     elif operator == CPY:
         length = (byte1 & 0x07) + 1
         params = {
@@ -162,17 +162,17 @@ def parse_instruction(
 
 
 class Operation:
-    def __init__(self, microcode: list[int], orig_seq: list[int], cost: float):
-        self.microcode = microcode
+    def __init__(self, bytecode: list[int], orig_seq: list[int], cost: float):
+        self.bytecode = bytecode
         self.orig_seq = orig_seq
         self.cost = cost
 
     def operator(self) -> Operator:
-        (op, _, _, _) = parse_instruction(self.microcode, 0)
+        (op, _, _, _) = parse_instruction(self.bytecode, 0)
         return op
 
     def __repr__(self) -> str:
-        (op, _, _, params) = parse_instruction(self.microcode, 0)
+        (op, _, _, params) = parse_instruction(self.bytecode, 0)
         ret = f"{op.mnemonic} ("
         for key, value in params.items():
             ret += f"{key}={value}, "
@@ -231,11 +231,11 @@ class MameFont:
         glyph_table_size = num_glyphs * glyph_table_entry_size
         lut_size = self.blob[OFST_LUT_SIZE] + 1
 
-        microcode_offset = OFST_GLYPH_TABLE
-        microcode_offset += roundup_size(glyph_table_size)
-        microcode_offset += roundup_size(lut_size)
-        microcode_size = blob_size - microcode_offset
-        microcode_per_glyph = microcode_size / num_glyphs
+        bytecode_offset = OFST_GLYPH_TABLE
+        bytecode_offset += roundup_size(glyph_table_size)
+        bytecode_offset += roundup_size(lut_size)
+        bytecode_size = blob_size - bytecode_offset
+        bytecode_per_glyph = bytecode_size / num_glyphs
         lut_usage_percent = lut_size * 100 / MAX_LUT_SIZE
         total_size = blob_size
         total_size_per_glyph = total_size / num_glyphs
@@ -265,7 +265,7 @@ class MameFont:
             else:
                 glyph_size_in_bytes = math.ceil(glyph_width / 8) * font_height
 
-            pc = microcode_offset
+            pc = bytecode_offset
             if shrinked_glyph_table:
                 pc += self.blob[table_entry_offset] * ALIGN_SIZE
             else:
@@ -307,7 +307,7 @@ class MameFont:
         code += f"//     Header        : {OFST_GLYPH_TABLE:4d} Bytes\n"
         code += f"//     Glyph Table   : {glyph_table_size:4d} Bytes ({glyph_table_entry_size} Bytes/glyph)\n"
         code += f"//     Lookup Table  : {lut_size:4d} Bytes ({lut_usage_percent:.2f}% used)\n"
-        code += f"//     Microcodes    : {microcode_size:4d} Bytes ({microcode_per_glyph:.2f} Bytes/glyph)\n"
+        code += f"//     Bytecodes     : {bytecode_size:4d} Bytes ({bytecode_per_glyph:.2f} Bytes/glyph)\n"
         code += f"//     Total         : {total_size:4d} Bytes ({total_size_per_glyph:.2f} Bytes/glyph)\n"
         code += "//   Compression Performance:\n"
         inst_sorted = sorted(stats_inst_size.keys())
@@ -330,7 +330,7 @@ class MameFont:
         i_start_of_header = 0
         i_start_of_glyph_table = OFST_GLYPH_TABLE
         i_start_of_lut = OFST_GLYPH_TABLE + glyph_table_size
-        i_start_of_microcodes = OFST_GLYPH_TABLE + glyph_table_size + lut_size
+        i_start_of_bytecodes = OFST_GLYPH_TABLE + glyph_table_size + lut_size
 
         for i, b in enumerate(self.blob):
             if i == i_start_of_header:
@@ -339,8 +339,8 @@ class MameFont:
                 code += "  // Glyph Table\n"
             if i == i_start_of_lut:
                 code += "  // Lookup Table\n"
-            if i == i_start_of_microcodes:
-                code += "  // Microcodes\n"
+            if i == i_start_of_bytecodes:
+                code += "  // Bytecodes\n"
 
             if i_col == 0:
                 code += "  "
@@ -350,7 +350,7 @@ class MameFont:
                 i_col == cols - 1
                 or i == i_start_of_glyph_table - 1
                 or i == i_start_of_lut - 1
-                or i == i_start_of_microcodes - 1
+                or i == i_start_of_bytecodes - 1
                 or i == len(self.blob) - 1
             )
 
@@ -671,7 +671,7 @@ class MameFontBuilder:
             if changed:
                 dump_nodes()
 
-        # Construct the microcode from the last node
+        # Construct the bytecode from the last node
         ops: list[Operation] = []
         curr = nodes[-1]
         while curr is not None:
@@ -705,8 +705,8 @@ class MameFontBuilder:
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
-                if LDI.match(op.microcode[0]):
-                    this_byte = op.microcode[1]
+                if LDI.match(op.bytecode[0]):
+                    this_byte = op.bytecode[1]
                     byte_ref_count[this_byte] = byte_ref_count.get(this_byte, 0) + 1
         lut = sorted(
             byte_ref_count.keys(), key=lambda item: byte_ref_count[item], reverse=True
@@ -905,7 +905,7 @@ class MameFontBuilder:
             for op in glyph.operations:
                 if len(op.orig_seq) == 1 and op.orig_seq[0] in lut:
                     index = lut.index(op.orig_seq[0])
-                    op.microcode = [LUS.code | index]
+                    op.bytecode = [LUS.code | index]
 
         # Replace instructions with LUD as possible
         verbose_print("  Replacing instructions LUS --> LUD as possible...")
@@ -918,8 +918,8 @@ class MameFontBuilder:
                 op = glyph.operations[i_op]
 
                 index2 = -1
-                if LUS.match(op.microcode[0]):
-                    index2 = op.microcode[0] & 0x3F
+                if LUS.match(op.bytecode[0]):
+                    index2 = op.bytecode[0] & 0x3F
 
                 lud_applicable = (
                     index1 >= 0
@@ -930,7 +930,7 @@ class MameFontBuilder:
                 if lud_applicable:
                     step = 0 if index1 == index2 else 1
                     inst_code = LUD.code | index1 | (step << 4)
-                    glyph.operations[i_op - 1].microcode = [inst_code]
+                    glyph.operations[i_op - 1].bytecode = [inst_code]
                     glyph.operations.remove(op)
                     index1 = -1
                     continue
@@ -947,7 +947,7 @@ class MameFontBuilder:
 
         # Determine to apply Shrinked Glyph Table or not
         shrinked_glyph_table = True
-        total_microcode_size = 0
+        total_bytecode_size = 0
         for code in codes:
             # Check glyph dimensions
             glyph = self.glyphs[code]
@@ -955,30 +955,30 @@ class MameFontBuilder:
                 shrinked_glyph_table = False
                 break
 
-            # Check microcode size
+            # Check bytecode size
             for op in glyph.operations:
-                total_microcode_size += len(op.microcode)
-            while total_microcode_size % ALIGN_SIZE != 0:
-                total_microcode_size += 1
-            if total_microcode_size > (ALIGN_SIZE * 256):
+                total_bytecode_size += len(op.bytecode)
+            while total_bytecode_size % ALIGN_SIZE != 0:
+                total_bytecode_size += 1
+            if total_bytecode_size > (ALIGN_SIZE * 256):
                 shrinked_glyph_table = False
                 break
 
-        # Construct microcode block
-        verbose_print(f"[{LIB_NAME}] Constructing microcode block...")
-        microcodes: list[int] = []
+        # Construct bytecode block
+        verbose_print(f"[{LIB_NAME}] Constructing bytecode block...")
+        bytecodes: list[int] = []
         for code in codes:
             verbose_print(f"  {format_char(code)}:")
             glyph = self.glyphs[code]
-            glyph.entry_point = len(microcodes)
+            glyph.entry_point = len(bytecodes)
             for op in glyph.operations:
                 if VERBOSE:
-                    inst_code_str = " ".join(f"0x{b:02X}" for b in op.microcode)
+                    inst_code_str = " ".join(f"0x{b:02X}" for b in op.bytecode)
                     print(f"    {inst_code_str:<10s} {op}")
-                microcodes += op.microcode
+                bytecodes += op.bytecode
             if shrinked_glyph_table:
-                while len(microcodes) % ALIGN_SIZE != 0:
-                    microcodes.append(0x00)
+                while len(bytecodes) % ALIGN_SIZE != 0:
+                    bytecodes.append(0x00)
 
         verbose_print(f"[{LIB_NAME}] Generating blob...")
         if shrinked_glyph_table:
@@ -1052,7 +1052,7 @@ class MameFontBuilder:
         # LUT
         blob += lut
 
-        # Microcode
-        blob += microcodes
+        # Bytecode
+        blob += bytecodes
 
         return MameFont(name=self.name, blob=blob)

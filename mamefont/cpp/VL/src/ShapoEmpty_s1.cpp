@@ -11,7 +11,7 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :    2 Bytes (2 Bytes/glyph)
 //     Lookup Table  :    2 Bytes (3.12% used)
-//     Microcodes    :    2 Bytes (2.00 Bytes/glyph)
+//     Bytecodes     :    2 Bytes (2.00 Bytes/glyph)
 //     Total         :   14 Bytes (14.00 Bytes/glyph)
 //   Compression Performance:
 //     RPT  :    1 -->    1 (  +0.00%)
@@ -27,7 +27,7 @@ static const uint8_t ShapoEmpty_s1_blob[] = {
   0x00, 0x10,
   // Lookup Table
   0x00, 0x00,
-  // Microcodes
+  // Bytecodes
   0xE0, 0x00,
 };
 
