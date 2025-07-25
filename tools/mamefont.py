@@ -585,14 +585,14 @@ class MameFontBuilder:
         # Solve with Dijkstra's algorithm
         nodes = [State(i) for i in range(num_bytes)]
 
-        if VERBOSE:
+        if False and VERBOSE:
             print(f"   ", end="")
             for frag in sequence:
                 print(f"   {frag:02X}", end="")
             print()
 
         def dump_nodes():
-            if not VERBOSE:
+            if True or not VERBOSE:
                 return
 
             node_indexes = list(range(num_bytes))

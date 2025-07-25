@@ -66,6 +66,12 @@
 
 ![](./bitmap/ShapoSansDigitP/s32c30w4/design.png)
 
+### MameDigitP
+
+#### s64w08
+
+![](./bitmap/MameDigitP/s64w08/design.png)
+
 ## Designing Font with Painting Tool
 
 ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
