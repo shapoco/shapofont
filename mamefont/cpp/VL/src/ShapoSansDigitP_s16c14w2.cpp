@@ -3,8 +3,8 @@
 //   First Code      : 46
 //   Glyph Count     : 12
 //   Font Height     : 16
-//   Scan Direction  : Horizontal
-//   Bit Reverse     : No
+//   Fragment Shape  : Vertical
+//   Bit Order       : LSB First
 //   Shrinked Format : Yes
 //   Estimated Footprint:
 //     Header        :    8 Bytes
@@ -28,9 +28,9 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoSansDigitP_s16c14w2_hs_blob[] = {
+static const uint8_t ShapoSansDigitP_s16c14w2_blob[] = {
   // Font Header
-  0x01, 0x2E, 0x0B, 0x1F, 0x0F, 0x13, 0x00, 0x20,
+  0x01, 0x2E, 0x0B, 0x1F, 0x0F, 0x13, 0x00, 0xA0,
   // Glyph Table
   0x00, 0x53, 0xFF, 0xFF, 0x02, 0xA8, 0x07, 0xA8, 0x0C, 0xA8, 0x14, 0xA8, 0x1B, 0xA8, 0x22, 0xA8,
   0x29, 0xA8, 0x2F, 0xA8, 0x35, 0xA8, 0x3A, 0xA8,
@@ -49,5 +49,5 @@ static const uint8_t ShapoSansDigitP_s16c14w2_hs_blob[] = {
   0xB8, 0x00,
 };
 
-extern const mamefont::Font ShapoSansDigitP_s16c14w2_hs(ShapoSansDigitP_s16c14w2_hs_blob);
+extern const mamefont::Font ShapoSansDigitP_s16c14w2(ShapoSansDigitP_s16c14w2_blob);
 

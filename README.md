@@ -42,6 +42,10 @@
 
 ![](./bitmap/ShapoSansP/s20c16w3a1/design.png)
 
+#### s26c22w4a1
+
+![](./bitmap/ShapoSansP/s26c22w4a1/design.png)
+
 ### ShapoSansMono
 
 #### s08c07

@@ -18,8 +18,8 @@ OFST_GLYPH_TABLE = 8
 OFST_ENTRY_POINT = 0
 OFST_GLYPH_DIMENSION = 2
 
-FONT_FLAG_VERTICAL_SCAN = 0x80
-FONT_FLAG_BIT_REVERSE = 0x40
+FONT_FLAG_VERTICAL_FRAGMENT = 0x80
+FONT_FLAG_MSB_FIRST = 0x40
 FONT_FLAG_SHRINKED_GLYPH_TABLE = 0x20
 
 SHIFT_MAX_SIZE = 4
@@ -196,13 +196,6 @@ class MameFont:
         self.name = name
         self.blob = blob
 
-    def name_postfix(self) -> str:
-        vertical_scan = 0 != (self.blob[OFST_FONT_FLAGS] & FONT_FLAG_VERTICAL_SCAN)
-        return "vs" if vertical_scan else "hs"
-
-    def full_name(self) -> str:
-        return f"{self.name}_{self.name_postfix()}"
-
     def generate_cpp_header(self) -> str:
         verbose_print(f"[{LIB_NAME}] Generating C++ header...")
 
@@ -214,7 +207,7 @@ class MameFont:
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"
         code += "\n"
-        code += f"extern const mamefont::Font {self.full_name()};\n"
+        code += f"extern const mamefont::Font {self.name};\n"
         code += "\n"
         return code
 
@@ -224,8 +217,8 @@ class MameFont:
         blob_size = len(self.blob)
 
         font_flags = self.blob[OFST_FONT_FLAGS]
-        vertical_scan = 0 != (font_flags & FONT_FLAG_VERTICAL_SCAN)
-        bit_reverse = 0 != (font_flags & FONT_FLAG_BIT_REVERSE)
+        vertical_frag = 0 != (font_flags & FONT_FLAG_VERTICAL_FRAGMENT)
+        msb1st = 0 != (font_flags & FONT_FLAG_MSB_FIRST)
         shrinked_glyph_table = 0 != (font_flags & FONT_FLAG_SHRINKED_GLYPH_TABLE)
 
         font_height = (self.blob[OFST_FONT_DIMENSION_0] & 0x3F) + 1
@@ -265,10 +258,10 @@ class MameFont:
             else:
                 glyph_width = (self.blob[table_entry_offset + 2] & 0x3F) + 1
 
-            if vertical_scan:
-                glyph_size_in_bytes = math.ceil(glyph_width / 8) * font_height
-            else:
+            if vertical_frag:
                 glyph_size_in_bytes = glyph_width * math.ceil(font_height / 8)
+            else:
+                glyph_size_in_bytes = math.ceil(glyph_width / 8) * font_height
 
             pc = microcode_offset
             if shrinked_glyph_table:
@@ -303,9 +296,9 @@ class MameFont:
         code += f"//   Glyph Count     : {num_glyphs}\n"
         code += f"//   Font Height     : {font_height}\n"
         code += (
-            f"//   Scan Direction  : {"Vertical" if vertical_scan else "Horizontal"}\n"
+            f"//   Fragment Shape  : {"Vertical" if vertical_frag else "Horizontal"}\n"
         )
-        code += f"//   Bit Reverse     : {"Yes" if bit_reverse else "No"}\n"
+        code += f"//   Bit Order       : {"MSB First" if msb1st else "LSB First"}\n"
         code += f"//   Shrinked Format : {"Yes" if shrinked_glyph_table else "No"}\n"
         code += "//   Estimated Footprint:\n"
         code += f"//     Header        : {OFST_GLYPH_TABLE:4d} Bytes\n"
@@ -327,7 +320,7 @@ class MameFont:
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"
         code += "\n"
-        code += f"static const uint8_t {self.full_name()}_blob[] = {{\n"
+        code += f"static const uint8_t {self.name}_blob[] = {{\n"
 
         cols = 16
         i_col = 0
@@ -367,7 +360,7 @@ class MameFont:
 
         code += "};\n"
         code += "\n"
-        code += f"extern const mamefont::Font {self.full_name()}({self.full_name()}_blob);\n"
+        code += f"extern const mamefont::Font {self.name}({self.name}_blob);\n"
         code += "\n"
 
         return code
@@ -384,15 +377,15 @@ class MameFontBuilder:
         glyph_height: int,
         x_spacing: int,
         y_advance: int,
-        vertical_scan: bool = False,
-        bit_reverse: bool = False,
+        vertical_frag: bool = False,
+        msb1st: bool = False,
     ):
         self.name = name
         self.glyph_height = glyph_height
         self.x_spacing = x_spacing
         self.y_advance = y_advance
-        self.vertical_scan = vertical_scan
-        self.bit_reverse = bit_reverse
+        self.vertical_frag = vertical_frag
+        self.msb1st = msb1st
         self.glyphs: dict[int, MameGlyph] = {}
 
     def add_glyph(
@@ -401,8 +394,8 @@ class MameFontBuilder:
         bmp: GrayBitmap,
     ):
         sequence = bmp.to_byte_segments(
-            vertical_scan=self.vertical_scan,
-            bit_reverse=self.bit_reverse,
+            vertical_frag=self.vertical_frag,
+            msb1st=self.msb1st,
         )
 
         if VERBOSE:
@@ -996,9 +989,9 @@ class MameFontBuilder:
         font_dimension_0 = (self.glyph_height - 1) & 0x3F
         font_dimension_1 = (self.y_advance - 1) & 0x3F
         font_flags = 0
-        if self.vertical_scan:
+        if self.vertical_frag:
             font_flags |= 0x80
-        if self.bit_reverse:
+        if self.msb1st:
             font_flags |= 0x40
         if shrinked_glyph_table:
             font_flags |= 0x20

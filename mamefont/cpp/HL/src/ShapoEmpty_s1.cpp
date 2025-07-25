@@ -3,8 +3,8 @@
 //   First Code      : 32
 //   Glyph Count     : 1
 //   Font Height     : 1
-//   Scan Direction  : Vertical
-//   Bit Reverse     : No
+//   Fragment Shape  : Horizontal
+//   Bit Order       : LSB First
 //   Shrinked Format : Yes
 //   Estimated Footprint:
 //     Header        :    8 Bytes
@@ -19,9 +19,9 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoEmpty_s1_vs_blob[] = {
+static const uint8_t ShapoEmpty_s1_blob[] = {
   // Font Header
-  0x01, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00, 0xA0,
+  0x01, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00, 0x20,
   // Glyph Table
   0x00, 0x10,
   // Lookup Table
@@ -30,5 +30,5 @@ static const uint8_t ShapoEmpty_s1_vs_blob[] = {
   0xE0, 0x00,
 };
 
-extern const mamefont::Font ShapoEmpty_s1_vs(ShapoEmpty_s1_vs_blob);
+extern const mamefont::Font ShapoEmpty_s1(ShapoEmpty_s1_blob);
 

@@ -1,0 +1,34 @@
+// Generated from ShapoFont
+//   Format Version: 1
+//   First Code      : 32
+//   Glyph Count     : 1
+//   Font Height     : 1
+//   Fragment Shape  : Horizontal
+//   Bit Order       : MSB First
+//   Shrinked Format : Yes
+//   Estimated Footprint:
+//     Header        :    8 Bytes
+//     Glyph Table   :    2 Bytes (2 Bytes/glyph)
+//     Lookup Table  :    2 Bytes (3.12% used)
+//     Microcodes    :    2 Bytes (2.00 Bytes/glyph)
+//     Total         :   14 Bytes (14.00 Bytes/glyph)
+//   Compression Performance:
+//     RPT  :    1 -->    1 (  +0.00%)
+//     Total:    1 -->    1 (  +0.00%)
+
+#include <stdint.h>
+#include <mamefont/mamefont.hpp>
+
+static const uint8_t ShapoEmpty_s1_blob[] = {
+  // Font Header
+  0x01, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00, 0x60,
+  // Glyph Table
+  0x00, 0x10,
+  // Lookup Table
+  0x00, 0x00,
+  // Microcodes
+  0xE0, 0x00,
+};
+
+extern const mamefont::Font ShapoEmpty_s1(ShapoEmpty_s1_blob);
+

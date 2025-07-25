@@ -3,8 +3,8 @@
 //   First Code      : 32
 //   Glyph Count     : 95
 //   Font Height     : 7
-//   Scan Direction  : Vertical
-//   Bit Reverse     : No
+//   Fragment Shape  : Horizontal
+//   Bit Order       : LSB First
 //   Shrinked Format : Yes
 //   Estimated Footprint:
 //     Header        :    8 Bytes
@@ -26,9 +26,9 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoSansP_s06c05a1_vs_blob[] = {
+static const uint8_t ShapoSansP_s06c05a1_blob[] = {
   // Font Header
-  0x01, 0x20, 0x5E, 0x17, 0x06, 0x07, 0x00, 0xA0,
+  0x01, 0x20, 0x5E, 0x17, 0x06, 0x07, 0x00, 0x20,
   // Glyph Table
   0x00, 0x32, 0x01, 0x10, 0x04, 0x32, 0x06, 0x54, 0x09, 0x54, 0x0C, 0x54, 0x0F, 0x54, 0x13, 0x10,
   0x15, 0x21, 0x17, 0x21, 0x19, 0x54, 0x1C, 0x54, 0x1E, 0x10, 0x20, 0x32, 0x22, 0x10, 0x24, 0x32,
@@ -80,5 +80,5 @@ static const uint8_t ShapoSansP_s06c05a1_vs_blob[] = {
   0x08, 0x03, 0xB9, 0x00,
 };
 
-extern const mamefont::Font ShapoSansP_s06c05a1_vs(ShapoSansP_s06c05a1_vs_blob);
+extern const mamefont::Font ShapoSansP_s06c05a1(ShapoSansP_s06c05a1_blob);
 

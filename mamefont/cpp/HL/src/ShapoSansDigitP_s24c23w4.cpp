@@ -3,8 +3,8 @@
 //   First Code      : 46
 //   Glyph Count     : 12
 //   Font Height     : 24
-//   Scan Direction  : Vertical
-//   Bit Reverse     : No
+//   Fragment Shape  : Horizontal
+//   Bit Order       : LSB First
 //   Shrinked Format : No
 //   Estimated Footprint:
 //     Header        :    8 Bytes
@@ -28,9 +28,9 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t ShapoSansDigitP_s24c23w4_vs_blob[] = {
+static const uint8_t ShapoSansDigitP_s24c23w4_blob[] = {
   // Font Header
-  0x01, 0x2E, 0x0B, 0x0F, 0x17, 0x1C, 0x00, 0x80,
+  0x01, 0x2E, 0x0B, 0x0F, 0x17, 0x1C, 0x00, 0x00,
   // Glyph Table
   0x00, 0x00, 0x04, 0x07, 0xFF, 0xFF, 0xFF, 0xFF, 0x06, 0x00, 0x0F, 0x12, 0x1B, 0x00, 0x0F, 0x12,
   0x28, 0x00, 0x0F, 0x12, 0x44, 0x00, 0x0F, 0x12, 0x5F, 0x00, 0x0F, 0x12, 0x76, 0x00, 0x0F, 0x12,
@@ -57,5 +57,5 @@ static const uint8_t ShapoSansDigitP_s24c23w4_vs_blob[] = {
   0x94, 0x96, 0x88, 0xF3, 0xE0, 0x09,
 };
 
-extern const mamefont::Font ShapoSansDigitP_s24c23w4_vs(ShapoSansDigitP_s24c23w4_vs_blob);
+extern const mamefont::Font ShapoSansDigitP_s24c23w4(ShapoSansDigitP_s24c23w4_blob);
 

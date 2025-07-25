@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json5
+import os
 from os import path
 import re
 import math
@@ -161,8 +162,8 @@ class BitmapFont:
         hpp_outdir: str = None,
         cpp_outdir: str = None,
         json_outdir: str = None,
-        vertical_scan: bool = False,
-        bit_reverse: bool = False,
+        vertical_frag: bool = False,
+        msb1st: bool = False,
     ):
         print(f"Generating MameFont")
 
@@ -171,8 +172,8 @@ class BitmapFont:
             self.bitmap_height(),
             self.normal_x_spacing,
             self.line_height,
-            vertical_scan=vertical_scan,
-            bit_reverse=bit_reverse,
+            vertical_frag=vertical_frag,
+            msb1st=msb1st,
         )
 
         for glyph in self.glyphs:
@@ -183,20 +184,18 @@ class BitmapFont:
 
         mame_font = builder.build()
 
-        postfix = "vs" if vertical_scan else "hs"
-
         if hpp_outdir:
-            hpp_file = path.join(hpp_outdir, f"{mame_font.full_name()}.hpp")
+            hpp_file = path.join(hpp_outdir, f"{self.full_name}.hpp")
             with open(hpp_file, "w") as f:
                 f.write(mame_font.generate_cpp_header())
 
         if cpp_outdir:
-            cpp_file = path.join(cpp_outdir, f"{mame_font.full_name()}.cpp")
+            cpp_file = path.join(cpp_outdir, f"{self.full_name}.cpp")
             with open(cpp_file, "w") as f:
                 f.write(mame_font.generate_cpp_source())
 
         if json_outdir:
-            json_file = path.join(json_outdir, f"{mame_font.full_name()}.json")
+            json_file = path.join(json_outdir, f"{self.full_name}.json")
             with open(json_file, "w") as f:
                 f.write(mame_font.generate_json())
 
@@ -204,6 +203,7 @@ class BitmapFont:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True)
+    parser.add_argument("--mame_arch", default="HL")
     parser.add_argument("--outdir_gfx_c")
     parser.add_argument("--outdir_mame_hpp")
     parser.add_argument("--outdir_mame_cpp")
@@ -216,21 +216,27 @@ def main():
         font.to_gfx_font(args.outdir_gfx_c)
 
     if args.outdir_mame_hpp or args.outdir_mame_cpp or args.outdir_mame_json:
+        if args.mame_arch == "HL":
+            vertical_frag = False
+            msb1st = False
+        elif args.mame_arch == "HM":
+            vertical_frag = False
+            msb1st = True
+        elif args.mame_arch == "VL":
+            vertical_frag = True
+            msb1st = False
+        elif args.mame_arch == "VM":
+            vertical_frag = True
+            msb1st = True
+        else:
+            raise ValueError(f"Unsupported memory architecture for MameFont: {args.mame_arch}")
+        
         font.to_mame_font(
             args.outdir_mame_hpp,
             args.outdir_mame_cpp,
             args.outdir_mame_json,
-            vertical_scan=False,
-            bit_reverse=False,
-        )
-
-    if args.outdir_mame_hpp or args.outdir_mame_cpp or args.outdir_mame_json:
-        font.to_mame_font(
-            args.outdir_mame_hpp,
-            args.outdir_mame_cpp,
-            args.outdir_mame_json,
-            vertical_scan=True,
-            bit_reverse=False,
+            vertical_frag=vertical_frag,
+            msb1st=msb1st,
         )
 
 
