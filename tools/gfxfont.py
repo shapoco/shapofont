@@ -194,7 +194,7 @@ class GFXfontBuilder:
     def build(self) -> GFXfont:
         codes = sorted(self.bitmaps.keys())
         code_first = codes[0]
-        code_last = code_first + len(codes) - 1
+        code_last = codes[-1]
 
         glyphs: list[GFXglyph] = []
 
