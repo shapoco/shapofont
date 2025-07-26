@@ -79,7 +79,7 @@ SLC = Operator("SLC", 0x40, [(0x40, 0x4F)], 1005)
 SLS = Operator("SLS", 0x50, [(0x50, 0x5F)], 1005)
 SRC = Operator("SRC", 0x60, [(0x60, 0x6F)], 1005)
 SRS = Operator("SRS", 0x70, [(0x70, 0x7F)], 1005)
-LUS = Operator("LUS", 0x00, [(0x00, 0x3F)], 1006)
+LUP = Operator("LUP", 0x00, [(0x00, 0x3F)], 1006)
 LUD = Operator("LUD", 0x80, [(0x80, 0x9F)], 1006)
 LDI = Operator("LDI", 0xA0, [(0xA0, 0xA0)], 1009)
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
@@ -93,7 +93,7 @@ opcodes = [
     SLS,
     SRC,
     SRS,
-    LUS,
+    LUP,
     LUD,
     LDI,
 ]
@@ -126,8 +126,8 @@ def parse_instruction(
 ) -> tuple[Operator, int, int, dict[str, int]]:
     byte1 = bytecode[offset]
     operator = parse_opcode(byte1)
-    if operator == LUS:
-        return (LUS, 1, 1, {"index": byte1 & 0x3F})
+    if operator == LUP:
+        return (LUP, 1, 1, {"index": byte1 & 0x3F})
     elif operator == LUD:
         return (LUD, 1, 2, {"index": byte1 & 0x0F, "step": (byte1 >> 4) & 0x01})
     elif operator == SLC or operator == SLS or operator == SRC or operator == SRS:
@@ -907,16 +907,16 @@ class MameFontBuilder:
             new_lut += seq.array
         lut = new_lut + lut
 
-        # Replace instructions with LUS as possible
+        # Replace instructions with LUP as possible
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
                 if len(op.orig_seq) == 1 and op.orig_seq[0] in lut:
                     index = lut.index(op.orig_seq[0])
-                    op.bytecode = [LUS.code | index]
+                    op.bytecode = [LUP.code | index]
 
         # Replace instructions with LUD as possible
-        verbose_print("  Replacing instructions LUS --> LUD as possible...")
+        verbose_print("  Replacing instructions LUP --> LUD as possible...")
         for code in codes:
             glyph = self.glyphs[code]
             index1 = -1
@@ -926,7 +926,7 @@ class MameFontBuilder:
                 op = glyph.operations[i_op]
 
                 index2 = -1
-                if LUS.match(op.bytecode[0]):
+                if LUP.match(op.bytecode[0]):
                     index2 = op.bytecode[0] & 0x3F
 
                 lud_applicable = (
