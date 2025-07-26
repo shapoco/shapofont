@@ -66,11 +66,17 @@
 
 ![](./bitmap/ShapoSansDigitP/s32c30w4/design.png)
 
-### MameDigitP
+### MameSansP
+
+#### s48c40w08
+
+![](./bitmap/MameSansP/s48c40w08/design.png)
+
+### MameSansDigitP
 
 #### s64w08
 
-![](./bitmap/MameDigitP/s64w08/design.png)
+![](./bitmap/MameSansDigitP/s64w08/design.png)
 
 ## Designing Font with Painting Tool
 

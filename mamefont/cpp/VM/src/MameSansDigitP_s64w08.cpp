@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-static const uint8_t MameDigitP_s64w08_blob[] = {
+static const uint8_t MameSansDigitP_s64w08_blob[] = {
   // Font Header
   0x01, 0xC0, 0x2E, 0x0B, 0x05, 0x3F, 0x0C, 0x27,
   // Glyph Table
@@ -87,5 +87,5 @@ static const uint8_t MameDigitP_s64w08_blob[] = {
   0x5D, 0xE5, 0x4D, 0xEB, 0xEF, 0x5D, 0xE5, 0x4D, 0xE7,
 };
 
-extern const mamefont::Font MameDigitP_s64w08(MameDigitP_s64w08_blob);
+extern const mamefont::Font MameSansDigitP_s64w08(MameSansDigitP_s64w08_blob);
 

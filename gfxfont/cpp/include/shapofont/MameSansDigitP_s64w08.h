@@ -24,7 +24,7 @@
 #define PROGMEM
 #endif
 
-const uint8_t MameDigitP_s64w08Bitmaps[] PROGMEM = {
+const uint8_t MameSansDigitP_s64w08Bitmaps[] PROGMEM = {
   0x0F, 0x03, 0xFC, 0x7F, 0xE7, 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F, 0xE7, 0xFE, 0x3F,
   0xC0, 0xF0, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x0F, 0xFF, 0xF0, 0x00, 0x00, 0x3F, 0xFF, 0xFC,
   0x00, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x01, 0xFF, 0xFF, 0xFF, 0x80, 0x03, 0xFF, 0xFF, 0xFF, 0xC0,
@@ -216,7 +216,7 @@ const uint8_t MameDigitP_s64w08Bitmaps[] PROGMEM = {
   0x00, 0x00, 0x03, 0xFC, 0x00, 0x00, 0x00, 0x03, 0xFC, 0x00,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameDigitP_s64w08Glyphs[] PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSansDigitP_s64w08Glyphs[] PROGMEM = {
   { 0x0000, 12, 12, 18,  0, -12 },
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0012, 40, 64, 46,  0, -64 },
@@ -231,9 +231,9 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameDigitP_s64w08Glyphs[] PROGMEM = {
   { 0x0A8A, 40, 64, 46,  0, -64 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameDigitP_s64w08 PROGMEM = {
-  (uint8_t*)MameDigitP_s64w08Bitmaps,
-  (GFXglyph*)MameDigitP_s64w08Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSansDigitP_s64w08 PROGMEM = {
+  (uint8_t*)MameSansDigitP_s64w08Bitmaps,
+  (GFXglyph*)MameSansDigitP_s64w08Glyphs,
   0x2E,
   0x39,
   77

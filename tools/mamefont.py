@@ -403,13 +403,14 @@ class MameFontBuilder:
 
         if VERBOSE:
             print(f"[{LIB_NAME}] Glyph added: {format_char(code)}")
-            print(f"  Fragments:")
-            for i, byte in enumerate(sequence):
-                if i % 16 == 0:
-                    print("    ", end="")
-                print(f"0x{byte:02x} ", end="")
-                if (i + 1) % 16 == 0 or i == len(sequence) - 1:
-                    print()
+            if False:
+                print(f"  Fragments:")
+                for i, byte in enumerate(sequence):
+                    if i % 16 == 0:
+                        print("    ", end="")
+                    print(f"0x{byte:02x} ", end="")
+                    if (i + 1) % 16 == 0 or i == len(sequence) - 1:
+                        print()
 
         sequence.insert(0, 0x00)  # TODO: remove pivot byte
         num_bytes = len(sequence)
@@ -968,11 +969,12 @@ class MameFontBuilder:
         verbose_print(f"[{LIB_NAME}] Constructing bytecode block...")
         bytecodes: list[int] = []
         for code in codes:
-            verbose_print(f"  {format_char(code)}:")
+            if False:
+                verbose_print(f"  {format_char(code)}:")
             glyph = self.glyphs[code]
             glyph.entry_point = len(bytecodes)
             for op in glyph.operations:
-                if VERBOSE:
+                if False and VERBOSE:
                     inst_code_str = " ".join(f"0x{b:02X}" for b in op.bytecode)
                     print(f"    {inst_code_str:<10s} {op}")
                 bytecodes += op.bytecode

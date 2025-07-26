@@ -5,5 +5,5 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-extern const mamefont::Font MameSansDigitP_s64w08;
+extern const mamefont::Font MameSansP_s48c40w08;
 
