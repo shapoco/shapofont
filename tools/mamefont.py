@@ -244,6 +244,7 @@ class MameFont:
         stats_orig_size = {}
         total_inst_size = 0
         total_orig_size = 0
+        num_total_pixels = 0
         for glyph_code in range(first_code, first_code + num_glyphs):
             table_entry_offset = (
                 OFST_GLYPH_TABLE + (glyph_code - first_code) * glyph_table_entry_size
@@ -289,15 +290,20 @@ class MameFont:
                     )
                 pc += inst_size
                 num_remaining_bytes -= orig_size
+            
+            num_total_pixels += glyph_width * font_height
         total_delta_size = total_inst_size - total_orig_size
+
+        pixels_per_byte = num_total_pixels / total_size if total_size > 0 else 0
 
         code = ""
         code += "// Generated from ShapoFont\n"
         code += f"//   Format Version: {self.blob[OFST_FORMAT_VERSION]}\n"
         code += f"//   First Code      : {first_code}\n"
         code += f"//   Glyph Count     : {num_glyphs}\n"
-        code += f"//   Font Height     : {font_height}\n"
-        code += f"//   Max Glyph Width : {max_glyph_width}\n"
+        code += f"//   Font Height     : {font_height} px\n"
+        code += f"//   Max Glyph Width : {max_glyph_width} px\n"
+        code += f"//   Total Pixels    : {num_total_pixels} px\n"
         code += (
             f"//   Fragment Shape  : {"Vertical" if vertical_frag else "Horizontal"}\n"
         )
@@ -319,6 +325,7 @@ class MameFont:
             comp_ratio = delta_size / total_orig_size * 100
             code += f"//     {inst:5s}: {orig_size:4d} --> {inst_size:4d} ({comp_ratio:+7.2f}%)\n"
         code += f"//     Total: {total_orig_size:4d} --> {total_inst_size:4d} ({total_comp_ratio:+7.2f}%)\n"
+        code += f"//   Memory Efficiency: {pixels_per_byte:6.3f} px/Byte\n"
         code += "\n"
         code += "#include <stdint.h>\n"
         code += "#include <mamefont/mamefont.hpp>\n"

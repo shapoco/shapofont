@@ -72,6 +72,8 @@ class GFXfont:
         glyph_table_size_per_glyph = glyph_table_size / num_glyphs
         total_size = bitmap_array_size + glyph_table_size + GFXfont.STRUCT_SIZE
         total_size_per_glyph = total_size / num_glyphs
+        
+        pixels_per_byte = original_bmp_pixels / total_size if total_size > 0 else 0
 
         code = "#pragma once\n"
         code += "\n"
@@ -84,6 +86,7 @@ class GFXfont:
         code += f"//     Glyph Table    : {glyph_table_size:5d} Bytes ({glyph_table_size_per_glyph:6.2f} Bytes/glyph)\n"
         code += f"//     GFXfont Struct : {GFXfont.STRUCT_SIZE:5d} Bytes\n"
         code += f"//     Total          : {total_size:5d} Bytes ({total_size_per_glyph:6.2f} Bytes/glyph)\n"
+        code += f"//   Memory Efficiency: {pixels_per_byte:6.3f} px/Byte\n"
         code += "\n"
         code += "#include <stdint.h>\n"
         code += "\n"

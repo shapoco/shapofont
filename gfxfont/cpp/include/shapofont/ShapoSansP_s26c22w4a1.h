@@ -9,6 +9,7 @@
 //     Glyph Table    :   760 Bytes (  8.00 Bytes/glyph)
 //     GFXfont Struct :    10 Bytes
 //     Total          :  3715 Bytes ( 39.11 Bytes/glyph)
+//   Memory Efficiency:  8.961 px/Byte
 
 #include <stdint.h>
 

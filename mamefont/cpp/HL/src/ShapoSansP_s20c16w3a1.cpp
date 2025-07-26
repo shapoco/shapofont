@@ -2,8 +2,9 @@
 //   Format Version: 1
 //   First Code      : 32
 //   Glyph Count     : 95
-//   Font Height     : 21
-//   Max Glyph Width : 16
+//   Font Height     : 21 px
+//   Max Glyph Width : 16 px
+//   Total Pixels    : 19593 px
 //   Fragment Shape  : Horizontal
 //   Bit Order       : LSB First
 //   Shrinked Format : No
@@ -25,6 +26,7 @@
 //     SRS  :   21 -->   10 (  -0.32%)
 //     XOR  :   59 -->   59 (  +0.00%)
 //     Total: 3465 --> 1418 ( -59.08%)
+//   Memory Efficiency: 10.523 px/Byte
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
