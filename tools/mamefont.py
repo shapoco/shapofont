@@ -71,8 +71,8 @@ CPY_OFFSET = Field(3, 2, bias=0)
 CPY_BYTE_REVERSE = Field(5, 1)
 
 CPX_OFFSET_H = Field(0, 1)
-CPX_LENGTH = Field(1, 4, bias=4, step=4)
-CPX_INVERSE = Field(5, 1)
+CPX_INVERSE = Field(1, 1)
+CPX_LENGTH = Field(2, 4, bias=4, step=4)
 CPX_BYTE_REVERSE = Field(6, 1)
 CPX_BIT_REVERSE = Field(7, 1)
 
