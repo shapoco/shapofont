@@ -11,6 +11,7 @@ gfx:
 	make -j -C bitmap TARGET_FAMILY=ShapoEmpty gfx
 	make -j -C bitmap TARGET_FAMILY=MameSansP gfx
 	make -j -C bitmap TARGET_FAMILY=MameSansDigitP gfx
+	make -j -C bitmap TARGET_FAMILY=MameSeg7 gfx
 
 mame:
 	@for i in $(MAME_ARCH_LIST); do \
@@ -20,6 +21,7 @@ mame:
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame; \
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame; \
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 mame; \
 	done
 
 distclean:
@@ -30,6 +32,7 @@ distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP distclean; \
+		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 distclean; \
 	done
 
 gfx_distclean:
@@ -40,6 +43,7 @@ gfx_distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty gfx_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP gfx_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP gfx_distclean; \
+		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 gfx_distclean; \
 	done
 
 mame_distclean:
@@ -50,4 +54,5 @@ mame_distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame_distclean; \
+		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 mame_distclean; \
 	done
