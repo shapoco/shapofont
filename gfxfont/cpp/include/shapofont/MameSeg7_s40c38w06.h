@@ -25,7 +25,7 @@
 #define PROGMEM
 #endif
 
-const uint8_t MameSeg7_s39c38w06a1Bitmaps[] PROGMEM = {
+const uint8_t MameSeg7_s40c38w06Bitmaps[] PROGMEM = {
   0x38, 0xFB, 0xFF, 0xFF, 0xEF, 0x8E, 0x00, 0x03, 0xFF, 0xF0, 0x07, 0xFF, 0xF8, 0x07, 0xFF, 0xF8,
   0x03, 0xFF, 0xF0, 0x19, 0xFF, 0xE6, 0x3C, 0xFF, 0xCF, 0x3E, 0x00, 0x1F, 0x3F, 0x00, 0x3F, 0x3F,
   0x00, 0x3F, 0x3F, 0x00, 0x3F, 0x3F, 0x00, 0x3F, 0x7E, 0x00, 0x7E, 0x7E, 0x00, 0x7E, 0x7E, 0x00,
@@ -124,19 +124,19 @@ const uint8_t MameSeg7_s39c38w06a1Bitmaps[] PROGMEM = {
   0x7E, 0x00, 0x03, 0xF0, 0x00, 0x1F, 0x00, 0x00, 0xF0, 0x00, 0x03, 0x00, 0x00, 0x00,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSeg7_s39c38w06a1Glyphs[] PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSeg7_s40c38w06Glyphs[] PROGMEM = {
   { 0x0000,  7,  7, 13,  0,  -7 },
   { 0x0000,  0,  0,  0,  0,   0 },
-  { 0x0007, 24, 38, 28,  0, -39 },
-  { 0x0079,  8, 30, 28, 16, -35 },
-  { 0x0097, 24, 38, 28,  0, -39 },
-  { 0x0109, 21, 38, 28,  3, -39 },
-  { 0x016D, 23, 30, 28,  1, -35 },
-  { 0x01C4, 22, 38, 28,  1, -39 },
-  { 0x022D, 23, 38, 28,  0, -39 },
-  { 0x029B, 23, 34, 28,  1, -39 },
-  { 0x02FD, 24, 38, 28,  0, -39 },
-  { 0x036F, 23, 38, 28,  1, -39 },
+  { 0x0007, 24, 38, 28,  0, -40 },
+  { 0x0079,  8, 30, 28, 16, -36 },
+  { 0x0097, 24, 38, 28,  0, -40 },
+  { 0x0109, 21, 38, 28,  3, -40 },
+  { 0x016D, 23, 30, 28,  1, -36 },
+  { 0x01C4, 22, 38, 28,  1, -40 },
+  { 0x022D, 23, 38, 28,  0, -40 },
+  { 0x029B, 23, 34, 28,  1, -40 },
+  { 0x02FD, 24, 38, 28,  0, -40 },
+  { 0x036F, 23, 38, 28,  1, -40 },
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0000,  0,  0,  0,  0,   0 },
@@ -144,18 +144,18 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSeg7_s39c38w06a1Glyphs[] PROGMEM 
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0000,  0,  0,  0,  0,   0 },
-  { 0x03DD, 24, 34, 28,  0, -39 },
-  { 0x0443, 23, 34, 28,  0, -35 },
-  { 0x04A5, 19, 22, 28,  0, -23 },
-  { 0x04DA, 24, 34, 28,  0, -35 },
-  { 0x0540, 21, 38, 28,  0, -39 },
-  { 0x05A4, 21, 34, 28,  0, -39 },
+  { 0x03DD, 24, 34, 28,  0, -40 },
+  { 0x0443, 23, 34, 28,  0, -36 },
+  { 0x04A5, 19, 22, 28,  0, -24 },
+  { 0x04DA, 24, 34, 28,  0, -36 },
+  { 0x0540, 21, 38, 28,  0, -40 },
+  { 0x05A4, 21, 34, 28,  0, -40 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSeg7_s39c38w06a1 PROGMEM = {
-  (uint8_t*)MameSeg7_s39c38w06a1Bitmaps,
-  (GFXglyph*)MameSeg7_s39c38w06a1Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSeg7_s40c38w06 PROGMEM = {
+  (uint8_t*)MameSeg7_s40c38w06Bitmaps,
+  (GFXglyph*)MameSeg7_s40c38w06Glyphs,
   0x2E,
   0x46,
-  47
+  48
 };

@@ -80,9 +80,9 @@
 
 ### MameSeg7
 
-#### s39c38w06a1
+#### s40c38w06
 
-![](./bitmap/MameSeg7/s39c38w06a1/design.png)
+![](./bitmap/MameSeg7/s40c38w06/design.png)
 
 ## Designing Font with Painting Tool
 
