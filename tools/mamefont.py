@@ -116,7 +116,7 @@ SRS = Operator("SRS", 0x70, [(0x70, 0x7F)], 1005)
 LUP = Operator("LUP", 0x00, [(0x00, 0x3F)], 1006)
 LUD = Operator("LUD", 0x80, [(0x80, 0x9F)], 1006)
 LDI = Operator("LDI", 0xA0, [(0xA0, 0xA0)], 1009)
-CPX = Operator("CPX", 0xC0, [(0xC0, 0xC0)], 3000)
+CPX = Operator("CPX", 0xC0, [(0xC0, 0xC0)], 3100)
 
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
 
@@ -641,7 +641,8 @@ class MameFontBuilder:
                     CPX_DISTANT_LANE_OFFSET.value_range,
                     CPX_DISTANT_FRAG_OFFSET.value_range,
                 ):
-                    offset_sum = bmp.width * lane_offset - frag_offset
+                    frags_per_lene = bmp.width if self.vertical_frag else bmp.height 
+                    offset_sum = frags_per_lene * lane_offset - frag_offset
                     i_copy_src = i_src + 1 - offset_sum - length
                     if i_copy_src < 0:
                         # Index out of bounds

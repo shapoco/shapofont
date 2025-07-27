@@ -2,14 +2,14 @@
 
 // Generated from ShapoFont
 //   Pixel Count:
-//     Effective: 107376 px
+//     Effective: 107328 px
 //     Shrinked : 77320 px
 //   Estimated Foot Print:
 //     Bitmap Data    :  9358 Bytes ( 98.51 Bytes/glyph)
 //     Glyph Table    :   760 Bytes (  8.00 Bytes/glyph)
 //     GFXfont Struct :    10 Bytes
 //     Total          : 10128 Bytes (106.61 Bytes/glyph)
-//   Memory Efficiency: 10.602 px/Byte
+//   Memory Efficiency: 10.597 px/Byte
 
 #include <stdint.h>
 
@@ -619,7 +619,7 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSansP_s48c40w08Glyphs[] PROGMEM =
   { 0x0028, 14, 14, 19,  0, -48 },
   { 0x0041, 24, 40, 29,  0, -48 },
   { 0x00B9, 24, 40, 29,  0, -48 },
-  { 0x0131, 32, 40, 38,  0, -48 },
+  { 0x0131, 32, 40, 37,  0, -48 },
   { 0x01D1, 29, 40, 34,  0, -48 },
   { 0x08BD,  8, 14, 13,  0, -48 },
   { 0x0262, 15, 40, 20,  0, -48 },
