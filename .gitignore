@@ -9,3 +9,7 @@ a.out
 *.log
 .vscode/settings.json
 *Zone.Identifier
+
+# todo: delete
+Makefile.update.py
+Makefile.batch.mk

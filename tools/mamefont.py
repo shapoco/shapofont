@@ -7,6 +7,30 @@ import json
 
 LIB_NAME = "MameFont"
 
+
+class Field:
+    def __init__(
+        self,
+        pos: int,
+        width: int,
+        val_offset: int = 0,
+        val_min: int | None = None,
+        val_max: int | None = None,
+    ):
+        self.bit_pos = pos
+        self.bit_width = width
+        self.val_offset = val_offset
+        self.min_value = val_offset if val_min is None else val_min
+        self.max_value = (val_offset + (1 << width) - 1) if val_max is None else val_max
+        self.value_range = range(self.min_value, self.max_value + 1)
+
+    def read(self, value: int) -> int:
+        return ((value >> self.bit_pos) & ((1 << self.bit_width) - 1)) + self.val_offset
+
+    def place(self, value: int) -> int:
+        return (value - self.val_offset) << self.bit_pos
+
+
 OFST_FORMAT_VERSION = 0
 OFST_FONT_FLAGS = 1
 OFST_FIRST_CODE = 2
@@ -26,7 +50,17 @@ FONT_FLAG_SHRINKED_GLYPH_TABLE = 0x20
 SHIFT_MAX_SIZE = 4
 SHIFT_MAX_REPEAT = 4
 REPEAT_MAX = 16
-COPY_MAX_LENGTH = 8
+CPY_REV_LENGTH_MAX = 8
+CPY_REV_OFFSET_MAX = 3
+
+CPX_LUT_INDEX = Field(0, 6)
+CPX_RECENT_OFFSET = Field(0, 6)
+CPX_DISTANT_LANE_OFFSET = Field(4, 3, val_offset=1)
+CPX_DISTANT_FRAG_OFFSET = Field(0, 4, val_offset=-8)
+
+CPX_LENGTH = Field(0, 6, val_offset=1)
+CPX_BIT_REVERSAL = Field(6, 1)
+CPX_BYTE_REVERSAL = Field(7, 1)
 
 MAX_LUT_SIZE = 64
 LUD_INDEX_RANGE = 16
@@ -82,6 +116,8 @@ SRS = Operator("SRS", 0x70, [(0x70, 0x7F)], 1005)
 LUP = Operator("LUP", 0x00, [(0x00, 0x3F)], 1006)
 LUD = Operator("LUD", 0x80, [(0x80, 0x9F)], 1006)
 LDI = Operator("LDI", 0xA0, [(0xA0, 0xA0)], 1009)
+CPX = Operator("CPX", 0xC0, [(0xC0, 0xC0)], 3000)
+
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
 
 opcodes = [
@@ -96,6 +132,7 @@ opcodes = [
     LUP,
     LUD,
     LDI,
+    CPX,
 ]
 
 
@@ -112,6 +149,12 @@ class ShiftDir(enum.IntEnum):
 class ShiftPostOp(enum.IntEnum):
     CLR = 0
     SET = 1
+
+
+class CpxSource(enum.IntEnum):
+    LUT = 0x00
+    RECENT = 0x40
+    DISTANT = 0x80
 
 
 def parse_opcode(target: int) -> Operator:
@@ -139,6 +182,13 @@ def parse_instruction(
         return (operator, 1, repeat_count, params)
     elif operator == LDI:
         return (LDI, 2, 1, {"byte": bytecode[offset + 1]})
+    elif operator == XOR:
+        mask_width = ((byte1 >> 3) & 0x01) + 1
+        mask_pos = byte1 & 0x07
+        return (XOR, 1, 1, {"mask_width": mask_width, "mask_pos": mask_pos})
+    elif operator == RPT:
+        repeat_count = (byte1 & 0x0F) + 1
+        return (RPT, 1, repeat_count, {"repeat_count": repeat_count})
     elif operator == CPY:
         length = (byte1 & 0x07) + 1
         params = {
@@ -147,16 +197,37 @@ def parse_instruction(
         }
         return (CPY, 1, length, params)
     elif operator == REV:
-        offset = (byte1 >> 3) & 0x1
         length = (byte1 & 0x07) + 1
-        return (REV, 1, length, {"offset": offset, "length": length})
-    elif operator == RPT:
-        repeat_count = (byte1 & 0x0F) + 1
-        return (RPT, 1, repeat_count, {"repeat_count": repeat_count})
-    elif operator == XOR:
-        mask_width = ((byte1 >> 3) & 0x01) + 1
-        mask_pos = byte1 & 0x07
-        return (XOR, 1, 1, {"mask_width": mask_width, "mask_pos": mask_pos})
+        params = {
+            "offset": (byte1 >> 3) & 0x1,
+            "length": length,
+        }
+        return (REV, 1, length, params)
+    elif operator == CPX:
+        byte2 = bytecode[offset + 1]
+        if 0 != (byte2 & CpxSource.DISTANT):
+            params = {
+                "copy_source": CpxSource.DISTANT,
+                "lane_offset": CPX_DISTANT_LANE_OFFSET.read(byte2),
+                "frag_offset": CPX_DISTANT_FRAG_OFFSET.read(byte2),
+            }
+        elif 0 != (byte2 & CpxSource.RECENT):
+            params = {
+                "copy_source": CpxSource.RECENT,
+                "frag_offset": byte2 & 0x3F,
+            }
+        else:
+            params = {
+                "copy_source": CpxSource.LUT,
+                "index": byte2 & 0x3F,
+            }
+
+        byte3 = bytecode[offset + 2]
+        params["byte_reversal"] = CPX_BYTE_REVERSAL.read(byte3)
+        params["bit_reversal"] = CPX_BIT_REVERSAL.read(byte3)
+        params["length"] = CPX_LENGTH.read(byte3)
+
+        return (CPX, 3, params["length"], params)
     else:
         return (UNKNOWN, 0, 0, {})
 
@@ -275,22 +346,31 @@ class MameFont:
 
             num_remaining_bytes = glyph_size_in_bytes
             while num_remaining_bytes > 0:
-                (opr, inst_size, orig_size, _) = parse_instruction(self.blob, pc)
-                stats_inst_size[opr.mnemonic] = (
-                    stats_inst_size.get(opr.mnemonic, 0) + inst_size
-                )
-                stats_orig_size[opr.mnemonic] = (
-                    stats_orig_size.get(opr.mnemonic, 0) + orig_size
-                )
+                (opr, inst_size, orig_size, params) = parse_instruction(self.blob, pc)
+
+                mne = opr.mnemonic
+                if opr == LUD:
+                    mne += f" (step={params["step"]})"
+                elif opr == CPX:
+                    mne += f" (src={CpxSource( params["copy_source"]).name[0]})"
+
+                stats_inst_size[mne] = stats_inst_size.get(mne, 0) + inst_size
+                stats_orig_size[mne] = stats_orig_size.get(mne, 0) + orig_size
                 total_inst_size += inst_size
                 total_orig_size += orig_size
                 if inst_size <= 0:
                     raise RuntimeError(
                         f"Unknown instruction: 0x{self.blob[pc]:02x} {opr}"
                     )
+
                 pc += inst_size
                 num_remaining_bytes -= orig_size
-            
+
+                if pc >= len(self.blob) and num_remaining_bytes != 0:
+                    raise RuntimeError(
+                        f"Byte code overrun: code=0x{glyph_code:04X}, pc=0x{pc:04X}, last_op={opr}, inst_size={inst_size}, orig_size={orig_size}, params={params}"
+                    )
+
             num_total_pixels += glyph_width * font_height
         total_delta_size = total_inst_size - total_orig_size
 
@@ -323,8 +403,8 @@ class MameFont:
             orig_size = stats_orig_size[inst]
             delta_size = inst_size - orig_size
             comp_ratio = delta_size / total_orig_size * 100
-            code += f"//     {inst:5s}: {orig_size:4d} --> {inst_size:4d} ({comp_ratio:+7.2f}%)\n"
-        code += f"//     Total: {total_orig_size:4d} --> {total_inst_size:4d} ({total_comp_ratio:+7.2f}%)\n"
+            code += f"//     {inst:12s}: {orig_size:4d} --> {inst_size:4d} ({comp_ratio:+7.2f}%)\n"
+        code += f"//     Total       : {total_orig_size:4d} --> {total_inst_size:4d} ({total_comp_ratio:+7.2f}%)\n"
         code += f"//   Memory Efficiency: {pixels_per_byte:6.3f} px/Byte\n"
         code += "\n"
         code += "#include <stdint.h>\n"
@@ -403,7 +483,7 @@ class MameFontBuilder:
         code: int,
         bmp: GrayBitmap,
     ):
-        sequence = bmp.to_byte_segments(
+        fragments = bmp.to_byte_segments(
             vertical_frag=self.vertical_frag,
             msb1st=self.msb1st,
         )
@@ -412,15 +492,15 @@ class MameFontBuilder:
             print(f"[{LIB_NAME}] Glyph added: {format_char(code)}")
             if False:
                 print(f"  Fragments:")
-                for i, byte in enumerate(sequence):
+                for i, byte in enumerate(fragments):
                     if i % 16 == 0:
                         print("    ", end="")
                     print(f"0x{byte:02x} ", end="")
-                    if (i + 1) % 16 == 0 or i == len(sequence) - 1:
+                    if (i + 1) % 16 == 0 or i == len(fragments) - 1:
                         print()
 
-        sequence.insert(0, 0x00)  # TODO: remove pivot byte
-        num_bytes = len(sequence)
+        fragments.insert(0, 0x00)
+        num_bytes = len(fragments)
 
         verbose_print(f"  Generating Instructions with Dijkstra's algorithm...")
         t_start = time.time()
@@ -434,17 +514,18 @@ class MameFontBuilder:
                 self.best_prev: State | None = None
 
                 # Find next available operations
-                for i_next in range(i_pos + 1, len(sequence)):
+                for i_next in range(i_pos + 1, len(fragments)):
                     cand = suggest_operation(i_pos, i_next)
                     if cand is not None:
                         self.next_ops[i_next] = cand
 
         def suggest_operation(i_src: int, i_dst: int) -> Operation | None:
-            orig_seq = sequence[i_src + 1 : i_dst + 1]
+            orig_seq = fragments[i_src + 1 : i_dst + 1]
 
             cands: list[Operation] = []
             cands += try_shift(i_src, i_dst, orig_seq)
             cands += try_cpy_rev(i_src, i_dst, orig_seq)
+            cands += try_cpx(i_src, i_dst, orig_seq)
             cands += try_ldi(i_src, i_dst, orig_seq)
             cands += try_rpt(i_src, i_dst, orig_seq)
             cands += try_xor(i_src, i_dst, orig_seq)
@@ -462,11 +543,11 @@ class MameFontBuilder:
         def try_cpy_rev(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
 
             length = i_dst - i_src
-            if length < 1 or length > COPY_MAX_LENGTH:
+            if length < 1 or length > CPY_REV_LENGTH_MAX:
                 return []
 
             for reverse in [False, True]:
-                offset_range = range(0, 4)
+                offset_range = range(0, CPY_REV_OFFSET_MAX + 1)
 
                 for offset in offset_range:
                     if i_src - length - offset < 0:
@@ -490,9 +571,9 @@ class MameFontBuilder:
                         if i_copy_from < 0:
                             copy_segment = 0x00
                         else:
-                            copy_segment = sequence[i_copy_from]
+                            copy_segment = fragments[i_copy_from]
 
-                        if copy_segment != sequence[i_src + 1 + i]:
+                        if copy_segment != fragments[i_src + 1 + i]:
                             fail = True
                             break
 
@@ -505,9 +586,95 @@ class MameFontBuilder:
 
             return []
 
+        def try_cpx(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
+            length = i_dst - i_src
+            if length < CPX_LENGTH.min_value or length > CPX_LENGTH.max_value:
+                return []
+
+            for byte_reversal, bit_reversal in product(
+                CPX_BYTE_REVERSAL.value_range, CPX_BIT_REVERSAL.value_range
+            ):
+                search_sequence = fragments[i_src + 1 : i_dst + 1]
+                if byte_reversal != 0:
+                    search_sequence = search_sequence[::-1]
+                if bit_reversal != 0:
+                    for i in range(len(search_sequence)):
+                        byte = search_sequence[i]
+                        byte = ((byte & 0x0F) << 4) | ((byte & 0xF0) >> 4)
+                        byte = ((byte & 0x33) << 2) | ((byte & 0xCC) >> 2)
+                        byte = ((byte & 0x55) << 1) | ((byte & 0xAA) >> 1)
+                        search_sequence[i] = byte
+
+                reversal_cost = byte_reversal + bit_reversal * 2
+
+                # from recent sequence
+                for offset in CPX_RECENT_OFFSET.value_range:
+                    i_copy_src = i_src + 1 - offset - length
+                    if i_copy_src < 0:
+                        # Index out of bounds
+                        continue
+
+                    if (
+                        not bit_reversal
+                        and length <= CPY_REV_LENGTH_MAX
+                        and offset <= CPY_REV_OFFSET_MAX
+                    ):
+                        # Use CPY/REV instead
+                        continue
+
+                    if fragments[i_copy_src : i_copy_src + length] == search_sequence:
+                        byte2 = 0
+                        byte2 |= CpxSource.RECENT
+                        byte2 |= CPX_RECENT_OFFSET.place(offset)
+
+                        byte3 = 0
+                        byte3 |= CPX_BYTE_REVERSAL.place(byte_reversal)
+                        byte3 |= CPX_BIT_REVERSAL.place(bit_reversal)
+                        byte3 |= CPX_LENGTH.place(length)
+
+                        cost = CPX.cost + 10 + reversal_cost
+
+                        return [Operation([CPX.code, byte2, byte3], orig_seq, cost)]
+
+                # from distant past sequence
+                for lane_offset, frag_offset in product(
+                    CPX_DISTANT_LANE_OFFSET.value_range,
+                    CPX_DISTANT_FRAG_OFFSET.value_range,
+                ):
+                    offset_sum = bmp.width * lane_offset - frag_offset
+                    i_copy_src = i_src + 1 - offset_sum - length
+                    if i_copy_src < 0:
+                        # Index out of bounds
+                        continue
+
+                    if (
+                        not bit_reversal
+                        and length <= CPY_REV_LENGTH_MAX
+                        and offset_sum <= CPY_REV_OFFSET_MAX
+                    ):
+                        # Use CPY/REV instead
+                        continue
+
+                    if fragments[i_copy_src : i_copy_src + length] == search_sequence:
+                        byte2 = 0
+                        byte2 |= CpxSource.DISTANT
+                        byte2 |= CPX_DISTANT_LANE_OFFSET.place(lane_offset)
+                        byte2 |= CPX_DISTANT_FRAG_OFFSET.place(frag_offset)
+
+                        byte3 = 0
+                        byte3 |= CPX_BYTE_REVERSAL.place(byte_reversal)
+                        byte3 |= CPX_BIT_REVERSAL.place(bit_reversal)
+                        byte3 |= CPX_LENGTH.place(length)
+
+                        cost = CPX.cost + 20 + reversal_cost
+
+                        return [Operation([CPX.code, byte2, byte3], orig_seq, cost)]
+
+            return []
+
         def try_ldi(i_src: int, i_dst: int, orig_seq: list[int]) -> list[Operation]:
             if i_src + 1 == i_dst:
-                return [Operation([LDI.code, sequence[i_dst]], orig_seq, LDI.cost)]
+                return [Operation([LDI.code, fragments[i_dst]], orig_seq, LDI.cost)]
             else:
                 return []
 
@@ -530,7 +697,7 @@ class MameFontBuilder:
                 if post_op == 0:
                     modifier = modifier ^ 0xFF
 
-                work = sequence[i_src]
+                work = fragments[i_src]
                 for i_step in range(i_src, i_dst):
                     if shift_dir == ShiftDir.LEFT:
                         work = work << shift_size
@@ -540,7 +707,7 @@ class MameFontBuilder:
                         work |= modifier
                     else:
                         work &= modifier
-                    if work != sequence[i_step + 1]:
+                    if work != fragments[i_step + 1]:
                         fail = True
                         break
 
@@ -568,7 +735,7 @@ class MameFontBuilder:
                 return []
 
             for i_step in range(i_src, i_dst):
-                if sequence[i_src] != sequence[i_step + 1]:
+                if fragments[i_src] != fragments[i_step + 1]:
                     return []
 
             inst_code = RPT.code | (repeat_count - 1)
@@ -584,7 +751,7 @@ class MameFontBuilder:
             for mask_width, mask_pos in product(mask_width_range, mask_pos_range):
                 mask = (1 << mask_width) - 1
                 mask <<= mask_pos
-                if sequence[i_src] ^ mask == sequence[i_dst]:
+                if fragments[i_src] ^ mask == fragments[i_dst]:
                     inst_code = XOR.code | ((mask_width - 1) << 3) | mask_pos
                     return [Operation([inst_code], orig_seq, XOR.cost)]
 
@@ -595,7 +762,7 @@ class MameFontBuilder:
 
         if False and VERBOSE:
             print(f"   ", end="")
-            for frag in sequence:
+            for frag in fragments:
                 print(f"   {frag:02X}", end="")
             print()
 

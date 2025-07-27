@@ -5,21 +5,21 @@ MAME_ARCH_LIST := HL HM VL VM
 all: gfx mame
 
 gfx:
-	make -C bitmap TARGET_FAMILY=ShapoSansP gfx
-	make -C bitmap TARGET_FAMILY=ShapoSansMono gfx
-	make -C bitmap TARGET_FAMILY=ShapoSansDigitP gfx
-	make -C bitmap TARGET_FAMILY=ShapoEmpty gfx
-	make -C bitmap TARGET_FAMILY=MameSansP gfx
-	make -C bitmap TARGET_FAMILY=MameSansDigitP gfx
+	make -j -C bitmap TARGET_FAMILY=ShapoSansP gfx
+	make -j -C bitmap TARGET_FAMILY=ShapoSansMono gfx
+	make -j -C bitmap TARGET_FAMILY=ShapoSansDigitP gfx
+	make -j -C bitmap TARGET_FAMILY=ShapoEmpty gfx
+	make -j -C bitmap TARGET_FAMILY=MameSansP gfx
+	make -j -C bitmap TARGET_FAMILY=MameSansDigitP gfx
 
 mame:
 	@for i in $(MAME_ARCH_LIST); do \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansP mame; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansMono mame; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansDigitP mame; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansP mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansMono mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansDigitP mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame; \
 	done
 
 distclean:

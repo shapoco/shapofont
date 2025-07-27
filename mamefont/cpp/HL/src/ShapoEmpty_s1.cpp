@@ -15,8 +15,8 @@
 //     Bytecodes     :    2 Bytes (2.00 Bytes/glyph)
 //     Total         :   14 Bytes (14.00 Bytes/glyph)
 //   Compression Performance:
-//     RPT  :    1 -->    1 (  +0.00%)
-//     Total:    1 -->    1 (  +0.00%)
+//     RPT         :    1 -->    1 (  +0.00%)
+//     Total       :    1 -->    1 (  +0.00%)
 //   Memory Efficiency:  0.071 px/Byte
 
 #include <stdint.h>
