@@ -223,8 +223,8 @@ def parse_instruction(
             "offset": ((CPX_OFFSET_H.read(byte3) << 8) | byte2),
             "length": CPX_LENGTH.read(byte3),
             "inverse": CPX_INVERSE.read(byte3),
-            "byte_reversal": CPX_BYTE_REVERSE.read(byte3),
-            "bit_reversal": CPX_BIT_REVERSE.read(byte3),
+            "byte_reverse": CPX_BYTE_REVERSE.read(byte3),
+            "bit_reverse": CPX_BIT_REVERSE.read(byte3),
         }
         return (CPX, 3, params["length"], params)
     elif operator == ABO:
@@ -549,6 +549,10 @@ class MameFontBuilder:
                 return best_op
 
             for byte_reverse in CPY_BYTE_REVERSE.range:
+                search_sequence = goal_seq.copy()
+                if byte_reverse != 0:
+                    search_sequence = search_sequence[::-1]
+                    
                 for offset in CPY_OFFSET.range:
                     if i_src - length - offset < 0:
                         continue
@@ -561,34 +565,25 @@ class MameFontBuilder:
                         # Reserved for other instructions
                         continue
 
-                    fail = False
-                    for i in range(length):
+                    i_copy_start = i_src + 1 - length - offset
+                    i_copy_end = i_copy_start + length
+                    if i_copy_end <= 0:
+                        copy_src = [0] * length
+                    elif i_copy_start < 0:
+                        copy_src = [0] * (-i_copy_start) + fragments[0:i_copy_end]
+                    else:
+                        copy_src = fragments[i_copy_start:i_copy_end]
+
+                    if copy_src == search_sequence:
+                        cost = CPY.cost
                         if byte_reverse != 0:
-                            i_copy_from = i_src - offset - i
-                        else:
-                            i_copy_from = i_src - offset - length + 1 + i
+                            cost += 1
 
-                        if i_copy_from < 0:
-                            copy_segment = 0x00
-                        else:
-                            copy_segment = fragments[i_copy_from]
-
-                        if copy_segment != fragments[i_src + 1 + i]:
-                            fail = True
-                            break
-
-                    if fail:
-                        continue
-
-                    cost = CPY.cost
-                    if byte_reverse != 0:
-                        cost += 1
-
-                    inst_code = CPY.code
-                    inst_code |= CPY_LENGTH.place(length)
-                    inst_code |= CPY_OFFSET.place(offset)
-                    inst_code |= CPY_BYTE_REVERSE.place(byte_reverse)
-                    return Operation([inst_code], goal_seq, cost)
+                        inst_code = CPY.code
+                        inst_code |= CPY_LENGTH.place(length)
+                        inst_code |= CPY_OFFSET.place(offset)
+                        inst_code |= CPY_BYTE_REVERSE.place(byte_reverse)
+                        return Operation([inst_code], goal_seq, cost)
 
             return best_op
 
@@ -602,13 +597,13 @@ class MameFontBuilder:
             if length not in CPX_LENGTH.range:
                 return best_op
 
-            for byte_reversal, bit_reversal, inverse in product(
+            for byte_reverse, bit_reverse, inverse in product(
                 CPX_BYTE_REVERSE.range, CPX_BIT_REVERSE.range, CPX_INVERSE.range
             ):
                 search_sequence = goal_seq.copy()
-                if byte_reversal != 0:
+                if byte_reverse != 0:
                     search_sequence = search_sequence[::-1]
-                if bit_reversal != 0:
+                if bit_reverse != 0:
                     for i in range(len(search_sequence)):
                         byte = search_sequence[i]
                         byte = ((byte & 0x0F) << 4) | ((byte & 0xF0) >> 4)
@@ -619,7 +614,7 @@ class MameFontBuilder:
                     for i in range(len(search_sequence)):
                         search_sequence[i] = search_sequence[i] ^ 0xFF
 
-                reversal_cost = byte_reversal + bit_reversal * 2
+                reversal_cost = byte_reverse + bit_reverse * 2
 
                 # from recent sequence
                 for abs_offset in range(i_src - length):
@@ -630,8 +625,8 @@ class MameFontBuilder:
                         byte3 = 0
                         byte3 |= CPX_OFFSET_H.place(abs_offset >> 8)
                         byte3 |= CPX_LENGTH.place(length)
-                        byte3 |= CPX_BYTE_REVERSE.place(byte_reversal)
-                        byte3 |= CPX_BIT_REVERSE.place(bit_reversal)
+                        byte3 |= CPX_BYTE_REVERSE.place(byte_reverse)
+                        byte3 |= CPX_BIT_REVERSE.place(bit_reverse)
                         byte3 |= CPX_INVERSE.place(inverse)
 
                         cost = CPX.cost + reversal_cost
