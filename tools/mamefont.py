@@ -134,6 +134,7 @@ LUP = Operator("LUP", 0x00, [(0x00, 0x3F)], 1006)
 LUD = Operator("LUD", 0x40, [(0x40, 0x5F)], 1006)
 LDI = Operator("LDI", 0xC0, [(0xC0, 0xC0)], 1009)
 CPX = Operator("CPX", 0xE0, [(0xE0, 0xE0)], 3100)
+ABO = Operator("ABO", 0xF0, [(0xF0, 0xF0)], 2000)
 
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
 
@@ -146,6 +147,7 @@ opcodes = [
     LUD,
     LDI,
     CPX,
+    ABO,
 ]
 
 
@@ -225,6 +227,8 @@ def parse_instruction(
             "bit_reversal": CPX_BIT_REVERSE.read(byte3),
         }
         return (CPX, 3, params["length"], params)
+    elif operator == ABO:
+        return (ABO, 1, 0, {})
     else:
         return (UNKNOWN, 0, 0, {})
 
@@ -1126,7 +1130,10 @@ class MameFontBuilder:
                 bytecodes += op.bytecode
             if shrinked_glyph_table:
                 while len(bytecodes) % ALIGN_SIZE != 0:
-                    bytecodes.append(0x00)
+                    bytecodes.append(ABO.code)
+
+        for _ in range(3):
+            bytecodes.append(ABO.code)
 
         verbose_print(f"[{LIB_NAME}] Generating blob...")
         if shrinked_glyph_table:

@@ -12,15 +12,15 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :    4 Bytes (4 Bytes/glyph)
 //     Lookup Table  :    2 Bytes (3.12% used)
-//     Bytecodes     :    8 Bytes (8.00 Bytes/glyph)
-//     Total         :   22 Bytes (22.00 Bytes/glyph)
+//     Bytecodes     :   11 Bytes (11.00 Bytes/glyph)
+//     Total         :   25 Bytes (25.00 Bytes/glyph)
 //   Compression Performance:
 //     CPY         :   14 -->    2 ( -37.50%)
 //     LUP         :    1 -->    1 (  +0.00%)
 //     RPT         :   14 -->    3 ( -34.38%)
 //     SFT         :    3 -->    2 (  -3.12%)
 //     Total       :   32 -->    8 ( -75.00%)
-//   Memory Efficiency: 11.636 px/Byte
+//   Memory Efficiency: 10.240 px/Byte
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
@@ -40,7 +40,7 @@ const uint8_t TestF_s16w4_blob[] MAMEFONT_PROGMEM = {
   // Lookup Table
   0xFF, 0x00,
   // Bytecodes
-  0x00, 0x62, 0xAC, 0x64, 0xE7, 0xE5, 0x65, 0xAD,
+  0x00, 0x62, 0xAC, 0x64, 0xE7, 0xE5, 0x65, 0xAD, 0xF0, 0xF0, 0xF0,
 };
 
 extern const mamefont::Font TestF_s16w4(TestF_s16w4_blob);

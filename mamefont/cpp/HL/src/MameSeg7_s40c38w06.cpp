@@ -12,8 +12,8 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :  100 Bytes (4 Bytes/glyph)
 //     Lookup Table  :   26 Bytes (40.62% used)
-//     Bytecodes     :  535 Bytes (21.40 Bytes/glyph)
-//     Total         :  669 Bytes (26.76 Bytes/glyph)
+//     Bytecodes     :  538 Bytes (21.52 Bytes/glyph)
+//     Total         :  672 Bytes (26.88 Bytes/glyph)
 //   Compression Performance:
 //     CPX         :  456 -->   54 ( -20.10%)
 //     CPY         :  391 -->   80 ( -15.55%)
@@ -24,7 +24,7 @@
 //     SFT         :  150 -->   90 (  -3.00%)
 //     XOR         :   44 -->   44 (  +0.00%)
 //     Total       : 2000 -->  535 ( -73.25%)
-//   Memory Efficiency: 23.498 px/Byte
+//   Memory Efficiency: 23.393 px/Byte
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
@@ -84,7 +84,7 @@ const uint8_t MameSeg7_s40c38w06_blob[] MAMEFONT_PROGMEM = {
   0x56, 0x58, 0xE1, 0x8D, 0x0A, 0x61, 0xE3, 0x64, 0xF7, 0xE0, 0x22, 0xD4, 0xA1, 0x0E, 0x68, 0x92,
   0xE3, 0x65, 0xFF, 0xD0, 0xA5, 0xB4, 0x02, 0xE1, 0x53, 0x76, 0x77, 0x62, 0xA0, 0x62, 0x05, 0x50,
   0x02, 0xE7, 0xA0, 0x62, 0xA1, 0x16, 0x0E, 0x64, 0x0A, 0x62, 0xF6, 0xE7, 0xE4, 0x6F, 0x9C, 0x74,
-  0x60, 0xA2, 0x0E, 0x68, 0x92, 0xE4, 0x6F,
+  0x60, 0xA2, 0x0E, 0x68, 0x92, 0xE4, 0x6F, 0xF0, 0xF0, 0xF0,
 };
 
 extern const mamefont::Font MameSeg7_s40c38w06(MameSeg7_s40c38w06_blob);

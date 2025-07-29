@@ -12,8 +12,8 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :  380 Bytes (4 Bytes/glyph)
 //     Lookup Table  :   50 Bytes (78.12% used)
-//     Bytecodes     : 1745 Bytes (18.37 Bytes/glyph)
-//     Total         : 2183 Bytes (22.98 Bytes/glyph)
+//     Bytecodes     : 1748 Bytes (18.40 Bytes/glyph)
+//     Total         : 2186 Bytes (23.01 Bytes/glyph)
 //   Compression Performance:
 //     CPX         :  476 -->  138 (  -6.55%)
 //     CPY         :  776 -->  138 ( -12.37%)
@@ -24,7 +24,7 @@
 //     SFT         :  352 -->  145 (  -4.01%)
 //     XOR         :   63 -->   63 (  +0.00%)
 //     Total       : 5157 --> 1745 ( -66.16%)
-//   Memory Efficiency: 15.250 px/Byte
+//   Memory Efficiency: 15.229 px/Byte
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
@@ -179,7 +179,7 @@ const uint8_t ShapoSansP_s26c22w4a1_blob[] MAMEFONT_PROGMEM = {
   0x62, 0xA2, 0xA3, 0xE0, 0x1F, 0x44, 0x05, 0x4B, 0x0A, 0x65, 0x08, 0x02, 0xE7, 0x1F, 0x1F, 0x0B,
   0x05, 0x8E, 0x03, 0x66, 0x6F, 0xAE, 0x03, 0x42, 0x0A, 0x65, 0x06, 0x0B, 0xE7, 0x1D, 0x1D, 0x52,
   0xAE, 0x6A, 0x26, 0x27, 0x41, 0x07, 0x1F, 0x04, 0x62, 0x6F, 0x10, 0x02, 0x48, 0x31, 0x20, 0x04,
-  0x69,
+  0x69, 0xF0, 0xF0, 0xF0,
 };
 
 extern const mamefont::Font ShapoSansP_s26c22w4a1(ShapoSansP_s26c22w4a1_blob);

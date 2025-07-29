@@ -12,12 +12,12 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :    2 Bytes (2 Bytes/glyph)
 //     Lookup Table  :    2 Bytes (3.12% used)
-//     Bytecodes     :    2 Bytes (2.00 Bytes/glyph)
-//     Total         :   14 Bytes (14.00 Bytes/glyph)
+//     Bytecodes     :    5 Bytes (5.00 Bytes/glyph)
+//     Total         :   17 Bytes (17.00 Bytes/glyph)
 //   Compression Performance:
 //     RPT         :    1 -->    1 (  +0.00%)
 //     Total       :    1 -->    1 (  +0.00%)
-//   Memory Efficiency:  0.071 px/Byte
+//   Memory Efficiency:  0.059 px/Byte
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
@@ -37,7 +37,7 @@ const uint8_t ShapoEmpty_s1_blob[] MAMEFONT_PROGMEM = {
   // Lookup Table
   0x00, 0x00,
   // Bytecodes
-  0x60, 0x00,
+  0x60, 0xF0, 0xF0, 0xF0, 0xF0,
 };
 
 extern const mamefont::Font ShapoEmpty_s1(ShapoEmpty_s1_blob);
