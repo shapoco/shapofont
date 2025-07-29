@@ -554,9 +554,6 @@ class MameFontBuilder:
                     search_sequence = search_sequence[::-1]
                     
                 for offset in CPY_OFFSET.range:
-                    if i_src - length - offset < 0:
-                        continue
-
                     if byte_reverse == 0 and length == 1 and offset == 0:
                         # Reserved for other instructions
                         continue
