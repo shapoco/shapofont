@@ -615,7 +615,7 @@ class MameFontBuilder:
                 reversal_cost = byte_reverse + bit_reverse * 2
 
                 # from recent sequence
-                for offset in range(1 << CPX_OFFSET_BITS):
+                for offset in range(i_src + length + 2):
                     i_copy_start = i_src + 1 - offset
                     i_copy_end = i_copy_start + length
 
