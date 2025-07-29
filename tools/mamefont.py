@@ -70,7 +70,8 @@ CPY_LENGTH = Field(0, 3, bias=1)
 CPY_OFFSET = Field(3, 2, bias=0)
 CPY_BYTE_REVERSE = Field(5, 1)
 
-CPX_OFFSET_H = Field(0, 1)
+CPX_OFFSET_BITS = 9
+CPX_OFFSET_H = Field(0, CPX_OFFSET_BITS - 8)
 CPX_INVERSE = Field(1, 1)
 CPX_LENGTH = Field(2, 4, bias=4, step=4)
 CPX_BYTE_REVERSE = Field(6, 1)
@@ -459,7 +460,7 @@ class MameFont:
         code += f"extern const mamefont::Font {self.name}({self.name}_blob);\n"
         code += "\n"
         code += "#undef MAMEFONT_PROGMEM\n"
-        
+
         return code
 
     def generate_json(self) -> str:
@@ -552,7 +553,7 @@ class MameFontBuilder:
                 search_sequence = goal_seq.copy()
                 if byte_reverse != 0:
                     search_sequence = search_sequence[::-1]
-                    
+
                 for offset in CPY_OFFSET.range:
                     if byte_reverse == 0 and length == 1 and offset == 0:
                         # Reserved for other instructions
@@ -614,13 +615,25 @@ class MameFontBuilder:
                 reversal_cost = byte_reverse + bit_reverse * 2
 
                 # from recent sequence
-                for abs_offset in range(i_src - length):
-                    i_copy_from = abs_offset + 1
-                    if fragments[i_copy_from : i_copy_from + length] == search_sequence:
-                        byte2 = abs_offset & 0xFF
+                for offset in range(1 << CPX_OFFSET_BITS):
+                    i_copy_start = i_src + 1 - offset
+                    i_copy_end = i_copy_start + length
+
+                    if i_copy_end > i_src:
+                        continue
+
+                    if i_copy_end <= 0:
+                        copy_src = [0] * length
+                    elif i_copy_start < 0:
+                        copy_src = [0] * (-i_copy_start) + fragments[0:i_copy_end]
+                    else:
+                        copy_src = fragments[i_copy_start:i_copy_end]
+
+                    if copy_src == search_sequence:
+                        byte2 = offset & 0xFF
 
                         byte3 = 0
-                        byte3 |= CPX_OFFSET_H.place(abs_offset >> 8)
+                        byte3 |= CPX_OFFSET_H.place(offset >> 8)
                         byte3 |= CPX_LENGTH.place(length)
                         byte3 |= CPX_BYTE_REVERSE.place(byte_reverse)
                         byte3 |= CPX_BIT_REVERSE.place(bit_reverse)
