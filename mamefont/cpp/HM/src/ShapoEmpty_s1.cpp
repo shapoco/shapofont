@@ -37,7 +37,7 @@ const uint8_t ShapoEmpty_s1_blob[] MAMEFONT_PROGMEM = {
   // Lookup Table
   0x00, 0x00,
   // Bytecodes
-  0x60, 0xF0, 0xF0, 0xF0, 0xF0,
+  0xE0, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
 extern const mamefont::Font ShapoEmpty_s1(ShapoEmpty_s1_blob);
