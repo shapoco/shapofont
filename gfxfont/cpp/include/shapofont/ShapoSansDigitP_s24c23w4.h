@@ -13,19 +13,29 @@
 
 #include <stdint.h>
 
-#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER
+#ifdef SHAPOFONT_INCLUDE_AVR_PGMSPACE
+#include <avr/pgmspace.h>
+#endif
+
+#ifdef SHAPOFONT_INCLUDE_GFXFONT
 #include <gfxfont.h>
+#endif
+
+#ifndef SHAPOFONT_PROGMEM
+#ifdef PROGMEM
+#define SHAPOFONT_PROGMEM PROGMEM
+#else
+#define SHAPOFONT_PROGMEM
+#endif
+#define SHAPOFONT_PROGMEM_SELF_DEFINED
 #endif
 
 #ifndef SHAPOFONT_GFXFONT_NAMESPACE
 #define SHAPOFONT_GFXFONT_NAMESPACE
+#define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-#ifndef PROGMEM
-#define PROGMEM
-#endif
-
-const uint8_t ShapoSansDigitP_s24c23w4Bitmaps[] PROGMEM = {
+const uint8_t ShapoSansDigitP_s24c23w4Bitmaps[] SHAPOFONT_PROGMEM = {
   0x77, 0xFF, 0xF7, 0x00, 0x07, 0xE0, 0x1F, 0xF8, 0x3F, 0xFC, 0x7E, 0x7E, 0x78, 0x1E, 0xF8, 0x1F,
   0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F,
   0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF8, 0x1F, 0x78, 0x1E, 0x7E, 0x7E, 0x3F, 0xFC, 0x1F, 0xF8,
@@ -56,7 +66,7 @@ const uint8_t ShapoSansDigitP_s24c23w4Bitmaps[] PROGMEM = {
   0xF8, 0x00, 0xF0, 0x01, 0xF0, 0x01, 0xE0, 0x03, 0xE0,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s24c23w4Glyphs[] PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s24c23w4Glyphs[] SHAPOFONT_PROGMEM = {
   { 0x0000,  5,  5,  8,  0,  -5 },
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0004, 16, 23, 19,  0, -24 },
@@ -71,10 +81,18 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s24c23w4Glyphs[] PROG
   { 0x018B, 16, 23, 19,  0, -24 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansDigitP_s24c23w4 PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansDigitP_s24c23w4 SHAPOFONT_PROGMEM = {
   (uint8_t*)ShapoSansDigitP_s24c23w4Bitmaps,
   (GFXglyph*)ShapoSansDigitP_s24c23w4Glyphs,
   0x2E,
   0x39,
   29
 };
+
+#ifdef SHAPOFONT_PROGMEM_SELF_DEFINED
+#undef SHAPOFONT_PROGMEM
+#endif
+
+#ifdef SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
+#undef SHAPOFONT_GFXFONT_NAMESPACE
+#endif

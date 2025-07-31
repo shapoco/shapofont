@@ -162,8 +162,6 @@ The rights to font files generated using the tools included in ShapoFont are sub
 Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=::lgfx::` macro so that it can be used with LovyanGFX.
 
 ```c++
-#pragma once
-
 #define SHAPOFONT_GFXFONT_NAMESPACE ::lgfx::
 #include "shapofont/ShapoSansP_s11c09w2a1.h"
 ```

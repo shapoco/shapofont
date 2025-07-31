@@ -13,19 +13,29 @@
 
 #include <stdint.h>
 
-#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER
+#ifdef SHAPOFONT_INCLUDE_AVR_PGMSPACE
+#include <avr/pgmspace.h>
+#endif
+
+#ifdef SHAPOFONT_INCLUDE_GFXFONT
 #include <gfxfont.h>
+#endif
+
+#ifndef SHAPOFONT_PROGMEM
+#ifdef PROGMEM
+#define SHAPOFONT_PROGMEM PROGMEM
+#else
+#define SHAPOFONT_PROGMEM
+#endif
+#define SHAPOFONT_PROGMEM_SELF_DEFINED
 #endif
 
 #ifndef SHAPOFONT_GFXFONT_NAMESPACE
 #define SHAPOFONT_GFXFONT_NAMESPACE
+#define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-#ifndef PROGMEM
-#define PROGMEM
-#endif
-
-const uint8_t MameSquareWide_s60c48w16a4Bitmaps[] PROGMEM = {
+const uint8_t MameSquareWide_s60c48w16a4Bitmaps[] SHAPOFONT_PROGMEM = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -1408,7 +1418,7 @@ const uint8_t MameSquareWide_s60c48w16a4Bitmaps[] PROGMEM = {
   0x00, 0x00, 0x03, 0xC0,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSquareWide_s60c48w16a4Glyphs[] PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSquareWide_s60c48w16a4Glyphs[] SHAPOFONT_PROGMEM = {
   { 0x0000,  0,  0, 22, 16,   0 },
   { 0x0000, 16, 48, 22,  0, -60 },
   { 0x0060, 36, 16, 42,  0, -64 },
@@ -1506,10 +1516,18 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSquareWide_s60c48w16a4Glyphs[] PR
   { 0x5604, 32, 12, 38,  0, -42 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSquareWide_s60c48w16a4 PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSquareWide_s60c48w16a4 SHAPOFONT_PROGMEM = {
   (uint8_t*)MameSquareWide_s60c48w16a4Bitmaps,
   (GFXglyph*)MameSquareWide_s60c48w16a4Glyphs,
   0x20,
   0x7E,
   72
 };
+
+#ifdef SHAPOFONT_PROGMEM_SELF_DEFINED
+#undef SHAPOFONT_PROGMEM
+#endif
+
+#ifdef SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
+#undef SHAPOFONT_GFXFONT_NAMESPACE
+#endif

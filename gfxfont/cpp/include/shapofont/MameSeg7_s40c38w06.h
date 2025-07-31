@@ -13,19 +13,29 @@
 
 #include <stdint.h>
 
-#ifdef SHAPOFONT_GFXFONT_INCLUDE_HEADER
+#ifdef SHAPOFONT_INCLUDE_AVR_PGMSPACE
+#include <avr/pgmspace.h>
+#endif
+
+#ifdef SHAPOFONT_INCLUDE_GFXFONT
 #include <gfxfont.h>
+#endif
+
+#ifndef SHAPOFONT_PROGMEM
+#ifdef PROGMEM
+#define SHAPOFONT_PROGMEM PROGMEM
+#else
+#define SHAPOFONT_PROGMEM
+#endif
+#define SHAPOFONT_PROGMEM_SELF_DEFINED
 #endif
 
 #ifndef SHAPOFONT_GFXFONT_NAMESPACE
 #define SHAPOFONT_GFXFONT_NAMESPACE
+#define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-#ifndef PROGMEM
-#define PROGMEM
-#endif
-
-const uint8_t MameSeg7_s40c38w06Bitmaps[] PROGMEM = {
+const uint8_t MameSeg7_s40c38w06Bitmaps[] SHAPOFONT_PROGMEM = {
   0x38, 0xFB, 0xFF, 0xFF, 0xEF, 0x8E, 0x00, 0x03, 0xFF, 0xF0, 0x07, 0xFF, 0xF8, 0x07, 0xFF, 0xF8,
   0x03, 0xFF, 0xF0, 0x19, 0xFF, 0xE6, 0x3C, 0xFF, 0xCF, 0x3E, 0x00, 0x1F, 0x3F, 0x00, 0x3F, 0x3F,
   0x00, 0x3F, 0x3F, 0x00, 0x3F, 0x3F, 0x00, 0x3F, 0x7E, 0x00, 0x7E, 0x7E, 0x00, 0x7E, 0x7E, 0x00,
@@ -124,7 +134,7 @@ const uint8_t MameSeg7_s40c38w06Bitmaps[] PROGMEM = {
   0x7E, 0x00, 0x03, 0xF0, 0x00, 0x1F, 0x00, 0x00, 0xF0, 0x00, 0x03, 0x00, 0x00, 0x00,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSeg7_s40c38w06Glyphs[] PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSeg7_s40c38w06Glyphs[] SHAPOFONT_PROGMEM = {
   { 0x0000,  7,  7, 13,  0,  -7 },
   { 0x0000,  0,  0,  0,  0,   0 },
   { 0x0007, 24, 38, 28,  0, -40 },
@@ -152,10 +162,18 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSeg7_s40c38w06Glyphs[] PROGMEM = 
   { 0x05A4, 21, 34, 28,  0, -40 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSeg7_s40c38w06 PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont MameSeg7_s40c38w06 SHAPOFONT_PROGMEM = {
   (uint8_t*)MameSeg7_s40c38w06Bitmaps,
   (GFXglyph*)MameSeg7_s40c38w06Glyphs,
   0x2E,
   0x46,
   48
 };
+
+#ifdef SHAPOFONT_PROGMEM_SELF_DEFINED
+#undef SHAPOFONT_PROGMEM
+#endif
+
+#ifdef SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
+#undef SHAPOFONT_GFXFONT_NAMESPACE
+#endif
