@@ -3,7 +3,7 @@
 - Bitmap fonts made primarily for embedded projects
 - a Tool for generating font files from PNG images
 
-## Font Naming Rule
+## Naming Rule
 
 ![](./img/dimensions.svg)
 
@@ -15,85 +15,85 @@
 ||Descent|s - c - a|
 |w|weight|1|
 
-## Fonts
+# Fonts
 
-### ShapoSansP
+## ShapoSansP
 
-#### s05
+### s05
 
 ![](./bitmap/ShapoSansP/s05/design.png)
 
-#### s06c05a1
+### s07c05a01
 
 ![](./bitmap/ShapoSansP/s07c05a01/design.png)
 
-#### s08c07
+### s08c07
 
 ![](./bitmap/ShapoSansP/s08c07/design.png)
 
-#### s11c09w2a1
+### s12c09a01w02
 
 ![](./bitmap/ShapoSansP/s12c09a01w02/design.png)
 
-#### s20c16w3a1
+### s21c16a01w03
 
 ![](./bitmap/ShapoSansP/s21c16a01w03/design.png)
 
-#### s26c22w4a1
+### s27c22a01w04
 
 ![](./bitmap/ShapoSansP/s27c22a01w04//design.png)
 
-### ShapoSansMono
+## ShapoSansMono
 
-#### s08c07
+### s08c07
 
 ![](./bitmap/ShapoSansMono/s08c07/design.png)
 
-### ShapoSansDigitP
+## ShapoSansDigitP
 
-#### s16c14w2
+### s16c14w02
 
 ![](./bitmap/ShapoSansDigitP/s16c14w02/design.png)
 
-#### s24c23w4
+### s24c23w04
 
 ![](./bitmap/ShapoSansDigitP/s24c23w04/design.png)
 
-#### s32c30w4
+### s32c30w04
 
 ![](./bitmap/ShapoSansDigitP/s32c30w04/design.png)
 
-### MameSansP
+## MameSansP
 
-#### s48c40w08
+### s48c40w08
 
 ![](./bitmap/MameSansP/s48c40w08/design.png)
 
-### MameSquareWide
+## MameSquareWide
 
-#### s60c48w16a4
+### s64c48a04w16
 
 ![](./bitmap/MameSquareWide/s64c48a04w16/design.png)
 
-### MameSansDigitP
+## MameSansDigitP
 
-#### s64w08
+### s64w08
 
 ![](./bitmap/MameSansDigitP/s64w08/design.png)
 
-### MameSeg7
+## MameSeg7
 
-#### s40c38w06
+### s40c38w06
 
 ![](./bitmap/MameSeg7/s40c38w06/design.png)
 
-## Designing Font with Painting Tool
+# Designing Font with Painting Tool
 
 ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
 
 ![](./img/designing_with_mspaint.png)
 
-### How to Design
+## How to Design
 
 1. Create a canvas of appropriate size with a black background.
 2. Design your glyphs in white.
@@ -116,7 +116,7 @@ ShapoFonts are designed using Microsoft Paint and converted to some font formats
 - There must be at least typeSize + ascenderSpacing pixels of space above the position marker.
 - The order of characters in the image must exactly match the order of characters listed in the meta information.
 
-### Directory Structure
+## Directory Structure
 
 Create a directory for each dimension identifier under the family name directory and place a design image and meta information in it.
 
@@ -127,7 +127,7 @@ ShapoSansP/  .................. Family Name
     +-- shapofont.json5  .... Meta Information
 ```
 
-### Converting to Font Files
+## Converting to Font Files
 
 1. Create a Python virtual environment using `venv-setup.shrc`.
     - `Pillow` and `json5` will be installed.
@@ -137,7 +137,7 @@ ShapoSansP/  .................. Family Name
 
 Since the script extracts a family name and a dimension identifier from the directory path, they must be named correctly.
 
-#### Example:
+### Example:
 
 ```bash
 source venv-setup.shrc
@@ -148,13 +148,13 @@ source venv-setup.shrc
 
 In this repository, after creating the venv, simply run `make all` and all fonts will be converted automatically.
 
-## License
+# License
 
 see [LICENSE](LICENSE).
 
 The rights to font files generated using the tools included in ShapoFont are subject to the rights of the original bitmap images and any fonts contained therein.
 
-## Using GFXfont in LovyanGFX
+# Using GFXfont in LovyanGFX
 
 Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=::lgfx::` macro so that it can be used with LovyanGFX.
 
@@ -163,7 +163,9 @@ Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=
 #include "shapofont/ShapoSansP_s11c09w2a1.h"
 ```
 
-## Memo: ASCII Code Table
+# Memo
+
+## ASCII Code Table
 
 ```
       0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
