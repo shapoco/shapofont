@@ -35,7 +35,7 @@
 #define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-const uint8_t ShapoSansDigitP_s24c23w4Bitmaps[] SHAPOFONT_PROGMEM = {
+const uint8_t ShapoSansDigitP_s24c23w04Bitmaps[] SHAPOFONT_PROGMEM = {
   0x77, 0xFF, 0xF7, 0x00, 0x07, 0xE0, 0x1F, 0xF8, 0x3F, 0xFC, 0x7E, 0x7E, 0x78, 0x1E, 0xF8, 0x1F,
   0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F,
   0xF0, 0x0F, 0xF0, 0x0F, 0xF0, 0x0F, 0xF8, 0x1F, 0x78, 0x1E, 0x7E, 0x7E, 0x3F, 0xFC, 0x1F, 0xF8,
@@ -66,24 +66,24 @@ const uint8_t ShapoSansDigitP_s24c23w4Bitmaps[] SHAPOFONT_PROGMEM = {
   0xF8, 0x00, 0xF0, 0x01, 0xF0, 0x01, 0xE0, 0x03, 0xE0,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s24c23w4Glyphs[] SHAPOFONT_PROGMEM = {
-  { 0x0000,  5,  5,  8,  0,  -5 },
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s24c23w04Glyphs[] SHAPOFONT_PROGMEM = {
+  { 0x0000,  5,  5,  7,  0,  -5 },
   { 0x0000,  0,  0,  0,  0,   0 },
-  { 0x0004, 16, 23, 19,  0, -24 },
-  { 0x0032,  8, 23, 19,  2, -24 },
-  { 0x0049, 16, 23, 19,  0, -24 },
-  { 0x0077, 16, 23, 19,  0, -24 },
-  { 0x00A5, 16, 23, 19,  0, -24 },
-  { 0x00D3, 16, 23, 19,  0, -24 },
-  { 0x0101, 16, 23, 19,  0, -24 },
-  { 0x012F, 16, 23, 19,  0, -24 },
-  { 0x015D, 16, 23, 19,  0, -24 },
-  { 0x018B, 16, 23, 19,  0, -24 },
+  { 0x0004, 16, 23, 18,  0, -24 },
+  { 0x0032,  8, 23, 18,  2, -24 },
+  { 0x0049, 16, 23, 18,  0, -24 },
+  { 0x0077, 16, 23, 18,  0, -24 },
+  { 0x00A5, 16, 23, 18,  0, -24 },
+  { 0x00D3, 16, 23, 18,  0, -24 },
+  { 0x0101, 16, 23, 18,  0, -24 },
+  { 0x012F, 16, 23, 18,  0, -24 },
+  { 0x015D, 16, 23, 18,  0, -24 },
+  { 0x018B, 16, 23, 18,  0, -24 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansDigitP_s24c23w4 SHAPOFONT_PROGMEM = {
-  (uint8_t*)ShapoSansDigitP_s24c23w4Bitmaps,
-  (GFXglyph*)ShapoSansDigitP_s24c23w4Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansDigitP_s24c23w04 SHAPOFONT_PROGMEM = {
+  (uint8_t*)ShapoSansDigitP_s24c23w04Bitmaps,
+  (GFXglyph*)ShapoSansDigitP_s24c23w04Glyphs,
   0x2E,
   0x39,
   29

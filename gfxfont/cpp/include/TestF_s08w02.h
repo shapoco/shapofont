@@ -35,17 +35,17 @@
 #define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-const uint8_t TestF_s8w2Bitmaps[] SHAPOFONT_PROGMEM = {
+const uint8_t TestF_s08w02Bitmaps[] SHAPOFONT_PROGMEM = {
   0xFF, 0xFF, 0xC0, 0xC0, 0xFE, 0xFE, 0xC0, 0xC0,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph TestF_s8w2Glyphs[] SHAPOFONT_PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph TestF_s08w02Glyphs[] SHAPOFONT_PROGMEM = {
   { 0x0000,  8,  8,  9,  0,  -8 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont TestF_s8w2 SHAPOFONT_PROGMEM = {
-  (uint8_t*)TestF_s8w2Bitmaps,
-  (GFXglyph*)TestF_s8w2Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont TestF_s08w02 SHAPOFONT_PROGMEM = {
+  (uint8_t*)TestF_s08w02Bitmaps,
+  (GFXglyph*)TestF_s08w02Glyphs,
   0x46,
   0x46,
   10

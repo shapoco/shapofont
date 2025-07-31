@@ -35,7 +35,7 @@
 #define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-const uint8_t ShapoSansDigitP_s16c14w2Bitmaps[] SHAPOFONT_PROGMEM = {
+const uint8_t ShapoSansDigitP_s16c14w02Bitmaps[] SHAPOFONT_PROGMEM = {
   0x6F, 0xF6, 0x3E, 0x3F, 0xB8, 0xF8, 0x3C, 0x1E, 0x0F, 0x07, 0x83, 0xC1, 0xE0, 0xF0, 0x7C, 0x77,
   0xF1, 0xF0, 0x19, 0xFF, 0xB1, 0x8C, 0x63, 0x18, 0xC6, 0x31, 0x8C, 0x3E, 0x3F, 0xB8, 0xF8, 0x30,
   0x18, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x0F, 0xFF, 0xFC, 0xFF, 0xFF, 0xC1, 0xC1, 0xC1,
@@ -48,24 +48,24 @@ const uint8_t ShapoSansDigitP_s16c14w2Bitmaps[] SHAPOFONT_PROGMEM = {
   0x1E, 0x0F, 0x8E, 0xFF, 0x3D, 0x81, 0x80, 0xC0, 0x60, 0x60, 0x30,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s16c14w2Glyphs[] SHAPOFONT_PROGMEM = {
-  { 0x0000,  4,  4,  6,  0,  -5 },
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansDigitP_s16c14w02Glyphs[] SHAPOFONT_PROGMEM = {
+  { 0x0000,  4,  4,  5,  0,  -5 },
   { 0x0000,  0,  0,  0,  0,   0 },
-  { 0x0002,  9, 14, 11,  0, -16 },
-  { 0x0012,  5, 14, 11,  1, -16 },
-  { 0x001B,  9, 14, 11,  0, -16 },
-  { 0x002B,  9, 14, 11,  0, -16 },
-  { 0x003B,  9, 14, 11,  0, -16 },
-  { 0x004B,  9, 14, 11,  0, -16 },
-  { 0x005B,  9, 14, 11,  0, -16 },
-  { 0x006B,  9, 14, 11,  0, -16 },
-  { 0x007B,  9, 14, 11,  0, -16 },
-  { 0x008B,  9, 14, 11,  0, -16 },
+  { 0x0002,  9, 14, 10,  0, -16 },
+  { 0x0012,  5, 14, 10,  1, -16 },
+  { 0x001B,  9, 14, 10,  0, -16 },
+  { 0x002B,  9, 14, 10,  0, -16 },
+  { 0x003B,  9, 14, 10,  0, -16 },
+  { 0x004B,  9, 14, 10,  0, -16 },
+  { 0x005B,  9, 14, 10,  0, -16 },
+  { 0x006B,  9, 14, 10,  0, -16 },
+  { 0x007B,  9, 14, 10,  0, -16 },
+  { 0x008B,  9, 14, 10,  0, -16 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansDigitP_s16c14w2 SHAPOFONT_PROGMEM = {
-  (uint8_t*)ShapoSansDigitP_s16c14w2Bitmaps,
-  (GFXglyph*)ShapoSansDigitP_s16c14w2Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansDigitP_s16c14w02 SHAPOFONT_PROGMEM = {
+  (uint8_t*)ShapoSansDigitP_s16c14w02Bitmaps,
+  (GFXglyph*)ShapoSansDigitP_s16c14w02Glyphs,
   0x2E,
   0x39,
   20

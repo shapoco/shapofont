@@ -46,9 +46,11 @@ class BitmapFont:
         self.type_size = dic["s"]
         self.cap_height = dic.get("c", self.type_size)
         self.weight = dic.get("w", 1)
-        self.line_height = dic.get("h", math.ceil(self.type_size * 1.2))
         self.ascender_spacing = dic.get("a", 0)
-        self.normal_x_spacing = dic.get("p", 1 + math.floor(self.type_size / 12))
+        self.line_height = dic.get(
+            "h", math.ceil((self.type_size - self.ascender_spacing) * 1.2)
+        )
+        self.normal_x_spacing = dic.get("p", math.ceil(self.type_size / 16))
 
         # Load the image
         self.bmp = GrayBitmap.from_file(path.join(dir_path, "design.png"))
@@ -136,7 +138,7 @@ class BitmapFont:
             marker_y += 1
 
     def bitmap_height(self) -> int:
-        return self.type_size + self.ascender_spacing
+        return self.type_size
 
     def to_gfx_font(self, outdir: str):
         out_file = path.join(outdir, f"{self.full_name}.h")
@@ -229,8 +231,10 @@ def main():
             vertical_frag = True
             msb1st = True
         else:
-            raise ValueError(f"Unsupported memory architecture for MameFont: {args.mame_arch}")
-        
+            raise ValueError(
+                f"Unsupported memory architecture for MameFont: {args.mame_arch}"
+            )
+
         font.to_mame_font(
             args.outdir_mame_hpp,
             args.outdir_mame_cpp,

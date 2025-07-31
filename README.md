@@ -9,14 +9,11 @@
 
 |Option|Description|Default Value|
 |:--:|:--|:--:|
-|s|typeSize|(required)|
-|c|capHeight|s|
-||descenderHeight|s - c|
-|h|lineHeight|ceil(s \* 1.2)|
-|a|ascenderSpacing|0|
-||descenderSpacing|h-s-a|
+|s|Body Size|(required)|
+|c|Cap Height|s|
+|a|Ascender Spacing|0|
+||Descent|s - c - a|
 |w|weight|1|
-|p|horizontalSpacing|1 + floor(s / 12)|
 
 ## Fonts
 
@@ -28,7 +25,7 @@
 
 #### s06c05a1
 
-![](./bitmap/ShapoSansP/s06c05a1/design.png)
+![](./bitmap/ShapoSansP/s07c05a01/design.png)
 
 #### s08c07
 
@@ -36,15 +33,15 @@
 
 #### s11c09w2a1
 
-![](./bitmap/ShapoSansP/s11c09w2a1/design.png)
+![](./bitmap/ShapoSansP/s12c09a01w02/design.png)
 
 #### s20c16w3a1
 
-![](./bitmap/ShapoSansP/s20c16w3a1/design.png)
+![](./bitmap/ShapoSansP/s21c16a01w03/design.png)
 
 #### s26c22w4a1
 
-![](./bitmap/ShapoSansP/s26c22w4a1/design.png)
+![](./bitmap/ShapoSansP/s27c22a01w04//design.png)
 
 ### ShapoSansMono
 
@@ -56,15 +53,15 @@
 
 #### s16c14w2
 
-![](./bitmap/ShapoSansDigitP/s16c14w2/design.png)
+![](./bitmap/ShapoSansDigitP/s16c14w02/design.png)
 
 #### s24c23w4
 
-![](./bitmap/ShapoSansDigitP/s24c23w4/design.png)
+![](./bitmap/ShapoSansDigitP/s24c23w04/design.png)
 
 #### s32c30w4
 
-![](./bitmap/ShapoSansDigitP/s32c30w4/design.png)
+![](./bitmap/ShapoSansDigitP/s32c30w04/design.png)
 
 ### MameSansP
 
@@ -76,7 +73,7 @@
 
 #### s60c48w16a4
 
-![](./bitmap/MameSquareWide/s60c48w16a4/design.png)
+![](./bitmap/MameSquareWide/s64c48a04w16/design.png)
 
 ### MameSansDigitP
 
@@ -136,7 +133,7 @@ ShapoSansP/  .................. Family Name
     - `Pillow` and `json5` will be installed.
 2. Specify the above design directory in `tools/shapofont.py` to convert to each font format.
     - `-i`: path to input directory (dimension identifier)
-    - `--outdir_gfx`: output directory for GFXfont format
+    - `--outdir_gfx_c`: output directory for GFXfont format
 
 Since the script extracts a family name and a dimension identifier from the directory path, they must be named correctly.
 
@@ -146,7 +143,7 @@ Since the script extracts a family name and a dimension identifier from the dire
 source venv-setup.shrc
 ./venv/bin/python3 ./tools/shapofont.py \
       -i bitmap/ShapoSansP/s20c16w3a1 \
-      --outdir_gfx tmp.outdir/
+      --outdir_gfx_c tmp.outdir/
 ```
 
 In this repository, after creating the venv, simply run `make all` and all fonts will be converted automatically.

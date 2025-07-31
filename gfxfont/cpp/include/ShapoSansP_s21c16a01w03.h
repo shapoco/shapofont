@@ -35,7 +35,7 @@
 #define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-const uint8_t ShapoSansP_s20c16w3a1Bitmaps[] SHAPOFONT_PROGMEM = {
+const uint8_t ShapoSansP_s21c16a01w03Bitmaps[] SHAPOFONT_PROGMEM = {
   0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xF7, 0xFB, 0xFD, 0xFE, 0xF3, 0x19, 0x8D, 0x8C,
   0x39, 0xC7, 0x38, 0xE7, 0x7F, 0xFF, 0xFF, 0xFF, 0xCE, 0x71, 0xCE, 0x73, 0x8E, 0x73, 0xFF, 0xFF,
   0xFF, 0xFE, 0xE7, 0x1C, 0xE3, 0x9C, 0x0E, 0x07, 0xF1, 0xFF, 0x77, 0x7E, 0xEF, 0xDC, 0x1F, 0x81,
@@ -142,7 +142,7 @@ const uint8_t ShapoSansP_s20c16w3a1Bitmaps[] SHAPOFONT_PROGMEM = {
   0x07, 0x47, 0xFF, 0xFF, 0x17, 0x00,
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s20c16w3a1Glyphs[] SHAPOFONT_PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s21c16a01w03Glyphs[] SHAPOFONT_PROGMEM = {
   { 0x0000,  0,  0,  8,  6,   0 },
   { 0x0000,  4, 16,  6,  0, -20 },
   { 0x0008,  9,  7, 11,  0, -21 },
@@ -240,9 +240,9 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s20c16w3a1Glyphs[] SHAPOFO
   { 0x0670,  9,  5, 11,  0, -15 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansP_s20c16w3a1 SHAPOFONT_PROGMEM = {
-  (uint8_t*)ShapoSansP_s20c16w3a1Bitmaps,
-  (GFXglyph*)ShapoSansP_s20c16w3a1Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansP_s21c16a01w03 SHAPOFONT_PROGMEM = {
+  (uint8_t*)ShapoSansP_s21c16a01w03Bitmaps,
+  (GFXglyph*)ShapoSansP_s21c16a01w03Glyphs,
   0x20,
   0x7E,
   24

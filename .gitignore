@@ -1,6 +1,7 @@
 venv/
 bin/
 build/
+.build/
 __pycache__/
 tmp.*/
 tmp.*
@@ -13,3 +14,5 @@ a.out
 # todo: delete
 Makefile.update.py
 Makefile.batch.mk
+docs/
+doc-src/

@@ -1,6 +1,9 @@
-.PHONY: all gfx mame gfx_distclean mame_distclean distclean
+.PHONY: all gfx mame gfx_distclean mame_distclean distclean doc_test
 
 MAME_ARCH_LIST := HL HM VL VM
+
+DOC_TEST_DIR := docs
+DOC_TEST_PORT := 51980
 
 all: gfx mame
 
@@ -66,3 +69,6 @@ mame_distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF mame_distclean; \
 	done
+
+doc_test:
+	python3 -m http.server -d $(DOC_TEST_DIR) $(DOC_TEST_PORT)

@@ -35,16 +35,16 @@
 #define SHAPOFONT_GFXFONT_NAMESPACE_SELF_DEFINED
 #endif
 
-const uint8_t ShapoEmpty_s1Bitmaps[] SHAPOFONT_PROGMEM = {
+const uint8_t ShapoEmpty_s01Bitmaps[] SHAPOFONT_PROGMEM = {
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoEmpty_s1Glyphs[] SHAPOFONT_PROGMEM = {
+const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoEmpty_s01Glyphs[] SHAPOFONT_PROGMEM = {
   { 0x0000,  0,  0,  2,  1,   0 },
 };
 
-const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoEmpty_s1 SHAPOFONT_PROGMEM = {
-  (uint8_t*)ShapoEmpty_s1Bitmaps,
-  (GFXglyph*)ShapoEmpty_s1Glyphs,
+const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoEmpty_s01 SHAPOFONT_PROGMEM = {
+  (uint8_t*)ShapoEmpty_s01Bitmaps,
+  (GFXglyph*)ShapoEmpty_s01Glyphs,
   0x20,
   0x20,
   2

@@ -6,11 +6,11 @@ TOOLS_DIR = $(REPO_DIR)/tools
 BUILD_DIR = $(REPO_DIR)/build
 BITMAP_DIR = .
 
-GFX_C_INC_DIR = $(REPO_DIR)/gfxfont/cpp/include/shapofont
+GFX_C_INC_DIR = $(REPO_DIR)/gfxfont/cpp/include
 
 MAME_ARCH := HL
 MAME_CPP_SRC_DIR = $(REPO_DIR)/mamefont/cpp/$(MAME_ARCH)/src
-MAME_CPP_INC_DIR = $(REPO_DIR)/mamefont/cpp/$(MAME_ARCH)/include/shapofont
+MAME_CPP_INC_DIR = $(REPO_DIR)/mamefont/cpp/$(MAME_ARCH)/include
 MAME_JS_JSON_DIR = $(REPO_DIR)/mamefont/json/$(MAME_ARCH)
 
 CMD_SHAPOFONT := $(TOOLS_DIR)/shapofont.py
@@ -43,7 +43,7 @@ $(GFX_C_INC_DIR)/$(TARGET_FAMILY)_%.h: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/design.p
 	@mkdir -p $(GFX_C_INC_DIR)
 	$(CMD_PYTHON) $(CMD_SHAPOFONT) \
 		-i $(dir $<) \
-		--outdir_gfx $(dir $@)
+		--outdir_gfx_c $(dir $@)
 
 $(MAME_CPP_SRC_DIR)/$(TARGET_FAMILY)_%.cpp: $(BITMAP_DIR)/$(TARGET_FAMILY)/%/design.png $(BITMAP_DIR)/$(TARGET_FAMILY)/%/shapofont.json5 $(EXTRA_DEPENDENCIES)
 	@mkdir -p $(MAME_CPP_INC_DIR)
