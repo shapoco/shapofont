@@ -72,6 +72,12 @@
 
 ![](./bitmap/MameSansP/s48c40w08/design.png)
 
+### MameSquareWide
+
+#### s60c48w16a4
+
+![](./bitmap/MameSquareWide/s60c48w16a4/design.png)
+
 ### MameSansDigitP
 
 #### s64w08

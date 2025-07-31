@@ -11,6 +11,7 @@ gfx:
 	make -j -C bitmap TARGET_FAMILY=MameSansP gfx
 	make -j -C bitmap TARGET_FAMILY=MameSansDigitP gfx
 	make -j -C bitmap TARGET_FAMILY=MameSeg7 gfx
+	make -j -C bitmap TARGET_FAMILY=MameSquareWide gfx
 	make -j -C bitmap TARGET_FAMILY=ShapoEmpty gfx
 	make -j -C bitmap TARGET_FAMILY=TestF gfx
 
@@ -22,6 +23,7 @@ mame:
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame; \
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame; \
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 mame; \
+		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide mame; \
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame; \
 		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF mame; \
 	done
@@ -34,6 +36,7 @@ distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 distclean; \
+		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF distclean; \
 	done
@@ -46,6 +49,7 @@ gfx_distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP gfx_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP gfx_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 gfx_distclean; \
+		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide gfx_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty gfx_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF gfx_distclean; \
 	done
@@ -58,6 +62,7 @@ mame_distclean:
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 mame_distclean; \
+		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame_distclean; \
 		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF mame_distclean; \
 	done
