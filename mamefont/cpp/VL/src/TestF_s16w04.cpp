@@ -32,17 +32,17 @@
 #define MAMEFONT_PROGMEM
 #endif
 
-const uint8_t TestF_s16w4_blob[] MAMEFONT_PROGMEM = {
+const uint8_t TestF_s16w04_blob[] MAMEFONT_PROGMEM = {
   // Font Header
   0x01, 0x80, 0x46, 0x00, 0x01, 0x0F, 0x13, 0x0F,
   // Glyph Table
-  0x00, 0x00, 0x0F, 0x11,
+  0x00, 0x00, 0x0F, 0x10,
   // Lookup Table
   0xFF, 0x00,
   // Bytecodes
   0x80, 0xE2, 0x2C, 0xE4, 0x67, 0x65, 0xE5, 0x2D, 0xFF, 0xFF, 0xFF,
 };
 
-extern const mamefont::Font TestF_s16w4(TestF_s16w4_blob);
+extern const mamefont::Font TestF_s16w04(TestF_s16w04_blob);
 
 #undef MAMEFONT_PROGMEM

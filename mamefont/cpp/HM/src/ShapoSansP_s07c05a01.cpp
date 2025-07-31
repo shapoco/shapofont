@@ -35,7 +35,7 @@
 #define MAMEFONT_PROGMEM
 #endif
 
-const uint8_t ShapoSansP_s06c05a1_blob[] MAMEFONT_PROGMEM = {
+const uint8_t ShapoSansP_s07c05a01_blob[] MAMEFONT_PROGMEM = {
   // Font Header
   0x01, 0x60, 0x20, 0x5E, 0x17, 0x06, 0x07, 0x04,
   // Glyph Table
@@ -89,6 +89,6 @@ const uint8_t ShapoSansP_s06c05a1_blob[] MAMEFONT_PROGMEM = {
   0xFF,
 };
 
-extern const mamefont::Font ShapoSansP_s06c05a1(ShapoSansP_s06c05a1_blob);
+extern const mamefont::Font ShapoSansP_s07c05a01(ShapoSansP_s07c05a01_blob);
 
 #undef MAMEFONT_PROGMEM

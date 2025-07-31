@@ -5,5 +5,5 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-extern const mamefont::Font TestF_s8w2;
+extern const mamefont::Font TestF_s08w02;
 

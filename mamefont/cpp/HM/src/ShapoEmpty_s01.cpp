@@ -29,7 +29,7 @@
 #define MAMEFONT_PROGMEM
 #endif
 
-const uint8_t ShapoEmpty_s1_blob[] MAMEFONT_PROGMEM = {
+const uint8_t ShapoEmpty_s01_blob[] MAMEFONT_PROGMEM = {
   // Font Header
   0x01, 0x60, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00,
   // Glyph Table
@@ -40,6 +40,6 @@ const uint8_t ShapoEmpty_s1_blob[] MAMEFONT_PROGMEM = {
   0xE0, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-extern const mamefont::Font ShapoEmpty_s1(ShapoEmpty_s1_blob);
+extern const mamefont::Font ShapoEmpty_s01(ShapoEmpty_s01_blob);
 
 #undef MAMEFONT_PROGMEM

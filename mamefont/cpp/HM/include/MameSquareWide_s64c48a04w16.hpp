@@ -5,5 +5,5 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-extern const mamefont::Font MameSquareWide_s60c48w16a4;
+extern const mamefont::Font MameSquareWide_s64c48a04w16;
 

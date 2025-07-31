@@ -32,7 +32,7 @@
 #define MAMEFONT_PROGMEM
 #endif
 
-const uint8_t TestF_s8w2_blob[] MAMEFONT_PROGMEM = {
+const uint8_t TestF_s08w02_blob[] MAMEFONT_PROGMEM = {
   // Font Header
   0x01, 0xE0, 0x46, 0x00, 0x01, 0x07, 0x09, 0x07,
   // Glyph Table
@@ -43,6 +43,6 @@ const uint8_t TestF_s8w2_blob[] MAMEFONT_PROGMEM = {
   0xC0, 0x81, 0xE3, 0x0C, 0xFF, 0xFF, 0xFF,
 };
 
-extern const mamefont::Font TestF_s8w2(TestF_s8w2_blob);
+extern const mamefont::Font TestF_s08w02(TestF_s08w02_blob);
 
 #undef MAMEFONT_PROGMEM

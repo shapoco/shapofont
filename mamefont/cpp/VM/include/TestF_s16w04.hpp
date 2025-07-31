@@ -5,5 +5,5 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-extern const mamefont::Font TestF_s16w4;
+extern const mamefont::Font TestF_s16w04;
 
