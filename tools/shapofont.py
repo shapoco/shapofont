@@ -142,7 +142,7 @@ class BitmapFont:
 
     def to_gfx_font(self, outdir: str):
         out_file = path.join(outdir, f"{self.full_name}.h")
-        print(f"Generating GFXfont: {out_file}")
+        #print(f"Generating GFXfont: {out_file}")
 
         builder = gfxfont.GFXfontBuilder(
             self.full_name,
@@ -167,7 +167,7 @@ class BitmapFont:
         vertical_frag: bool = False,
         msb1st: bool = False,
     ):
-        print(f"Generating MameFont")
+        #print(f"Generating MameFont: {self.full_name}")
 
         builder = mamefont.MameFontBuilder(
             self.full_name,

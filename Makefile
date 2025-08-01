@@ -1,74 +1,28 @@
-.PHONY: all gfx mame gfx_distclean mame_distclean distclean doc_test
+.PHONY: all configure doc_test
+
+TOOLS_DIR := tools
+
+CMD_PYTHON := venv/bin/python3
+SHAPOFONT_PY := $(TOOLS_DIR)/shapofont.py
+GFXFONT_PY := $(TOOLS_DIR)/gfxfont.py
+MAMEFONT_PY := $(TOOLS_DIR)/mamefont.py
 
 MAME_ARCH_LIST := HL HM VL VM
 
 DOC_TEST_DIR := docs
 DOC_TEST_PORT := 51980
 
-all: gfx mame
+COMMON_DEPENDENCIES := \
+	Makefile \
+	$(SHAPOFONT_PY) \
+	$(TOOLS_DIR)/design.py
 
-gfx:
-	make -j -C bitmap TARGET_FAMILY=ShapoSansP gfx
-	make -j -C bitmap TARGET_FAMILY=ShapoSansMono gfx
-	make -j -C bitmap TARGET_FAMILY=ShapoSansDigitP gfx
-	make -j -C bitmap TARGET_FAMILY=MameSansP gfx
-	make -j -C bitmap TARGET_FAMILY=MameSansDigitP gfx
-	make -j -C bitmap TARGET_FAMILY=MameSeg7 gfx
-	make -j -C bitmap TARGET_FAMILY=MameSquareWide gfx
-	make -j -C bitmap TARGET_FAMILY=ShapoEmpty gfx
-	make -j -C bitmap TARGET_FAMILY=TestF gfx
+all: gfx_all mame_all
 
-mame:
-	@for i in $(MAME_ARCH_LIST); do \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansP mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansMono mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansDigitP mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame; \
-		make -j -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF mame; \
-	done
+configure:
+	$(CMD_PYTHON) Makefile.update.py
 
-distclean:
-	@for i in $(MAME_ARCH_LIST); do \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansP distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansMono distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansDigitP distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF distclean; \
-	done
-
-gfx_distclean:
-	@for i in $(MAME_ARCH_LIST); do \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansP gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansMono gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansDigitP gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty gfx_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF gfx_distclean; \
-	done
-
-mame_distclean:
-	@for i in $(MAME_ARCH_LIST); do \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansP mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansMono mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoSansDigitP mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansP mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSansDigitP mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSeg7 mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=MameSquareWide mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=ShapoEmpty mame_distclean; \
-		make -C bitmap MAME_ARCH=$$i TARGET_FAMILY=TestF mame_distclean; \
-	done
+include Makefile.batch.mk
 
 doc_test:
 	python3 -m http.server -d $(DOC_TEST_DIR) $(DOC_TEST_PORT)

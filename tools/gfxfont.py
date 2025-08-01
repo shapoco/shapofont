@@ -2,7 +2,12 @@ from design import GrayBitmap
 
 WORD_SIZE = 2
 LIB_NAME = "ShapoFont"
-VERBOSE = True
+VERBOSE = False
+
+
+def verbose_print(s: str = "") -> None:
+    if VERBOSE:
+        print(s)
 
 
 def align_to_word_size(size: int) -> int:
@@ -72,7 +77,7 @@ class GFXfont:
         glyph_table_size_per_glyph = glyph_table_size / num_glyphs
         total_size = bitmap_array_size + glyph_table_size + GFXfont.STRUCT_SIZE
         total_size_per_glyph = total_size / num_glyphs
-        
+
         pixels_per_byte = original_bmp_pixels / total_size if total_size > 0 else 0
 
         code = "#pragma once\n"
@@ -219,8 +224,7 @@ class GFXfontBuilder:
 
         glyphs: list[GFXglyph] = []
 
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Generating bitmap array...")
+        verbose_print(f"[{LIB_NAME}] Generating bitmap array...")
 
         bitmap: list[int] = []
         for code in range(code_first, code_last + 1):
@@ -242,12 +246,11 @@ class GFXfontBuilder:
             glyphs.append(glyph)
 
         # Find duplicated byte sequences
-        if VERBOSE:
-            print(f"[{LIB_NAME}] Optimizing bitmap array...")
+        verbose_print(f"[{LIB_NAME}] Optimizing bitmap array...")
         total_bytes_deleted = 0
         deleted_codes = []
         for i_trial in range(10):
-            print(f"  Trial #{i_trial + 1}:")
+            verbose_print(f"  Trial #{i_trial + 1}:")
             num_deleted = 0
             for code in range(code_first, code_last + 1):
                 if code in deleted_codes:
@@ -310,16 +313,16 @@ class GFXfontBuilder:
                     elif overlapped:
                         partial_referers.append(ref_code)
 
-                print(
+                verbose_print(
                     f"    Duplication found: code=0x{code:02X}, offset={orig_offset}-->{new_offset}, size={ref_size}."
                 )
 
                 if len(partial_referers) > 0:
-                    print(
+                    verbose_print(
                         f"      But this bitmap is area referenced by {len(partial_referers)} others. Skipping..."
                     )
                     continue
-                
+
                 # Update offset
                 glyph.bitmap_offset = new_offset
 
@@ -329,14 +332,13 @@ class GFXfontBuilder:
                     ref_old_offset = ref_glyph.bitmap_offset
                     ref_new_offset = ref_old_offset + (new_offset - orig_offset)
                     ref_glyph.bitmap_offset = ref_new_offset
-                    if VERBOSE:
-                        print(
-                            f"      Referer is also updated: code=0x{ref_code:02X}, offset={ref_old_offset}-->{ref_new_offset}."
-                        )
+                    verbose_print(
+                        f"      Referer is also updated: code=0x{ref_code:02X}, offset={ref_old_offset}-->{ref_new_offset}."
+                    )
 
                 # Delete bitmap block
                 bitmap = bitmap[:orig_offset] + bitmap[orig_offset + size :]
-                
+
                 # Update offsets of following glyphs
                 for ref_code in range(code_first, code_last + 1):
                     if ref_code not in self.glyphs or ref_code not in self.bitmaps:
@@ -360,13 +362,12 @@ class GFXfontBuilder:
                     print(f"    No more duplications found.")
                 break
 
-        if VERBOSE:
-            if total_bytes_deleted > 0:
-                print(
-                    f"  Totally {len(deleted_codes)} chars, {total_bytes_deleted} bytes duplications are deleted."
-                )
-            else:
-                print(f"  No duplications found.")
+        if total_bytes_deleted > 0:
+            verbose_print(
+                f"  Totally {len(deleted_codes)} chars, {total_bytes_deleted} bytes duplications are deleted."
+            )
+        else:
+            verbose_print(f"  No duplications found.")
 
         return GFXfont(
             name=self.name,

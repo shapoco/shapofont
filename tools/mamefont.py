@@ -7,6 +7,15 @@ import json
 
 LIB_NAME = "MameFont"
 
+VERBOSE = False
+
+REPORT_INTERVAL_SEC = 5
+
+
+def verbose_print(s: str = "") -> None:
+    if VERBOSE:
+        print(s)
+
 
 class Field:
     def __init__(
@@ -57,14 +66,16 @@ FONT_FLAG_MSB_FIRST = 0x40
 FONT_FLAG_SHRINKED_GLYPH_TABLE = 0x20
 
 FONT_DIM_FONT_HEIGHT = Field(0, 6, bias=1)
-FONT_DIM_Y_ADVANCE = Field(0, 6, bias=1)
+FONT_DIM_Y_SPACING = Field(0, 6)
 FONT_DIM_MAX_GLYPH_WIDTH = Field(0, 6, bias=1)
 
 GLYPH_DIM_WIDTH = Field(0, 6, bias=1)
-GLYPH_DIM_X_ADVANCE = Field(0, 6, bias=1)
+GLYPH_DIM_X_SPACING = Field(0, 5, bias=-16)
+GLYPH_DIM_X_LEFT_SHIFT = Field(5, 3)
 
 GLYPH_SHRINKED_DIM_WIDTH = Field(0, 4, bias=1)
-GLYPH_SHRINKED_DIM_X_ADVANCE = Field(4, 4, bias=1)
+GLYPH_SHRINKED_DIM_X_SPACING = Field(4, 2)
+GLYPH_SHRINKED_DIM_LEFT_SHIFT = Field(6, 2)
 
 RPT_REPEAT_COUNT = Field(0, 4, bias=1)
 
@@ -92,8 +103,6 @@ LUD_INDEX = Field(0, 4)
 
 MAX_LUT_SIZE = 1 << LUP_INDEX.width
 
-VERBOSE = True
-
 ALIGN_SIZE = 2
 
 
@@ -106,11 +115,6 @@ def format_char(c: int) -> str:
         return f"'{chr(c)}' (0x{c:x})"
     else:
         return f"\\x{c:02x}"
-
-
-def verbose_print(s: str = "") -> None:
-    if VERBOSE:
-        print(s)
 
 
 class Operator:
@@ -266,12 +270,12 @@ class Operation:
 
 class MameGlyph:
     def __init__(
-        self, code: int, operations: list[Operation], glyphWidth: int, x_advance: int
+        self, code: int, operations: list[Operation], glyphWidth: int, x_spacing: int
     ):
         self.code = code
         self.operations = operations
         self.glyph_width = glyphWidth
-        self.x_advance = x_advance
+        self.x_spacing = x_spacing
         self.entry_point = 0xFFFF
 
 
@@ -279,6 +283,67 @@ class MameFont:
     def __init__(self, name: str, blob: list[int]):
         self.name = name
         self.blob = blob
+
+    def get_num_glyphs(self) -> int:
+        return self.blob[OFST_GLYPH_TABLE_LEN] + 1
+
+    def get_flags(self) -> int:
+        return self.blob[OFST_FONT_FLAGS]
+
+    def is_shrinked_glyph_table(self) -> bool:
+        return 0 != (self.get_flags() & FONT_FLAG_SHRINKED_GLYPH_TABLE)
+
+    def get_glyph_table_entry_size(self) -> int:
+        return 2 if self.is_shrinked_glyph_table() else 4
+
+    def get_glyph_table_size(self) -> int:
+        return self.get_num_glyphs() * self.get_glyph_table_entry_size()
+
+    def get_lut_size(self) -> int:
+        return self.blob[OFST_LUT_SIZE] + 1
+
+    def generate_c_style_array(
+        self, indent="  ", with_comment=True, hexadecimal=True
+    ) -> str:
+        cols = 16
+        i_col = 0
+        i_start_of_header = 0
+        i_start_of_glyph_table = OFST_GLYPH_TABLE
+        i_start_of_lut = i_start_of_glyph_table + self.get_glyph_table_size()
+        i_start_of_bytecodes = i_start_of_lut + self.get_lut_size()
+
+        code = ""
+        for i, b in enumerate(self.blob):
+            if with_comment:
+                if i == i_start_of_header:
+                    code += f"{indent}// Font Header\n"
+                if i == i_start_of_glyph_table:
+                    code += f"{indent}// Glyph Table\n"
+                if i == i_start_of_lut:
+                    code += f"{indent}// Lookup Table\n"
+                if i == i_start_of_bytecodes:
+                    code += f"{indent}// Bytecodes\n"
+
+            if i_col == 0:
+                code += f"{indent}"
+            code += f"0x{b:02X}," if hexadecimal else f"{b},"
+
+            is_end_of_section = (
+                i_col == cols - 1
+                or i == i_start_of_glyph_table - 1
+                or i == i_start_of_lut - 1
+                or i == i_start_of_bytecodes - 1
+                or i == len(self.blob) - 1
+            )
+
+            if is_end_of_section:
+                code += "\n"
+                i_col = 0
+            else:
+                code += " "
+                i_col += 1
+
+        return code
 
     def generate_cpp_header(self) -> str:
         verbose_print(f"[{LIB_NAME}] Generating C++ header...")
@@ -300,19 +365,19 @@ class MameFont:
 
         blob_size = len(self.blob)
 
-        font_flags = self.blob[OFST_FONT_FLAGS]
+        font_flags = self.get_flags()
         vertical_frag = 0 != (font_flags & FONT_FLAG_VERTICAL_FRAGMENT)
         msb1st = 0 != (font_flags & FONT_FLAG_MSB_FIRST)
-        shrinked_glyph_table = 0 != (font_flags & FONT_FLAG_SHRINKED_GLYPH_TABLE)
+        shrinked_glyph_table = self.is_shrinked_glyph_table()
 
         glyph_height = (self.blob[OFST_FONT_DIMENSION_0] & 0x3F) + 1
         max_glyph_width = (self.blob[OFST_FONT_DIMENSION_2] & 0x3F) + 1
 
         first_code = self.blob[OFST_FIRST_CODE]
-        num_glyphs = self.blob[OFST_GLYPH_TABLE_LEN] + 1
-        glyph_table_entry_size = 2 if shrinked_glyph_table else 4
-        glyph_table_size = num_glyphs * glyph_table_entry_size
-        lut_size = self.blob[OFST_LUT_SIZE] + 1
+        num_glyphs = self.get_num_glyphs()
+        glyph_table_entry_size = self.get_glyph_table_entry_size()
+        glyph_table_size = self.get_glyph_table_size()
+        lut_size = self.get_lut_size()
 
         bytecode_offset = OFST_GLYPH_TABLE
         bytecode_offset += roundup_size(glyph_table_size)
@@ -429,41 +494,7 @@ class MameFont:
         code += "\n"
         code += f"const uint8_t {self.name}_blob[] MAMEFONT_PROGMEM = {{\n"
 
-        cols = 16
-        i_col = 0
-        i_start_of_header = 0
-        i_start_of_glyph_table = OFST_GLYPH_TABLE
-        i_start_of_lut = OFST_GLYPH_TABLE + glyph_table_size
-        i_start_of_bytecodes = OFST_GLYPH_TABLE + glyph_table_size + lut_size
-
-        for i, b in enumerate(self.blob):
-            if i == i_start_of_header:
-                code += "  // Font Header\n"
-            if i == i_start_of_glyph_table:
-                code += "  // Glyph Table\n"
-            if i == i_start_of_lut:
-                code += "  // Lookup Table\n"
-            if i == i_start_of_bytecodes:
-                code += "  // Bytecodes\n"
-
-            if i_col == 0:
-                code += "  "
-            code += f"0x{b:02X},"
-
-            is_end_of_section = (
-                i_col == cols - 1
-                or i == i_start_of_glyph_table - 1
-                or i == i_start_of_lut - 1
-                or i == i_start_of_bytecodes - 1
-                or i == len(self.blob) - 1
-            )
-
-            if is_end_of_section:
-                code += "\n"
-                i_col = 0
-            else:
-                code += " "
-                i_col += 1
+        code += self.generate_c_style_array()
 
         code += "};\n"
         code += "\n"
@@ -475,7 +506,18 @@ class MameFont:
 
     def generate_json(self) -> str:
         verbose_print(f"[{LIB_NAME}] Generating JSON...")
-        return json.dumps(self.blob)
+        code = "{\n"
+        code += f'  "name": "{self.name}",\n'
+        code += f'  "blob": [\n'
+        code += (
+            self.generate_c_style_array(with_comment=False, hexadecimal=False)
+            .rstrip()
+            .rstrip(",")
+            + "\n"
+        )
+        code += f"  ]\n"
+        code += "}\n"
+        return code
 
 
 class MameFontBuilder:
@@ -491,10 +533,24 @@ class MameFontBuilder:
         self.name = name
         self.glyph_height = glyph_height
         self.x_spacing = x_spacing
-        self.y_advance = y_advance
+        self.y_spacing = y_advance - glyph_height
         self.vertical_frag = vertical_frag
         self.msb1st = msb1st
         self.glyphs: dict[int, MameGlyph] = {}
+
+        if vertical_frag:
+            if msb1st:
+                self.acrh = "VM"
+            else:
+                self.acrh = "VL"
+        else:
+            if msb1st:
+                self.acrh = "HM"
+            else:
+                self.acrh = "HL"
+
+        self.next_report_time = time.time() + REPORT_INTERVAL_SEC
+        self.report_finished = False
 
     def add_glyph(
         self,
@@ -507,7 +563,7 @@ class MameFontBuilder:
         )
 
         if VERBOSE:
-            print(f"[{LIB_NAME}] Glyph added: {format_char(code)}")
+            print(f"[{self.name}:{self.acrh}] Adding glyph: {format_char(code)}")
             if False:
                 print(f"  Fragments:")
                 for i, byte in enumerate(fragments):
@@ -857,8 +913,16 @@ class MameFontBuilder:
             code=code,
             operations=ops,
             glyphWidth=bmp.width,
-            x_advance=bmp.width + self.x_spacing,
+            x_spacing=self.x_spacing,
         )
+
+        now = time.time()
+        if now >= self.next_report_time:
+            print(f"[{self.name}:{self.acrh}] {len(self.glyphs)} glyphs added.")
+            self.next_report_time = min(
+                now + REPORT_INTERVAL_SEC, self.next_report_time + REPORT_INTERVAL_SEC
+            )
+            self.report_finished = True
 
     def build(self) -> MameGlyph:
         format_version = 1
@@ -866,7 +930,7 @@ class MameFontBuilder:
         codes = sorted(self.glyphs.keys())
 
         # Generate Lookup Table
-        verbose_print(f"[{LIB_NAME}] Generating Lookup Table...")
+        verbose_print(f"[{self.name}:{self.acrh}] Generating Lookup Table...")
         byte_ref_count: dict[int, int] = {}
         for code in codes:
             glyph = self.glyphs[code]
@@ -883,7 +947,7 @@ class MameFontBuilder:
             )
             lut = lut[:MAX_LUT_SIZE]
 
-        verbose_print(f"[{LIB_NAME}] Optimizing Lookup Table...")
+        verbose_print(f"[{self.name}:{self.acrh}] Optimizing Lookup Table...")
         verbose_print("  Detecting frequent two-byte sequences...")
         byte_seq_count: dict[int, dict[int, int]] = {}
         for byte1 in lut:
@@ -979,9 +1043,10 @@ class MameFontBuilder:
             print(f"    Potential Effect of LUD: {total_score} ")
 
         # Reorder LUT
-        verbose_print("  LUT Before Reorder:")
-        report_lut_score()
-        verbose_print("  Reordering LUT...")
+        if VERBOSE:
+            print("  LUT Before Reorder:")
+            report_lut_score()
+            print("  Reordering LUT...")
 
         class LutSeq:
             def __init__(self, seq: list[int], frozen: bool = False):
@@ -1055,10 +1120,11 @@ class MameFontBuilder:
                     seq.frozen = True
                 head_frozen = True
 
-            print("    ", end="")
-            for seq in seq_buff:
-                print(f"{seq} ", end="")
-            print()
+            if VERBOSE:
+                print("    ", end="")
+                for seq in seq_buff:
+                    print(f"{seq} ", end="")
+                print()
 
         new_lut = []
         for seq in seq_buff:
@@ -1104,8 +1170,9 @@ class MameFontBuilder:
                 index1 = index2
                 i_op += 1
 
-        verbose_print("  LUT After Reorder:")
-        report_lut_score()
+        if VERBOSE:
+            print("  LUT After Reorder:")
+            report_lut_score()
 
         # Align LUT to 2-byte boundary
         while len(lut) % ALIGN_SIZE != 0 or len(lut) == 0:
@@ -1113,12 +1180,18 @@ class MameFontBuilder:
 
         # Determine to apply Shrinked Glyph Table or not
         shrinked_glyph_table = True
+        cannot_shrink_reason = ""
         total_bytecode_size = 0
         for code in codes:
             # Check glyph dimensions
             glyph = self.glyphs[code]
-            if glyph.glyph_width > 16 or glyph.x_advance > 16:
+            if glyph.glyph_width not in GLYPH_SHRINKED_DIM_WIDTH.range:
                 shrinked_glyph_table = False
+                cannot_shrink_reason = "Glyph width is out of range."
+                break
+            if glyph.x_spacing not in GLYPH_SHRINKED_DIM_X_SPACING.range:
+                shrinked_glyph_table = False
+                cannot_shrink_reason = "X spacing is out of range."
                 break
 
             # Check bytecode size
@@ -1128,10 +1201,16 @@ class MameFontBuilder:
                 total_bytecode_size += 1
             if total_bytecode_size > (ALIGN_SIZE * 256):
                 shrinked_glyph_table = False
+                cannot_shrink_reason = "Total bytecode size is out of range."
                 break
 
+        if shrinked_glyph_table:
+            verbose_print(f"[{self.name}:{self.acrh}] Applying Shrinked Glyph Table format.")
+        else:
+            verbose_print(f"[{self.name}:{self.acrh}] Shrinked Glyph Table format cannot be applied because: {cannot_shrink_reason}")
+
         # Construct bytecode block
-        verbose_print(f"[{LIB_NAME}] Constructing bytecode block...")
+        verbose_print(f"[{self.name}:{self.acrh}] Constructing bytecode block...")
         bytecodes: list[int] = []
         for code in codes:
             if False:
@@ -1150,7 +1229,7 @@ class MameFontBuilder:
         for _ in range(3):
             bytecodes.append(ABO.code)
 
-        verbose_print(f"[{LIB_NAME}] Generating blob...")
+        verbose_print(f"[{self.name}:{self.acrh}] Generating blob...")
         if shrinked_glyph_table:
             verbose_print("  Using Shrinked Glyph Table format.")
         else:
@@ -1159,13 +1238,13 @@ class MameFontBuilder:
         code_first = codes[0]
         code_last = codes[-1]
 
-        max_glyph_width = 0
+        max_glyph_width = 1
         for glyph in self.glyphs.values():
             if glyph.glyph_width > max_glyph_width:
                 max_glyph_width = glyph.glyph_width
 
         font_dimension_0 = FONT_DIM_FONT_HEIGHT.place(self.glyph_height)
-        font_dimension_1 = FONT_DIM_Y_ADVANCE.place(self.y_advance)
+        font_dimension_1 = FONT_DIM_Y_SPACING.place(self.y_spacing)
         font_dimension_2 = FONT_DIM_MAX_GLYPH_WIDTH.place(max_glyph_width)
 
         font_flags = 0
@@ -1206,12 +1285,14 @@ class MameFontBuilder:
             if shrinked_glyph_table:
                 shrinked_glyph_dim = 0
                 shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_WIDTH.place(glyph.glyph_width)
-                shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_X_ADVANCE.place(glyph.x_advance)
+                shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_X_SPACING.place(
+                    glyph.x_spacing
+                )
                 blob.append((glyph.entry_point // 2) & 0xFF)
                 blob.append(shrinked_glyph_dim)
             else:
                 glyph_dim_0 = GLYPH_DIM_WIDTH.place(glyph.glyph_width)
-                glyph_dim_1 = GLYPH_DIM_X_ADVANCE.place(glyph.x_advance)
+                glyph_dim_1 = GLYPH_DIM_X_SPACING.place(glyph.x_spacing)
                 blob.append(glyph.entry_point & 0xFF)
                 blob.append((glyph.entry_point >> 8) & 0xFF)
                 blob.append(glyph_dim_0)
@@ -1226,4 +1307,9 @@ class MameFontBuilder:
         # Bytecode
         blob += bytecodes
 
-        return MameFont(name=self.name, blob=blob)
+        result = MameFont(name=self.name, blob=blob)
+
+        if self.report_finished:
+            print(f"[{self.name}:{self.acrh}] Build succeeded")
+
+        return result

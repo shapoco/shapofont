@@ -7,13 +7,13 @@
 //   Total Pixels    : 256 px
 //   Fragment Shape  : Horizontal
 //   Bit Order       : LSB First
-//   Shrinked Format : No
+//   Shrinked Format : Yes
 //   Estimated Footprint:
 //     Header        :    8 Bytes
-//     Glyph Table   :    4 Bytes (4 Bytes/glyph)
+//     Glyph Table   :    2 Bytes (2 Bytes/glyph)
 //     Lookup Table  :    4 Bytes (6.25% used)
 //     Bytecodes     :   13 Bytes (13.00 Bytes/glyph)
-//     Total         :   29 Bytes (29.00 Bytes/glyph)
+//     Total         :   27 Bytes (27.00 Bytes/glyph)
 //   Compression Performance:
 //     CPY         :   18 -->    3 ( -46.88%)
 //     LUD (step=0):    2 -->    1 (  -3.12%)
@@ -21,7 +21,7 @@
 //     RPT         :    9 -->    3 ( -18.75%)
 //     SFT         :    1 -->    1 (  +0.00%)
 //     Total       :   32 -->   10 ( -68.75%)
-//   Memory Efficiency:  8.828 px/Byte
+//   Memory Efficiency:  9.481 px/Byte
 
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
@@ -35,9 +35,9 @@
 
 const uint8_t TestF_s16w04_blob[] MAMEFONT_PROGMEM = {
   // Font Header
-  0x01, 0x00, 0x46, 0x00, 0x03, 0x0F, 0x13, 0x0F,
+  0x01, 0x20, 0x46, 0x00, 0x03, 0x0F, 0x04, 0x0F,
   // Glyph Table
-  0x00, 0x00, 0x0F, 0x10,
+  0x00, 0x1F,
   // Lookup Table
   0xFF, 0x00, 0x3F, 0x00,
   // Bytecodes
