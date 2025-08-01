@@ -60,8 +60,11 @@ FONT_DIM_FONT_HEIGHT = Field(0, 6, bias=1)
 FONT_DIM_Y_ADVANCE = Field(0, 6, bias=1)
 FONT_DIM_MAX_GLYPH_WIDTH = Field(0, 6, bias=1)
 
-GLYPH_DIM_GLYPH_WIDTH = Field(0, 6, bias=1)
+GLYPH_DIM_WIDTH = Field(0, 6, bias=1)
 GLYPH_DIM_X_ADVANCE = Field(0, 6, bias=1)
+
+GLYPH_SHRINKED_DIM_WIDTH = Field(0, 4, bias=1)
+GLYPH_SHRINKED_DIM_X_ADVANCE = Field(4, 4, bias=1)
 
 RPT_REPEAT_COUNT = Field(0, 4, bias=1)
 
@@ -267,7 +270,7 @@ class MameGlyph:
     ):
         self.code = code
         self.operations = operations
-        self.glyphWidth = glyphWidth
+        self.glyph_width = glyphWidth
         self.x_advance = x_advance
         self.entry_point = 0xFFFF
 
@@ -302,7 +305,7 @@ class MameFont:
         msb1st = 0 != (font_flags & FONT_FLAG_MSB_FIRST)
         shrinked_glyph_table = 0 != (font_flags & FONT_FLAG_SHRINKED_GLYPH_TABLE)
 
-        font_height = (self.blob[OFST_FONT_DIMENSION_0] & 0x3F) + 1
+        glyph_height = (self.blob[OFST_FONT_DIMENSION_0] & 0x3F) + 1
         max_glyph_width = (self.blob[OFST_FONT_DIMENSION_2] & 0x3F) + 1
 
         first_code = self.blob[OFST_FIRST_CODE]
@@ -342,9 +345,9 @@ class MameFont:
                 glyph_width = (self.blob[table_entry_offset + 2] & 0x3F) + 1
 
             if vertical_frag:
-                glyph_size_in_bytes = glyph_width * math.ceil(font_height / 8)
+                glyph_size_in_bytes = glyph_width * math.ceil(glyph_height / 8)
             else:
-                glyph_size_in_bytes = math.ceil(glyph_width / 8) * font_height
+                glyph_size_in_bytes = math.ceil(glyph_width / 8) * glyph_height
 
             pc = bytecode_offset
             if shrinked_glyph_table:
@@ -378,7 +381,7 @@ class MameFont:
                         f"Byte code overrun: code=0x{glyph_code:04X}, pc=0x{pc:04X}, last_op={opr}, inst_size={inst_size}, orig_size={orig_size}, params={params}"
                     )
 
-            num_total_pixels += glyph_width * font_height
+            num_total_pixels += glyph_width * glyph_height
         total_delta_size = total_inst_size - total_orig_size
 
         pixels_per_byte = num_total_pixels / total_size if total_size > 0 else 0
@@ -388,7 +391,7 @@ class MameFont:
         code += f"//   Format Version: {self.blob[OFST_FORMAT_VERSION]}\n"
         code += f"//   First Code      : {first_code}\n"
         code += f"//   Glyph Count     : {num_glyphs}\n"
-        code += f"//   Font Height     : {font_height} px\n"
+        code += f"//   Font Height     : {glyph_height} px\n"
         code += f"//   Max Glyph Width : {max_glyph_width} px\n"
         code += f"//   Total Pixels    : {num_total_pixels} px\n"
         code += (
@@ -1114,7 +1117,7 @@ class MameFontBuilder:
         for code in codes:
             # Check glyph dimensions
             glyph = self.glyphs[code]
-            if glyph.glyphWidth > 16 or glyph.x_advance > 16:
+            if glyph.glyph_width > 16 or glyph.x_advance > 16:
                 shrinked_glyph_table = False
                 break
 
@@ -1158,12 +1161,13 @@ class MameFontBuilder:
 
         max_glyph_width = 0
         for glyph in self.glyphs.values():
-            if glyph.glyphWidth > max_glyph_width:
-                max_glyph_width = glyph.glyphWidth
+            if glyph.glyph_width > max_glyph_width:
+                max_glyph_width = glyph.glyph_width
 
-        font_dimension_0 = (self.glyph_height - 1) & 0x3F
-        font_dimension_1 = (self.y_advance - 1) & 0x3F
-        font_dimension_2 = (max_glyph_width - 1) & 0x3F
+        font_dimension_0 = FONT_DIM_FONT_HEIGHT.place(self.glyph_height)
+        font_dimension_1 = FONT_DIM_Y_ADVANCE.place(self.y_advance)
+        font_dimension_2 = FONT_DIM_MAX_GLYPH_WIDTH.place(max_glyph_width)
+
         font_flags = 0
         if self.vertical_frag:
             font_flags |= 0x80
@@ -1200,18 +1204,18 @@ class MameFontBuilder:
 
             glyph = self.glyphs[code]
             if shrinked_glyph_table:
-                shrinked_glyph_dimension = 0
-                shrinked_glyph_dimension |= (glyph.glyphWidth - 1) & 0xF
-                shrinked_glyph_dimension |= ((glyph.x_advance - 1) & 0xF) << 4
+                shrinked_glyph_dim = 0
+                shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_WIDTH.place(glyph.glyph_width)
+                shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_X_ADVANCE.place(glyph.x_advance)
                 blob.append((glyph.entry_point // 2) & 0xFF)
-                blob.append(shrinked_glyph_dimension)
+                blob.append(shrinked_glyph_dim)
             else:
-                glyph_dimension_0 = (glyph.glyphWidth - 1) & 0x3F
-                glyph_dimension_1 = (glyph.x_advance - 1) & 0x3F
+                glyph_dim_0 = GLYPH_DIM_WIDTH.place(glyph.glyph_width)
+                glyph_dim_1 = GLYPH_DIM_X_ADVANCE.place(glyph.x_advance)
                 blob.append(glyph.entry_point & 0xFF)
                 blob.append((glyph.entry_point >> 8) & 0xFF)
-                blob.append(glyph_dimension_0)
-                blob.append(glyph_dimension_1)
+                blob.append(glyph_dim_0)
+                blob.append(glyph_dim_1)
 
         while len(blob) % 2 != 0:
             blob.append(0x00)
