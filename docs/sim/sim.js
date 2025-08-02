@@ -509,7 +509,9 @@ var App = /** @class */ (function () {
         var screenSizeStr = this.screenSizeBox.value;
         var _b = __read(screenSizeStr.split('x').map(Number), 2), screenWidth = _b[0], screenHeight = _b[1];
         var zoom = Number(this.zoomBox.value);
-        var dotEmphasis = this.dotEmphasisBox.checked;
+        var dotEmphasisAllowed = screenWidth <= 320 && screenHeight <= 320;
+        this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
+        var dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
         var textSize = this.getTextSize();
         var originX = Number(this.originXBox.value);
         var originY = Number(this.originY1Box.value);

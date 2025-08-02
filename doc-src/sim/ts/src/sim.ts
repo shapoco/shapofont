@@ -428,7 +428,9 @@ class App {
     const screenSizeStr = this.screenSizeBox.value;
     const [screenWidth, screenHeight] = screenSizeStr.split('x').map(Number);
     const zoom = Number(this.zoomBox.value);
-    const dotEmphasis = this.dotEmphasisBox.checked;
+    const dotEmphasisAllowed = screenWidth <= 320 && screenHeight <= 320;
+    this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
+    const dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
     const textSize = this.getTextSize();
     const originX = Number(this.originXBox.value);
     let originY = Number(this.originY1Box.value);
