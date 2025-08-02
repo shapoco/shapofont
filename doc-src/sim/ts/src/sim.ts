@@ -310,6 +310,9 @@ class App {
         this.requestUpdatePreview();
       });
     }
+
+    this.sampleTextBox.value =
+        ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
   }
 
   async init() {

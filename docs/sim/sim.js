@@ -382,6 +382,8 @@ var App = /** @class */ (function () {
             }
             finally { if (e_4) throw e_4.error; }
         }
+        this.sampleTextBox.value =
+            ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
