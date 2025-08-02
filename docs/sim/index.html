@@ -121,14 +121,20 @@
       display: inline-block;
       white-space: nowrap;
     }
+
+    a {
+      color: #4ac !important;
+    }
   </style>
 </head>
 
 <body>
   <main>
     <h1>GFXfont Simulator</h1>
-    <p id="shapoconet_stamp_wrap"></p>
-    <script async src="https://shapoco.github.io/js/stamp/v1/widget.js?20250802140600"></script>
+    <p>
+      GFXfont のソースコードを下に貼り付けると、任意のテキストを使ってレンダリング結果をチェックできます。<br>
+      Paste the GFXfont source code below to see the rendering results with any text.
+    </p>
 
     <h2>GFXfont source code</h2>
     <p>
@@ -206,6 +212,15 @@
         <label for="dot-emphasis">Dot Emphasis</label>
       </span>
     </p>
+
+    <hr>
+    
+    <p style="text-align: center;">
+      This application is part of <a href="https://github.com/shapoco/shapofont">ShapoFont</a>.
+    </p>
+
+    <p id="shapoconet_stamp_wrap" style="text-align: center;"></p>
+    <script async src="https://shapoco.github.io/js/stamp/v1/widget.js?20250802140600"></script>
 
   </main>
 </body>
