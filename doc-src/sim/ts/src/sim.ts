@@ -332,7 +332,12 @@ class App {
             case 'u': {
               const url = decodeURIComponent(value);
               const urlStart = 'https://raw.githubusercontent.com/';
-              if (url.startsWith(urlStart)) {
+              const shapoFontStart = 'shapofont/';
+              if (url.startsWith(shapoFontStart)) {
+                srcUrl =
+                    'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/' +
+                    url.slice(shapoFontStart.length);
+              } else if (url.startsWith(urlStart)) {
                 srcUrl = url;
               } else {
                 throw new Error(`Only URLs from '${urlStart}' are allowed.`);

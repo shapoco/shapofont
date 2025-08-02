@@ -386,7 +386,7 @@ var App = /** @class */ (function () {
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var hash, srcUrl, sampleText, params, params_1, params_1_1, param, _a, key, value, url, urlStart, fontSrc, fontText, error_1;
+            var hash, srcUrl, sampleText, params, params_1, params_1_1, param, _a, key, value, url, urlStart, shapoFontStart, fontSrc, fontText, error_1;
             var e_5, _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
@@ -407,7 +407,13 @@ var App = /** @class */ (function () {
                                             {
                                                 url = decodeURIComponent(value);
                                                 urlStart = 'https://raw.githubusercontent.com/';
-                                                if (url.startsWith(urlStart)) {
+                                                shapoFontStart = 'shapofont/';
+                                                if (url.startsWith(shapoFontStart)) {
+                                                    srcUrl =
+                                                        'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/' +
+                                                            url.slice(shapoFontStart.length);
+                                                }
+                                                else if (url.startsWith(urlStart)) {
                                                     srcUrl = url;
                                                 }
                                                 else {
