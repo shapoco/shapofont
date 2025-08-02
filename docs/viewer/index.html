@@ -37,8 +37,10 @@
 
 <body>
   <h1>GFXfont Viewer</h1>
+  <p id="shapoconet_stamp_wrap"></p>
+  <script async src="/stamp/v1/widget.js?20250802140600"></script>
   <p>
-  <textarea id="font-src">
+    <textarea id="font-src">
 #pragma once
 
 // Generated from ShapoFont
@@ -297,11 +299,11 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXfont ShapoSansP_s20c16w3a1 SHAPOFONT_PROGME
 #undef SHAPOFONT_GFXFONT_NAMESPACE
 #endif
   </textarea><br>
-  <button id="parse-btn">Parse</button>
-</p>
+    <button id="parse-btn">Parse</button>
+  </p>
   <p id="output"></p>
   <p>
-  <textarea id="sample-text"></textarea>
+    <textarea id="sample-text"></textarea>
   </p>
   <p>
     <canvas id="text-preview" width="800" height="400"></canvas>
