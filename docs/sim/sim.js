@@ -580,6 +580,9 @@ var App = /** @class */ (function () {
             ctx.strokeStyle = '#666';
             ctx.lineWidth = lw;
             ctx.strokeRect(originX * dotSize, originY * dotSize, textWidth * dotSize, textHeight * dotSize);
+            ctx.strokeStyle = '#f00';
+            ctx.lineWidth = lw;
+            ctx.strokeRect(originX * dotSize - lw * 4, offsettedOriginY * dotSize - lw * 4, lw * 8, lw * 8);
             ctx.font = "".concat(Math.ceil(lw * 16), "px sans-serif");
             ctx.fillStyle = '#666';
             ctx.textBaseline = 'top';
