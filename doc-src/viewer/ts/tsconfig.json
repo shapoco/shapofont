@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "module": "ES6",
+    "target": "ES5",
+    "downlevelIteration": true,
+    "lib": [
+      "es2021",
+      "dom",
+      "dom.iterable"
+    ],
+    "outDir": ".build",
+  },
+  "files": [
+    "src/viewer.ts"
+  ]
+}

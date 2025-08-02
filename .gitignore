@@ -10,7 +10,3 @@ a.out
 *.log
 .vscode/settings.json
 *Zone.Identifier
-
-# todo: delete
-docs/
-doc-src/
