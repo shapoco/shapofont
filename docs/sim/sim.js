@@ -194,7 +194,7 @@ var Font = /** @class */ (function () {
         if (!success)
             success = this.tryParseGfxFont(src);
         if (!success)
-            throw new Error('Failed to parse font source');
+            throw new Error('Unknown Font Format');
     }
     Font.prototype.tryParseGfxFont = function (src) {
         var e_1, _a;
@@ -383,30 +383,72 @@ var App = /** @class */ (function () {
             }
             finally { if (e_4) throw e_4.error; }
         }
-        this.sampleTextBox.value =
-            ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var fontSrc, fontText, error_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var hash, srcUrl, sampleText, params, params_1, params_1_1, param, _a, key, value, url, urlStart, fontSrc, fontText, error_1;
+            var e_5, _b;
+            return __generator(this, function (_c) {
+                switch (_c.label) {
                     case 0:
-                        _a.trys.push([0, 3, , 4]);
-                        return [4 /*yield*/, fetch('https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h')];
+                        _c.trys.push([0, 4, , 5]);
+                        hash = window.location.hash;
+                        srcUrl = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
+                        sampleText = ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
+                        if (hash.startsWith('#')) {
+                            hash = hash.slice(1);
+                            params = hash.split('&');
+                            try {
+                                for (params_1 = __values(params), params_1_1 = params_1.next(); !params_1_1.done; params_1_1 = params_1.next()) {
+                                    param = params_1_1.value;
+                                    _a = __read(param.split('='), 2), key = _a[0], value = _a[1];
+                                    switch (key) {
+                                        case 'u':
+                                            {
+                                                url = decodeURIComponent(value);
+                                                urlStart = 'https://raw.githubusercontent.com/';
+                                                if (url.startsWith(urlStart)) {
+                                                    srcUrl = url;
+                                                }
+                                                else {
+                                                    throw new Error("Only URLs from '".concat(urlStart, "' are allowed."));
+                                                }
+                                            }
+                                            break;
+                                        case 't':
+                                            sampleText = decodeURIComponent(value);
+                                            break;
+                                        case 's':
+                                            this.screenSizeBox.value = decodeURIComponent(value);
+                                            break;
+                                    }
+                                }
+                            }
+                            catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                            finally {
+                                try {
+                                    if (params_1_1 && !params_1_1.done && (_b = params_1.return)) _b.call(params_1);
+                                }
+                                finally { if (e_5) throw e_5.error; }
+                            }
+                        }
+                        this.sampleTextBox.value = sampleText;
+                        if (!srcUrl) return [3 /*break*/, 3];
+                        return [4 /*yield*/, fetch(srcUrl)];
                     case 1:
-                        fontSrc = _a.sent();
+                        fontSrc = _c.sent();
                         return [4 /*yield*/, fontSrc.text()];
                     case 2:
-                        fontText = _a.sent();
+                        fontText = _c.sent();
                         document.querySelector('#font-src').value =
                             fontText;
-                        return [3 /*break*/, 4];
-                    case 3:
-                        error_1 = _a.sent();
-                        this.logBox.textContent = 'Error fetching sample font:\n' + error_1;
-                        return [3 /*break*/, 4];
+                        _c.label = 3;
+                    case 3: return [3 /*break*/, 5];
                     case 4:
+                        error_1 = _c.sent();
+                        this.logBox.textContent = 'Error fetching sample font:\n' + error_1;
+                        return [3 /*break*/, 5];
+                    case 5:
                         this.runParse();
                         return [2 /*return*/];
                 }
@@ -446,7 +488,7 @@ var App = /** @class */ (function () {
         this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
     };
     App.prototype.updatePreview = function () {
-        var e_5, _a;
+        var e_6, _a;
         if (this.updatePreviewRequestId >= 0) {
             clearTimeout(this.updatePreviewRequestId);
             this.updatePreviewRequestId = -1;
@@ -497,16 +539,16 @@ var App = /** @class */ (function () {
                 c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '255 255 255');
             }
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
         finally {
             try {
                 if (chars_1_1 && !chars_1_1.done && (_a = chars_1.return)) _a.call(chars_1);
             }
-            finally { if (e_5) throw e_5.error; }
+            finally { if (e_6) throw e_6.error; }
         }
     };
     App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
-        var e_6, _a;
+        var e_7, _a;
         var cursorX = x;
         var cursorY = y;
         var characters = [];
@@ -527,12 +569,12 @@ var App = /** @class */ (function () {
                 }
             }
         }
-        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
             }
-            finally { if (e_6) throw e_6.error; }
+            finally { if (e_7) throw e_7.error; }
         }
         return characters;
     };

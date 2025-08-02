@@ -134,7 +134,7 @@ class Font {
 
     let success = false;
     if (!success) success = this.tryParseGfxFont(src);
-    if (!success) throw new Error('Failed to parse font source');
+    if (!success) throw new Error('Unknown Font Format');
   }
 
   tryParseGfxFont(src: string): boolean {
@@ -312,21 +312,57 @@ class App {
         this.requestUpdatePreview();
       });
     }
-
-    this.sampleTextBox.value =
-        ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
   }
 
   async init() {
     try {
-      const fontSrc = await fetch(
-          'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h');
-      const fontText = await fontSrc.text();
-      (document.querySelector('#font-src') as HTMLTextAreaElement).value =
-          fontText;
+      let hash = window.location.hash;
+      let srcUrl =
+          'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
+      let sampleText =
+          ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
+
+      if (hash.startsWith('#')) {
+        hash = hash.slice(1);
+
+        const params = hash.split('&');
+        for (const param of params) {
+          const [key, value] = param.split('=');
+          switch (key) {
+            case 'u': {
+              const url = decodeURIComponent(value);
+              const urlStart = 'https://raw.githubusercontent.com/';
+              if (url.startsWith(urlStart)) {
+                srcUrl = url;
+              } else {
+                throw new Error(`Only URLs from '${urlStart}' are allowed.`);
+              }
+            } break;
+
+            case 't':
+              sampleText = decodeURIComponent(value);
+              break;
+
+            case 's':
+              this.screenSizeBox.value = decodeURIComponent(value);
+              break;
+          }
+        }
+      }
+
+      this.sampleTextBox.value = sampleText;
+
+      if (srcUrl) {
+        const fontSrc = await fetch(srcUrl);
+        const fontText = await fontSrc.text();
+        (document.querySelector('#font-src') as HTMLTextAreaElement).value =
+            fontText;
+      }
+
     } catch (error) {
       this.logBox.textContent = 'Error fetching sample font:\n' + error;
     }
+
     this.runParse();
   }
 
