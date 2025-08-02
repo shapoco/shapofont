@@ -393,7 +393,7 @@ var App = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         _a.trys.push([0, 3, , 4]);
-                        return [4 /*yield*/, fetch('https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h')];
+                        return [4 /*yield*/, fetch('https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h')];
                     case 1:
                         fontSrc = _a.sent();
                         return [4 /*yield*/, fontSrc.text()];

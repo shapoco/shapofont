@@ -320,7 +320,7 @@ class App {
   async init() {
     try {
       const fontSrc = await fetch(
-          'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h');
+          'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h');
       const fontText = await fontSrc.text();
       (document.querySelector('#font-src') as HTMLTextAreaElement).value =
           fontText;
