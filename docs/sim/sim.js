@@ -540,7 +540,7 @@ var App = /** @class */ (function () {
         try {
             for (var chars_1 = __values(chars), chars_1_1 = chars_1.next(); !chars_1_1.done; chars_1_1 = chars_1.next()) {
                 var c = chars_1_1.value;
-                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '255 255 255');
+                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '192 224 255');
             }
         }
         catch (e_6_1) { e_6 = { error: e_6_1 }; }

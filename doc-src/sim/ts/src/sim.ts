@@ -465,7 +465,7 @@ class App {
     for (const c of chars) {
       c.glyph.render(
           ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis,
-          '255 255 255');
+          '192 224 255');
     }
   }
 

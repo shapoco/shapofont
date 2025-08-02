@@ -7,7 +7,7 @@
   <meta name="keywords" content="GFXfont,simulator">
   <meta name="description" content="A web app that lets you check GFXfont rendering in your browser.">
 
-  <title>GFXfont Simulator</title>
+  <title>GFXfont Web Simulator</title>
   <script src="sim.js"></script>
 
   <style>
@@ -130,10 +130,10 @@
 
 <body>
   <main>
-    <h1>GFXfont Simulator</h1>
+    <h1>GFXfont Web Simulator</h1>
     <p>
-      GFXfont のソースコードを下に貼り付けると、任意のテキストを使ってレンダリング結果をチェックできます。<br>
-      Paste the GFXfont source code below to see the rendering results with any text.
+      Paste the GFXfont source code below to see the rendering results with any text.<br>
+      GFXfont のソースコードを下に貼り付けると、任意のテキストを使ってレンダリング結果をチェックできます。
     </p>
 
     <h2>GFXfont source code</h2>
@@ -169,11 +169,11 @@
       </span> |
       <span class="nowrap">
         X:
-        <input type="number" id="origin-x" value="0" />
+        <input type="number" id="origin-x" value="4" />
       </span> |
       <span class="nowrap">
         Y:
-        <input type="number" id="origin-y" value="0" />
+        <input type="number" id="origin-y" value="4" />
         <input type="checkbox" id="origin-y-auto-offset" checked />
         <label for="origin-y-auto-offset">Auto Offset</label>
       </span> |
@@ -208,7 +208,7 @@
         </select>
       </span>
       <span class="nowrap">
-        <input type="checkbox" id="dot-emphasis" />
+        <input type="checkbox" id="dot-emphasis" checked />
         <label for="dot-emphasis">Dot Emphasis</label>
       </span>
     </p>
