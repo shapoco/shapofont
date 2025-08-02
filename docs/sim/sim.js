@@ -543,10 +543,10 @@ var App = /** @class */ (function () {
         var screenSizeStr = this.screenSizeBox.value;
         var _c = __read(screenSizeStr.split('x').map(Number), 2), screenWidth = _c[0], screenHeight = _c[1];
         if (screenWidth <= 0) {
-            screenWidth = Math.max(128, Math.ceil(textRight * 1.1 / 40) * 40);
+            screenWidth = Math.max(128, Math.ceil(textRight * 1.1 / 20) * 20);
         }
         if (screenHeight <= 0) {
-            screenHeight = Math.max(64, Math.ceil(textBottom * 1.1 / 40) * 40);
+            screenHeight = Math.max(32, Math.ceil(textBottom * 1.1 / 20) * 20);
         }
         var zoom = Number(this.zoomBox.value);
         var dotEmphasisAllowed = screenWidth < 320 && screenHeight < 320;

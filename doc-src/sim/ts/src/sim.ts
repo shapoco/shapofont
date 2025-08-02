@@ -459,10 +459,10 @@ class App {
     const screenSizeStr = this.screenSizeBox.value;
     let [screenWidth, screenHeight] = screenSizeStr.split('x').map(Number);
     if (screenWidth <= 0) {
-      screenWidth = Math.max(128, Math.ceil(textRight * 1.1 / 40) * 40);
+      screenWidth = Math.max(128, Math.ceil(textRight * 1.1 / 20) * 20);
     }
     if (screenHeight <= 0) {
-      screenHeight = Math.max(64, Math.ceil(textBottom * 1.1 / 40) * 40);
+      screenHeight = Math.max(32, Math.ceil(textBottom * 1.1 / 20) * 20);
     }
 
     const zoom = Number(this.zoomBox.value);
