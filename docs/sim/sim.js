@@ -568,7 +568,7 @@ var App = /** @class */ (function () {
             canvas.style.width = '100%';
         }
         var ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = '#002';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         {
             var lw = Math.max(1, screenWidth * dotSize / 900);

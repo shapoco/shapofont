@@ -488,7 +488,7 @@ class App {
     }
 
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = '#002';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     {
