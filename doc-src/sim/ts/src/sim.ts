@@ -254,6 +254,14 @@ class Character {
   constructor(
       public font: Font, public glyph: Glyph, public x: number,
       public y: number, public size: number) {}
+
+  public getRight(): number {
+    return this.x + (this.glyph.xOffset + this.glyph.width) * this.size;
+  }
+
+  public getBottom(): number {
+    return this.y + (this.glyph.yOffset + this.glyph.height) * this.size;
+  }
 }
 
 class App {
@@ -413,35 +421,54 @@ class App {
       this.updatePreviewRequestId = -1;
     }
 
-    const previewCanvas =
+    const canvas =
         document.querySelector('#preview-canvas') as HTMLCanvasElement;
 
     const font = this.font;
     if (!font) {
-      const ctx = previewCanvas.getContext('2d');
+      const ctx = canvas.getContext('2d');
       ctx.fillStyle = '#f00';
       ctx.fillText('No font loaded', 10, 20);
       return;
     }
 
     const text = this.sampleTextBox.value;
-    const screenSizeStr = this.screenSizeBox.value;
-    const [screenWidth, screenHeight] = screenSizeStr.split('x').map(Number);
-    const zoom = Number(this.zoomBox.value);
-    const dotEmphasisAllowed = screenWidth <= 320 && screenHeight <= 320;
-    this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
-    const dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
-    const textSize = this.getTextSize();
     const originX = Number(this.originXBox.value);
-    let originY = Number(this.originY1Box.value);
+    const textSize = this.getTextSize();
+    const originY = Number(this.originY1Box.value);
+    let offsettedOriginY = originY;
     if (this.originYAutoOffsetBox.checked) {
-      originY += this.font.getPreferredOriginY() * textSize;
+      offsettedOriginY += this.font.getPreferredOriginY() * textSize;
     }
     const xAdvanceAdjust = Number(this.xAdvanceAdjustBox.value);
     const yAdvanceAdjust = Number(this.yAdvanceAdjustBox.value);
 
     const chars = this.layoutChars(
-        font, text, originX, originY, textSize, xAdvanceAdjust, yAdvanceAdjust);
+        font, text, originX, offsettedOriginY, textSize, xAdvanceAdjust,
+        yAdvanceAdjust);
+
+    let textRight = originX;
+    let textBottom = originY;
+    for (const c of chars) {
+      textRight = Math.max(textRight, c.getRight());
+      textBottom = Math.max(textBottom, c.getBottom());
+    }
+    const textWidth = textRight - originX;
+    const textHeight = textBottom - originY;
+
+    const screenSizeStr = this.screenSizeBox.value;
+    let [screenWidth, screenHeight] = screenSizeStr.split('x').map(Number);
+    if (screenWidth <= 0) {
+      screenWidth = Math.max(128, Math.ceil(textRight * 1.1 / 40) * 40);
+    }
+    if (screenHeight <= 0) {
+      screenHeight = Math.max(64, Math.ceil(textBottom * 1.1 / 40) * 40);
+    }
+
+    const zoom = Number(this.zoomBox.value);
+    const dotEmphasisAllowed = screenWidth < 320 && screenHeight < 320;
+    this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
+    const dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
 
     let dotSize = zoom;
     if (dotSize <= 0) {
@@ -449,20 +476,41 @@ class App {
       dotSize = Math.max(1, Math.min(8, dotSize));
     }
 
-    previewCanvas.width = screenWidth * dotSize;
-    previewCanvas.height = screenHeight * dotSize;
+    canvas.width = screenWidth * dotSize;
+    canvas.height = screenHeight * dotSize;
 
     if (zoom > 0) {
-      previewCanvas.style.imageRendering = 'pixelated';
-      previewCanvas.style.width = `${screenWidth * zoom}px`;
+      canvas.style.imageRendering = 'pixelated';
+      canvas.style.width = `${screenWidth * zoom}px`;
     } else {
-      previewCanvas.style.imageRendering = 'auto';
-      previewCanvas.style.width = '100%';
+      canvas.style.imageRendering = 'auto';
+      canvas.style.width = '100%';
     }
 
-    const ctx = previewCanvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
     ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    {
+      const lw = Math.max(1, screenWidth * dotSize / 900);
+      // ctx.fillStyle = '#666';
+      // ctx.fillRect(originX * dotSize - lw / 2, 0, lw, canvas.height);
+      // ctx.fillRect(0, originY * dotSize - lw / 2, canvas.width, lw);
+      // ctx.fillRect(textRight * dotSize - lw / 2, 0, lw, canvas.height);
+      // ctx.fillRect(0, textBottom * dotSize - lw / 2, canvas.width, lw);
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = lw;
+      ctx.strokeRect(
+          originX * dotSize, originY * dotSize, textWidth * dotSize,
+          textHeight * dotSize);
+
+      ctx.font = `${Math.ceil(lw * 16)}px sans-serif`;
+      ctx.fillStyle = '#666';
+      ctx.textBaseline = 'top';
+      ctx.fillText(
+          `${textWidth}x${textHeight}`, originX * dotSize,
+          textBottom * dotSize);
+    }
 
     for (const c of chars) {
       c.glyph.render(

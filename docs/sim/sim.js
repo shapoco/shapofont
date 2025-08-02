@@ -318,6 +318,12 @@ var Character = /** @class */ (function () {
         this.y = y;
         this.size = size;
     }
+    Character.prototype.getRight = function () {
+        return this.x + (this.glyph.xOffset + this.glyph.width) * this.size;
+    };
+    Character.prototype.getBottom = function () {
+        return this.y + (this.glyph.yOffset + this.glyph.height) * this.size;
+    };
     return Character;
 }());
 var App = /** @class */ (function () {
@@ -492,57 +498,37 @@ var App = /** @class */ (function () {
         this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
     };
     App.prototype.updatePreview = function () {
-        var e_6, _a;
+        var e_6, _a, e_7, _b;
         if (this.updatePreviewRequestId >= 0) {
             clearTimeout(this.updatePreviewRequestId);
             this.updatePreviewRequestId = -1;
         }
-        var previewCanvas = document.querySelector('#preview-canvas');
+        var canvas = document.querySelector('#preview-canvas');
         var font = this.font;
         if (!font) {
-            var ctx_1 = previewCanvas.getContext('2d');
+            var ctx_1 = canvas.getContext('2d');
             ctx_1.fillStyle = '#f00';
             ctx_1.fillText('No font loaded', 10, 20);
             return;
         }
         var text = this.sampleTextBox.value;
-        var screenSizeStr = this.screenSizeBox.value;
-        var _b = __read(screenSizeStr.split('x').map(Number), 2), screenWidth = _b[0], screenHeight = _b[1];
-        var zoom = Number(this.zoomBox.value);
-        var dotEmphasisAllowed = screenWidth <= 320 && screenHeight <= 320;
-        this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
-        var dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
-        var textSize = this.getTextSize();
         var originX = Number(this.originXBox.value);
+        var textSize = this.getTextSize();
         var originY = Number(this.originY1Box.value);
+        var offsettedOriginY = originY;
         if (this.originYAutoOffsetBox.checked) {
-            originY += this.font.getPreferredOriginY() * textSize;
+            offsettedOriginY += this.font.getPreferredOriginY() * textSize;
         }
         var xAdvanceAdjust = Number(this.xAdvanceAdjustBox.value);
         var yAdvanceAdjust = Number(this.yAdvanceAdjustBox.value);
-        var chars = this.layoutChars(font, text, originX, originY, textSize, xAdvanceAdjust, yAdvanceAdjust);
-        var dotSize = zoom;
-        if (dotSize <= 0) {
-            dotSize = Math.ceil(2000 / Math.max(screenWidth, screenHeight));
-            dotSize = Math.max(1, Math.min(8, dotSize));
-        }
-        previewCanvas.width = screenWidth * dotSize;
-        previewCanvas.height = screenHeight * dotSize;
-        if (zoom > 0) {
-            previewCanvas.style.imageRendering = 'pixelated';
-            previewCanvas.style.width = "".concat(screenWidth * zoom, "px");
-        }
-        else {
-            previewCanvas.style.imageRendering = 'auto';
-            previewCanvas.style.width = '100%';
-        }
-        var ctx = previewCanvas.getContext('2d');
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        var chars = this.layoutChars(font, text, originX, offsettedOriginY, textSize, xAdvanceAdjust, yAdvanceAdjust);
+        var textRight = originX;
+        var textBottom = originY;
         try {
             for (var chars_1 = __values(chars), chars_1_1 = chars_1.next(); !chars_1_1.done; chars_1_1 = chars_1.next()) {
                 var c = chars_1_1.value;
-                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '192 224 255');
+                textRight = Math.max(textRight, c.getRight());
+                textBottom = Math.max(textBottom, c.getBottom());
             }
         }
         catch (e_6_1) { e_6 = { error: e_6_1 }; }
@@ -552,9 +538,69 @@ var App = /** @class */ (function () {
             }
             finally { if (e_6) throw e_6.error; }
         }
+        var textWidth = textRight - originX;
+        var textHeight = textBottom - originY;
+        var screenSizeStr = this.screenSizeBox.value;
+        var _c = __read(screenSizeStr.split('x').map(Number), 2), screenWidth = _c[0], screenHeight = _c[1];
+        if (screenWidth <= 0) {
+            screenWidth = Math.max(128, Math.ceil(textRight * 1.1 / 40) * 40);
+        }
+        if (screenHeight <= 0) {
+            screenHeight = Math.max(64, Math.ceil(textBottom * 1.1 / 40) * 40);
+        }
+        var zoom = Number(this.zoomBox.value);
+        var dotEmphasisAllowed = screenWidth < 320 && screenHeight < 320;
+        this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
+        var dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
+        var dotSize = zoom;
+        if (dotSize <= 0) {
+            dotSize = Math.ceil(2000 / Math.max(screenWidth, screenHeight));
+            dotSize = Math.max(1, Math.min(8, dotSize));
+        }
+        canvas.width = screenWidth * dotSize;
+        canvas.height = screenHeight * dotSize;
+        if (zoom > 0) {
+            canvas.style.imageRendering = 'pixelated';
+            canvas.style.width = "".concat(screenWidth * zoom, "px");
+        }
+        else {
+            canvas.style.imageRendering = 'auto';
+            canvas.style.width = '100%';
+        }
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        {
+            var lw = Math.max(1, screenWidth * dotSize / 900);
+            // ctx.fillStyle = '#666';
+            // ctx.fillRect(originX * dotSize - lw / 2, 0, lw, canvas.height);
+            // ctx.fillRect(0, originY * dotSize - lw / 2, canvas.width, lw);
+            // ctx.fillRect(textRight * dotSize - lw / 2, 0, lw, canvas.height);
+            // ctx.fillRect(0, textBottom * dotSize - lw / 2, canvas.width, lw);
+            ctx.strokeStyle = '#666';
+            ctx.lineWidth = lw;
+            ctx.strokeRect(originX * dotSize, originY * dotSize, textWidth * dotSize, textHeight * dotSize);
+            ctx.font = "".concat(Math.ceil(lw * 16), "px sans-serif");
+            ctx.fillStyle = '#666';
+            ctx.textBaseline = 'top';
+            ctx.fillText("".concat(textWidth, "x").concat(textHeight), originX * dotSize, textBottom * dotSize);
+        }
+        try {
+            for (var chars_2 = __values(chars), chars_2_1 = chars_2.next(); !chars_2_1.done; chars_2_1 = chars_2.next()) {
+                var c = chars_2_1.value;
+                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '192 224 255');
+            }
+        }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        finally {
+            try {
+                if (chars_2_1 && !chars_2_1.done && (_b = chars_2.return)) _b.call(chars_2);
+            }
+            finally { if (e_7) throw e_7.error; }
+        }
     };
     App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
-        var e_7, _a;
+        var e_8, _a;
         var cursorX = x;
         var cursorY = y;
         var characters = [];
@@ -575,12 +621,12 @@ var App = /** @class */ (function () {
                 }
             }
         }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
         finally {
             try {
                 if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
             }
-            finally { if (e_7) throw e_7.error; }
+            finally { if (e_8) throw e_8.error; }
         }
         return characters;
     };

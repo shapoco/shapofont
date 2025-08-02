@@ -8,7 +8,7 @@
   <meta name="description" content="A web app that lets you check GFXfont rendering in your browser.">
 
   <title>GFXfont Web Simulator</title>
-  <script src="sim.js"></script>
+  <script src="sim.js?20250803004600"></script>
 
   <style>
     body {
@@ -157,11 +157,12 @@
       <span class="nowrap">
         Screen Size:
         <select id="screen-size">
+          <option value="0x0" selected>Auto</option>
           <option value="128x32">128x32</option>
           <option value="128x64">128x64</option>
           <option value="160x128">160x128</option>
           <option value="240x240">240x240</option>
-          <option value="320x240" selected>320x240</option>
+          <option value="320x240">320x240</option>
           <option value="480x320">480x320</option>
           <option value="640x480">640x480</option>
           <option value="800x600">800x600</option>
