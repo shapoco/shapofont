@@ -11,6 +11,6 @@
     "outDir": ".build",
   },
   "files": [
-    "src/viewer.ts"
+    "src/sim.ts"
   ]
 }
