@@ -270,6 +270,7 @@ class App {
   private yAdvanceAdjustBox: HTMLInputElement;
   private zoomBox: HTMLSelectElement;
   private dotEmphasisBox: HTMLInputElement;
+  private logBox: HTMLPreElement;
 
   constructor() {
     this.fontSrcBox =
@@ -289,6 +290,7 @@ class App {
     this.zoomBox = document.querySelector('#zoom') as HTMLSelectElement;
     this.dotEmphasisBox =
         document.querySelector('#dot-emphasis') as HTMLInputElement;
+    this.logBox = document.querySelector('#log') as HTMLPreElement;
 
     this.fontSrcBox.addEventListener('input', () => {
       this.requestParse();
@@ -316,11 +318,15 @@ class App {
   }
 
   async init() {
-    const fontSrc = await fetch(
-        'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h');
-    const fontText = await fontSrc.text();
-    (document.querySelector('#font-src') as HTMLTextAreaElement).value =
-        fontText;
+    try {
+      const fontSrc = await fetch(
+          'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h');
+      const fontText = await fontSrc.text();
+      (document.querySelector('#font-src') as HTMLTextAreaElement).value =
+          fontText;
+    } catch (error) {
+      this.logBox.textContent = 'Error fetching sample font:\n' + error;
+    }
     this.runParse();
   }
 
@@ -335,19 +341,18 @@ class App {
     }
 
     const fontSrc = this.fontSrcBox.value;
-    const log = document.querySelector('#log');
-    log.innerHTML = '';  // Clear previous output
+    this.logBox.innerHTML = '';
 
     try {
       const font = new Font(fontSrc);
       this.font = font;
 
-      log.innerHTML = `firstCode: ${codeToStr(font.firstCode)}, ` +
+      this.logBox.textContent = `firstCode: ${codeToStr(font.firstCode)}, ` +
           `lastCode: ${codeToStr(font.lastCode)}, ` +
           `yAdvance: ${font.yAdvance}`;
     } catch (error) {
       this.font = null;
-      log.innerHTML = `Error: ${error.message}`;
+      this.logBox.textContent = `Error: ${error.message}`;
     }
 
     this.requestUpdatePreview();

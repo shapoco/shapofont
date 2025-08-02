@@ -344,6 +344,7 @@ var App = /** @class */ (function () {
         this.zoomBox = document.querySelector('#zoom');
         this.dotEmphasisBox =
             document.querySelector('#dot-emphasis');
+        this.logBox = document.querySelector('#log');
         this.fontSrcBox.addEventListener('input', function () {
             _this.requestParse();
         });
@@ -387,10 +388,12 @@ var App = /** @class */ (function () {
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var fontSrc, fontText;
+            var fontSrc, fontText, error_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, fetch('https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h')];
+                    case 0:
+                        _a.trys.push([0, 3, , 4]);
+                        return [4 /*yield*/, fetch('https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h')];
                     case 1:
                         fontSrc = _a.sent();
                         return [4 /*yield*/, fontSrc.text()];
@@ -398,6 +401,12 @@ var App = /** @class */ (function () {
                         fontText = _a.sent();
                         document.querySelector('#font-src').value =
                             fontText;
+                        return [3 /*break*/, 4];
+                    case 3:
+                        error_1 = _a.sent();
+                        this.logBox.textContent = 'Error fetching sample font:\n' + error_1;
+                        return [3 /*break*/, 4];
+                    case 4:
                         this.runParse();
                         return [2 /*return*/];
                 }
@@ -414,18 +423,17 @@ var App = /** @class */ (function () {
             this.parseRequestId = -1;
         }
         var fontSrc = this.fontSrcBox.value;
-        var log = document.querySelector('#log');
-        log.innerHTML = ''; // Clear previous output
+        this.logBox.innerHTML = '';
         try {
             var font = new Font(fontSrc);
             this.font = font;
-            log.innerHTML = "firstCode: ".concat(codeToStr(font.firstCode), ", ") +
+            this.logBox.textContent = "firstCode: ".concat(codeToStr(font.firstCode), ", ") +
                 "lastCode: ".concat(codeToStr(font.lastCode), ", ") +
                 "yAdvance: ".concat(font.yAdvance);
         }
         catch (error) {
             this.font = null;
-            log.innerHTML = "Error: ".concat(error.message);
+            this.logBox.textContent = "Error: ".concat(error.message);
         }
         this.requestUpdatePreview();
     };
