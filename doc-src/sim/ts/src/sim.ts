@@ -39,15 +39,11 @@ enum ScanType {
 }
 
 class GrayBitmap {
-  public scanType: ScanType;
-  public msb1st: boolean;
-  public width: number;
-  public height: number;
-  public data: Uint8Array;
+  public grayData: Uint8Array;
 
   constructor(
-      width: number, height: number, data: Uint8Array, scanType: ScanType,
-      msb1st: boolean = false) {
+      public width: number, public height: number, public rawData: Uint8Array,
+      public scanType: ScanType, public msb1st: boolean = false) {
     this.scanType = scanType;
     this.msb1st = msb1st;
     this.width = width;
@@ -63,7 +59,7 @@ class GrayBitmap {
         for (let y = 0; y < height; y++) {
           for (let x = 0; x < width; x++) {
             if (ibit == 0) {
-              sreg = data[ibyte++];
+              sreg = rawData[ibyte++];
               if (msb1st) sreg = reverseByte(sreg);
               ibit = 8;
             }
@@ -78,22 +74,15 @@ class GrayBitmap {
         throw new Error(`Unsupported scan type: ${scanType}`);
     }
 
-    this.data = grayData;
+    this.grayData = grayData;
   }
 }
 
 class Glyph {
-  public dataOffset: number;
-  public bitmap: GrayBitmap|null;
-  public width: number;
-  public height: number;
-  public xAdvance: number;
-  public xOffset: number;
-  public yOffset: number;
-
   constructor(
-      dataOffset: number, bitmap: GrayBitmap|null, width: number,
-      height: number, xAdvance: number, xOffset: number, yOffset: number) {
+      public dataOffset: number, public bitmap: GrayBitmap|null,
+      public width: number, public height: number, public xAdvance: number,
+      public xOffset: number, public yOffset: number) {
     this.dataOffset = dataOffset;
     this.bitmap = bitmap;
     this.width = width;
@@ -104,17 +93,30 @@ class Glyph {
   }
 
   public render(
-      ctx: CanvasRenderingContext2D, x: number, y: number, size: number) {
+      ctx: CanvasRenderingContext2D, x: number, y: number, textSize: number,
+      dotSize: number, dotEmphasis: boolean, rgb: string) {
     if (!this.bitmap) return;
 
+    const multSize = textSize * dotSize;
+
     ctx.save();
-    ctx.translate(x + this.xOffset * size, y + this.yOffset * size);
-    ctx.scale(size, size);
+    ctx.translate(x + this.xOffset * multSize, y + this.yOffset * multSize);
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
-        const pixel = this.bitmap.data[y * this.width + x];
-        ctx.fillStyle = `rgb(${pixel}, ${pixel}, ${pixel})`;
-        ctx.fillRect(x, y, 1, 1);
+        const pixel =
+            Math.round(100 * this.bitmap.grayData[y * this.width + x] / 255);
+        ctx.fillStyle = `rgb(${rgb} / ${pixel}%)`;
+        if (dotSize < 2 || !dotEmphasis) {
+          ctx.fillRect(x * multSize, y * multSize, multSize, multSize);
+        } else {
+          for (let i = 0; i < textSize; i++) {
+            for (let j = 0; j < textSize; j++) {
+              ctx.fillRect(
+                  x * multSize + i * dotSize, y * multSize + j * dotSize,
+                  dotSize - 1, dotSize - 1);
+            }
+          }
+        }
       }
     }
     ctx.restore();
@@ -122,13 +124,12 @@ class Glyph {
 }
 
 class Font {
-  public src: string;
   public firstCode: number;
   public lastCode: number;
   public yAdvance: number;
   public glyphs: Map<number, Glyph> = new Map();
 
-  constructor(src: string) {
+  constructor(public src: string) {
     this.src = src;
 
     let success = false;
@@ -237,106 +238,214 @@ class Font {
 
     return true;
   }
+
+  public getPreferredOriginY(): number {
+    let y = 0;
+    for (const glyph of this.glyphs.values()) {
+      if (-glyph.yOffset > y) {
+        y = -glyph.yOffset;
+      }
+    }
+    return y;
+  }
+}
+
+class Character {
+  constructor(
+      public font: Font, public glyph: Glyph, public x: number,
+      public y: number, public size: number) {}
 }
 
 class App {
   private parseRequestId = -1;
   private updatePreviewRequestId = -1;
   private font: Font|null = null;
+  private fontSrcBox: HTMLTextAreaElement;
+  private sampleTextBox: HTMLTextAreaElement;
+  private screenSizeBox: HTMLSelectElement;
+  private originXBox: HTMLInputElement;
+  private originY1Box: HTMLInputElement;
+  private originYAutoOffsetBox: HTMLInputElement;
+  private xAdvanceAdjustBox: HTMLInputElement;
+  private yAdvanceAdjustBox: HTMLInputElement;
+  private zoomBox: HTMLSelectElement;
+  private dotEmphasisBox: HTMLInputElement;
 
   constructor() {
-    document.querySelector('#parse-btn').addEventListener('click', () => {
-      this.runParse();
-    });
-    document.querySelector('#font-src').addEventListener('input', () => {
+    this.fontSrcBox =
+        document.querySelector('#font-src') as HTMLTextAreaElement;
+    this.sampleTextBox =
+        document.querySelector('#sample-text') as HTMLTextAreaElement;
+    this.screenSizeBox =
+        document.querySelector('#screen-size') as HTMLSelectElement;
+    this.originXBox = document.querySelector('#origin-x') as HTMLInputElement;
+    this.originY1Box = document.querySelector('#origin-y') as HTMLInputElement;
+    this.originYAutoOffsetBox =
+        document.querySelector('#origin-y-auto-offset') as HTMLInputElement;
+    this.xAdvanceAdjustBox =
+        document.querySelector('#x-advance-adjust') as HTMLInputElement;
+    this.yAdvanceAdjustBox =
+        document.querySelector('#y-advance-adjust') as HTMLInputElement;
+    this.zoomBox = document.querySelector('#zoom') as HTMLSelectElement;
+    this.dotEmphasisBox =
+        document.querySelector('#dot-emphasis') as HTMLInputElement;
+
+    this.fontSrcBox.addEventListener('input', () => {
       this.requestParse();
     });
-    document.querySelector('#sample-text').addEventListener('input', () => {
+    this.sampleTextBox.addEventListener('input', () => {
       this.requestUpdatePreview();
     });
 
+    const renderOptions = document.querySelector('#render-options');
+    for (let box of renderOptions.querySelectorAll('input, select')) {
+      box.addEventListener('change', () => {
+        this.requestUpdatePreview();
+      });
+    }
+
+    const previewOptions = document.querySelector('#preview-options');
+    for (let box of previewOptions.querySelectorAll('input, select')) {
+      box.addEventListener('change', () => {
+        this.requestUpdatePreview();
+      });
+    }
+  }
+
+  async init() {
+    const fontSrc = await fetch(
+        'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h');
+    const fontText = await fontSrc.text();
+    (document.querySelector('#font-src') as HTMLTextAreaElement).value =
+        fontText;
     this.runParse();
   }
 
   private requestParse(): void {
-    if (this.parseRequestId >= 0) {
-      clearTimeout(this.parseRequestId);
-    }
     this.parseRequestId = setTimeout(() => this.runParse(), 300);
   }
 
   private runParse(): void {
-    const fontSrc =
-        (document.querySelector('#font-src') as HTMLTextAreaElement).value;
-    const output = document.querySelector('#output');
-    output.innerHTML = '';  // Clear previous output
+    if (this.parseRequestId >= 0) {
+      clearTimeout(this.parseRequestId);
+      this.parseRequestId = -1;
+    }
+
+    const fontSrc = this.fontSrcBox.value;
+    const log = document.querySelector('#log');
+    log.innerHTML = '';  // Clear previous output
 
     try {
       const font = new Font(fontSrc);
       this.font = font;
 
-      output.innerHTML = `firstCode: ${codeToStr(font.firstCode)}, ` +
+      log.innerHTML = `firstCode: ${codeToStr(font.firstCode)}, ` +
           `lastCode: ${codeToStr(font.lastCode)}, ` +
           `yAdvance: ${font.yAdvance}`;
-
-      let sampleText = '';
-      for (const code of font.glyphs.keys()) {
-        sampleText += String.fromCodePoint(code);
-        if ((code + 1) % 16 == 0) {
-          sampleText += '\n';
-        }
-      }
-      (document.querySelector('#sample-text') as HTMLTextAreaElement).value =
-          sampleText;
     } catch (error) {
       this.font = null;
-      output.innerHTML = `Error: ${error.message}`;
+      log.innerHTML = `Error: ${error.message}`;
     }
 
     this.requestUpdatePreview();
   }
 
+  private getTextSize(): number {
+    return Number((document.querySelector('input[name="text-size"]:checked') as
+                   HTMLInputElement)
+                      .value);
+  }
+
   private requestUpdatePreview(): void {
-    if (this.updatePreviewRequestId >= 0) {
-      clearTimeout(this.updatePreviewRequestId);
-    }
     this.updatePreviewRequestId = setTimeout(() => this.updatePreview(), 300);
   }
 
   private updatePreview(): void {
-    this.updatePreviewRequestId = -1;
+    if (this.updatePreviewRequestId >= 0) {
+      clearTimeout(this.updatePreviewRequestId);
+      this.updatePreviewRequestId = -1;
+    }
 
     const previewCanvas =
-        document.querySelector('#text-preview') as HTMLCanvasElement;
-    const ctx = previewCanvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.fillStyle = '#222';
-    ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        document.querySelector('#preview-canvas') as HTMLCanvasElement;
 
     const font = this.font;
-    const text =
-        (document.querySelector('#sample-text') as HTMLTextAreaElement).value;
+    if (!font) {
+      const ctx = previewCanvas.getContext('2d');
+      ctx.fillStyle = '#f00';
+      ctx.fillText('No font loaded', 10, 20);
+      return;
+    }
 
-    let size = 2;
-    let x = 16;
-    let y = 16 + font.yAdvance * size;
+    const text = this.sampleTextBox.value;
+    const screenSizeStr = this.screenSizeBox.value;
+    const [screenWidth, screenHeight] = screenSizeStr.split('x').map(Number);
+    const zoom = Number(this.zoomBox.value);
+    const dotEmphasis = this.dotEmphasisBox.checked;
+    const textSize = this.getTextSize();
+    const originX = Number(this.originXBox.value);
+    let originY = Number(this.originY1Box.value);
+    if (this.originYAutoOffsetBox.checked) {
+      originY += this.font.getPreferredOriginY() * textSize;
+    }
+    const xAdvanceAdjust = Number(this.xAdvanceAdjustBox.value);
+    const yAdvanceAdjust = Number(this.yAdvanceAdjustBox.value);
+
+    const chars = this.layoutChars(
+        font, text, originX, originY, textSize, xAdvanceAdjust, yAdvanceAdjust);
+
+    let dotSize = zoom;
+    if (dotSize <= 0) {
+      dotSize = Math.ceil(2000 / Math.max(screenWidth, screenHeight));
+      dotSize = Math.max(1, Math.min(8, dotSize));
+    }
+
+    previewCanvas.width = screenWidth * dotSize;
+    previewCanvas.height = screenHeight * dotSize;
+
+    if (zoom > 0) {
+      previewCanvas.style.imageRendering = 'pixelated';
+      previewCanvas.style.width = `${screenWidth * zoom}px`;
+    } else {
+      previewCanvas.style.imageRendering = 'auto';
+      previewCanvas.style.width = '100%';
+    }
+
+    const ctx = previewCanvas.getContext('2d');
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+    for (const c of chars) {
+      c.glyph.render(
+          ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis,
+          '255 255 255');
+    }
+  }
+
+  private layoutChars(
+      font: Font, text: string, x: number, y: number, size: number,
+      xAdvanceAdjust: number, yAdvanceAdjust: number): Character[] {
+    let cursorX = x;
+    let cursorY = y;
+    const characters: Character[] = [];
     for (let c of text) {
       const code = c.codePointAt(0);
       if (code == 0x0a) {
-        x = 16;
-        y += font.yAdvance * size;
+        cursorX = x;
+        cursorY += font.yAdvance * size + yAdvanceAdjust;
       } else if (font.glyphs.has(code)) {
         const glyph = font.glyphs.get(code);
         if (glyph) {
-          glyph.render(ctx, x, y, size);
-          x += glyph.xAdvance * size;
+          characters.push(new Character(font, glyph, cursorX, cursorY, size));
+          cursorX += glyph.xAdvance * size + xAdvanceAdjust;
         }
       }
     }
+    return characters;
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  new App();
+document.addEventListener('DOMContentLoaded', async () => {
+  const app = new App();
+  await app.init();
 });

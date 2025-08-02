@@ -1,3 +1,39 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var __values = (this && this.__values) || function(o) {
     var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
@@ -9,6 +45,23 @@ var __values = (this && this.__values) || function(o) {
     };
     throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var _this = this;
 function parseCInt(name, s) {
     s = s.trim();
     var sign = 1;
@@ -49,8 +102,13 @@ var ScanType;
     ScanType[ScanType["VERTICAL_FRAGMENT"] = 2] = "VERTICAL_FRAGMENT";
 })(ScanType || (ScanType = {}));
 var GrayBitmap = /** @class */ (function () {
-    function GrayBitmap(width, height, data, scanType, msb1st) {
+    function GrayBitmap(width, height, rawData, scanType, msb1st) {
         if (msb1st === void 0) { msb1st = false; }
+        this.width = width;
+        this.height = height;
+        this.rawData = rawData;
+        this.scanType = scanType;
+        this.msb1st = msb1st;
         this.scanType = scanType;
         this.msb1st = msb1st;
         this.width = width;
@@ -65,7 +123,7 @@ var GrayBitmap = /** @class */ (function () {
                     for (var y = 0; y < height; y++) {
                         for (var x = 0; x < width; x++) {
                             if (ibit == 0) {
-                                sreg = data[ibyte++];
+                                sreg = rawData[ibyte++];
                                 if (msb1st)
                                     sreg = reverseByte(sreg);
                                 ibit = 8;
@@ -80,7 +138,7 @@ var GrayBitmap = /** @class */ (function () {
             default:
                 throw new Error("Unsupported scan type: ".concat(scanType));
         }
-        this.data = grayData;
+        this.grayData = grayData;
     }
     return GrayBitmap;
 }());
@@ -93,18 +151,34 @@ var Glyph = /** @class */ (function () {
         this.xAdvance = xAdvance;
         this.xOffset = xOffset;
         this.yOffset = yOffset;
+        this.dataOffset = dataOffset;
+        this.bitmap = bitmap;
+        this.width = width;
+        this.height = height;
+        this.xAdvance = xAdvance;
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
     }
-    Glyph.prototype.render = function (ctx, x, y, size) {
+    Glyph.prototype.render = function (ctx, x, y, textSize, dotSize, dotEmphasis, rgb) {
         if (!this.bitmap)
             return;
+        var multSize = textSize * dotSize;
         ctx.save();
-        ctx.translate(x + this.xOffset * size, y + this.yOffset * size);
-        ctx.scale(size, size);
+        ctx.translate(x + this.xOffset * multSize, y + this.yOffset * multSize);
         for (var y_1 = 0; y_1 < this.height; y_1++) {
             for (var x_1 = 0; x_1 < this.width; x_1++) {
-                var pixel = this.bitmap.data[y_1 * this.width + x_1];
-                ctx.fillStyle = "rgb(".concat(pixel, ", ").concat(pixel, ", ").concat(pixel, ")");
-                ctx.fillRect(x_1, y_1, 1, 1);
+                var pixel = Math.round(100 * this.bitmap.grayData[y_1 * this.width + x_1] / 255);
+                ctx.fillStyle = "rgb(".concat(rgb, " / ").concat(pixel, "%)");
+                if (dotSize < 2 || !dotEmphasis) {
+                    ctx.fillRect(x_1 * multSize, y_1 * multSize, multSize, multSize);
+                }
+                else {
+                    for (var i = 0; i < textSize; i++) {
+                        for (var j = 0; j < textSize; j++) {
+                            ctx.fillRect(x_1 * multSize + i * dotSize, y_1 * multSize + j * dotSize, dotSize - 1, dotSize - 1);
+                        }
+                    }
+                }
             }
         }
         ctx.restore();
@@ -113,6 +187,7 @@ var Glyph = /** @class */ (function () {
 }());
 var Font = /** @class */ (function () {
     function Font(src) {
+        this.src = src;
         this.glyphs = new Map();
         this.src = src;
         var success = false;
@@ -213,117 +288,256 @@ var Font = /** @class */ (function () {
         }
         return true;
     };
+    Font.prototype.getPreferredOriginY = function () {
+        var e_2, _a;
+        var y = 0;
+        try {
+            for (var _b = __values(this.glyphs.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
+                var glyph = _c.value;
+                if (-glyph.yOffset > y) {
+                    y = -glyph.yOffset;
+                }
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
+        return y;
+    };
     return Font;
+}());
+var Character = /** @class */ (function () {
+    function Character(font, glyph, x, y, size) {
+        this.font = font;
+        this.glyph = glyph;
+        this.x = x;
+        this.y = y;
+        this.size = size;
+    }
+    return Character;
 }());
 var App = /** @class */ (function () {
     function App() {
+        var e_3, _a, e_4, _b;
         var _this = this;
         this.parseRequestId = -1;
         this.updatePreviewRequestId = -1;
         this.font = null;
-        document.querySelector('#parse-btn').addEventListener('click', function () {
-            _this.runParse();
-        });
-        document.querySelector('#font-src').addEventListener('input', function () {
+        this.fontSrcBox =
+            document.querySelector('#font-src');
+        this.sampleTextBox =
+            document.querySelector('#sample-text');
+        this.screenSizeBox =
+            document.querySelector('#screen-size');
+        this.originXBox = document.querySelector('#origin-x');
+        this.originY1Box = document.querySelector('#origin-y');
+        this.originYAutoOffsetBox =
+            document.querySelector('#origin-y-auto-offset');
+        this.xAdvanceAdjustBox =
+            document.querySelector('#x-advance-adjust');
+        this.yAdvanceAdjustBox =
+            document.querySelector('#y-advance-adjust');
+        this.zoomBox = document.querySelector('#zoom');
+        this.dotEmphasisBox =
+            document.querySelector('#dot-emphasis');
+        this.fontSrcBox.addEventListener('input', function () {
             _this.requestParse();
         });
-        document.querySelector('#sample-text').addEventListener('input', function () {
+        this.sampleTextBox.addEventListener('input', function () {
             _this.requestUpdatePreview();
         });
-        this.runParse();
-    }
-    App.prototype.requestParse = function () {
-        var _this = this;
-        if (this.parseRequestId >= 0) {
-            clearTimeout(this.parseRequestId);
-        }
-        this.parseRequestId = setTimeout(function () { return _this.runParse(); }, 300);
-    };
-    App.prototype.runParse = function () {
-        var e_2, _a;
-        var fontSrc = document.querySelector('#font-src').value;
-        var output = document.querySelector('#output');
-        output.innerHTML = ''; // Clear previous output
+        var renderOptions = document.querySelector('#render-options');
         try {
-            var font = new Font(fontSrc);
-            this.font = font;
-            output.innerHTML = "firstCode: ".concat(codeToStr(font.firstCode), ", ") +
-                "lastCode: ".concat(codeToStr(font.lastCode), ", ") +
-                "yAdvance: ".concat(font.yAdvance);
-            var sampleText = '';
-            try {
-                for (var _b = __values(font.glyphs.keys()), _c = _b.next(); !_c.done; _c = _b.next()) {
-                    var code = _c.value;
-                    sampleText += String.fromCodePoint(code);
-                    if ((code + 1) % 16 == 0) {
-                        sampleText += '\n';
-                    }
-                }
-            }
-            catch (e_2_1) { e_2 = { error: e_2_1 }; }
-            finally {
-                try {
-                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
-                }
-                finally { if (e_2) throw e_2.error; }
-            }
-            document.querySelector('#sample-text').value =
-                sampleText;
-        }
-        catch (error) {
-            this.font = null;
-            output.innerHTML = "Error: ".concat(error.message);
-        }
-        this.requestUpdatePreview();
-    };
-    App.prototype.requestUpdatePreview = function () {
-        var _this = this;
-        if (this.updatePreviewRequestId >= 0) {
-            clearTimeout(this.updatePreviewRequestId);
-        }
-        this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
-    };
-    App.prototype.updatePreview = function () {
-        var e_3, _a;
-        this.updatePreviewRequestId = -1;
-        var previewCanvas = document.querySelector('#text-preview');
-        var ctx = previewCanvas.getContext('2d');
-        if (!ctx)
-            return;
-        ctx.fillStyle = '#222';
-        ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-        var font = this.font;
-        var text = document.querySelector('#sample-text').value;
-        var size = 2;
-        var x = 16;
-        var y = 16 + font.yAdvance * size;
-        try {
-            for (var text_1 = __values(text), text_1_1 = text_1.next(); !text_1_1.done; text_1_1 = text_1.next()) {
-                var c = text_1_1.value;
-                var code = c.codePointAt(0);
-                if (code == 0x0a) {
-                    x = 16;
-                    y += font.yAdvance * size;
-                }
-                else if (font.glyphs.has(code)) {
-                    var glyph = font.glyphs.get(code);
-                    if (glyph) {
-                        glyph.render(ctx, x, y, size);
-                        x += glyph.xAdvance * size;
-                    }
-                }
+            for (var _c = __values(renderOptions.querySelectorAll('input, select')), _d = _c.next(); !_d.done; _d = _c.next()) {
+                var box = _d.value;
+                box.addEventListener('change', function () {
+                    _this.requestUpdatePreview();
+                });
             }
         }
         catch (e_3_1) { e_3 = { error: e_3_1 }; }
         finally {
             try {
-                if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
+                if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
             finally { if (e_3) throw e_3.error; }
         }
+        var previewOptions = document.querySelector('#preview-options');
+        try {
+            for (var _e = __values(previewOptions.querySelectorAll('input, select')), _f = _e.next(); !_f.done; _f = _e.next()) {
+                var box = _f.value;
+                box.addEventListener('change', function () {
+                    _this.requestUpdatePreview();
+                });
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
+            }
+            finally { if (e_4) throw e_4.error; }
+        }
+    }
+    App.prototype.init = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var fontSrc, fontText;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, fetch('https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h')];
+                    case 1:
+                        fontSrc = _a.sent();
+                        return [4 /*yield*/, fontSrc.text()];
+                    case 2:
+                        fontText = _a.sent();
+                        document.querySelector('#font-src').value =
+                            fontText;
+                        this.runParse();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    App.prototype.requestParse = function () {
+        var _this = this;
+        this.parseRequestId = setTimeout(function () { return _this.runParse(); }, 300);
+    };
+    App.prototype.runParse = function () {
+        if (this.parseRequestId >= 0) {
+            clearTimeout(this.parseRequestId);
+            this.parseRequestId = -1;
+        }
+        var fontSrc = this.fontSrcBox.value;
+        var log = document.querySelector('#log');
+        log.innerHTML = ''; // Clear previous output
+        try {
+            var font = new Font(fontSrc);
+            this.font = font;
+            log.innerHTML = "firstCode: ".concat(codeToStr(font.firstCode), ", ") +
+                "lastCode: ".concat(codeToStr(font.lastCode), ", ") +
+                "yAdvance: ".concat(font.yAdvance);
+        }
+        catch (error) {
+            this.font = null;
+            log.innerHTML = "Error: ".concat(error.message);
+        }
+        this.requestUpdatePreview();
+    };
+    App.prototype.getTextSize = function () {
+        return Number(document.querySelector('input[name="text-size"]:checked')
+            .value);
+    };
+    App.prototype.requestUpdatePreview = function () {
+        var _this = this;
+        this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
+    };
+    App.prototype.updatePreview = function () {
+        var e_5, _a;
+        if (this.updatePreviewRequestId >= 0) {
+            clearTimeout(this.updatePreviewRequestId);
+            this.updatePreviewRequestId = -1;
+        }
+        var previewCanvas = document.querySelector('#preview-canvas');
+        var font = this.font;
+        if (!font) {
+            var ctx_1 = previewCanvas.getContext('2d');
+            ctx_1.fillStyle = '#f00';
+            ctx_1.fillText('No font loaded', 10, 20);
+            return;
+        }
+        var text = this.sampleTextBox.value;
+        var screenSizeStr = this.screenSizeBox.value;
+        var _b = __read(screenSizeStr.split('x').map(Number), 2), screenWidth = _b[0], screenHeight = _b[1];
+        var zoom = Number(this.zoomBox.value);
+        var dotEmphasis = this.dotEmphasisBox.checked;
+        var textSize = this.getTextSize();
+        var originX = Number(this.originXBox.value);
+        var originY = Number(this.originY1Box.value);
+        if (this.originYAutoOffsetBox.checked) {
+            originY += this.font.getPreferredOriginY() * textSize;
+        }
+        var xAdvanceAdjust = Number(this.xAdvanceAdjustBox.value);
+        var yAdvanceAdjust = Number(this.yAdvanceAdjustBox.value);
+        var chars = this.layoutChars(font, text, originX, originY, textSize, xAdvanceAdjust, yAdvanceAdjust);
+        var dotSize = zoom;
+        if (dotSize <= 0) {
+            dotSize = Math.ceil(2000 / Math.max(screenWidth, screenHeight));
+            dotSize = Math.max(1, Math.min(8, dotSize));
+        }
+        previewCanvas.width = screenWidth * dotSize;
+        previewCanvas.height = screenHeight * dotSize;
+        if (zoom > 0) {
+            previewCanvas.style.imageRendering = 'pixelated';
+            previewCanvas.style.width = "".concat(screenWidth * zoom, "px");
+        }
+        else {
+            previewCanvas.style.imageRendering = 'auto';
+            previewCanvas.style.width = '100%';
+        }
+        var ctx = previewCanvas.getContext('2d');
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        try {
+            for (var chars_1 = __values(chars), chars_1_1 = chars_1.next(); !chars_1_1.done; chars_1_1 = chars_1.next()) {
+                var c = chars_1_1.value;
+                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '255 255 255');
+            }
+        }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        finally {
+            try {
+                if (chars_1_1 && !chars_1_1.done && (_a = chars_1.return)) _a.call(chars_1);
+            }
+            finally { if (e_5) throw e_5.error; }
+        }
+    };
+    App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
+        var e_6, _a;
+        var cursorX = x;
+        var cursorY = y;
+        var characters = [];
+        try {
+            for (var text_1 = __values(text), text_1_1 = text_1.next(); !text_1_1.done; text_1_1 = text_1.next()) {
+                var c = text_1_1.value;
+                var code = c.codePointAt(0);
+                if (code == 0x0a) {
+                    cursorX = x;
+                    cursorY += font.yAdvance * size + yAdvanceAdjust;
+                }
+                else if (font.glyphs.has(code)) {
+                    var glyph = font.glyphs.get(code);
+                    if (glyph) {
+                        characters.push(new Character(font, glyph, cursorX, cursorY, size));
+                        cursorX += glyph.xAdvance * size + xAdvanceAdjust;
+                    }
+                }
+            }
+        }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        finally {
+            try {
+                if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
+            }
+            finally { if (e_6) throw e_6.error; }
+        }
+        return characters;
     };
     return App;
 }());
-document.addEventListener('DOMContentLoaded', function () {
-    new App();
-});
+document.addEventListener('DOMContentLoaded', function () { return __awaiter(_this, void 0, void 0, function () {
+    var app;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                app = new App();
+                return [4 /*yield*/, app.init()];
+            case 1:
+                _a.sent();
+                return [2 /*return*/];
+        }
+    });
+}); });
