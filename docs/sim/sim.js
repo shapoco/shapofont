@@ -407,7 +407,7 @@ var App = /** @class */ (function () {
                                             {
                                                 url = decodeURIComponent(value);
                                                 urlStart = 'https://raw.githubusercontent.com/';
-                                                shapoFontStart = 'shapofont/';
+                                                shapoFontStart = '/shapofont/';
                                                 if (url.startsWith(shapoFontStart)) {
                                                     srcUrl =
                                                         'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/' +
@@ -448,15 +448,14 @@ var App = /** @class */ (function () {
                         fontText = _c.sent();
                         document.querySelector('#font-src').value =
                             fontText;
+                        this.runParse();
                         _c.label = 3;
                     case 3: return [3 /*break*/, 5];
                     case 4:
                         error_1 = _c.sent();
-                        this.logBox.textContent = 'Error fetching sample font:\n' + error_1;
+                        this.logError(error_1.message);
                         return [3 /*break*/, 5];
-                    case 5:
-                        this.runParse();
-                        return [2 /*return*/];
+                    case 5: return [2 /*return*/];
                 }
             });
         });
@@ -471,17 +470,16 @@ var App = /** @class */ (function () {
             this.parseRequestId = -1;
         }
         var fontSrc = this.fontSrcBox.value;
-        this.logBox.innerHTML = '';
         try {
             var font = new Font(fontSrc);
             this.font = font;
-            this.logBox.textContent = "firstCode: ".concat(codeToStr(font.firstCode), ", ") +
+            this.logInfo("firstCode: ".concat(codeToStr(font.firstCode), ", ") +
                 "lastCode: ".concat(codeToStr(font.lastCode), ", ") +
-                "yAdvance: ".concat(font.yAdvance);
+                "yAdvance: ".concat(font.yAdvance));
         }
         catch (error) {
             this.font = null;
-            this.logBox.textContent = "Error: ".concat(error.message);
+            this.logError(error.message);
         }
         this.requestUpdatePreview();
     };
@@ -583,6 +581,15 @@ var App = /** @class */ (function () {
             finally { if (e_7) throw e_7.error; }
         }
         return characters;
+    };
+    App.prototype.logError = function (msg) {
+        console.error(msg);
+        this.logBox.textContent = "Error: ".concat(msg);
+        this.logBox.style.color = '#c00';
+    };
+    App.prototype.logInfo = function (msg) {
+        this.logBox.textContent = msg;
+        this.logBox.style.color = '#0cf';
     };
     return App;
 }());

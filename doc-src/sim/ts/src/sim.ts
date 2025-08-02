@@ -332,7 +332,7 @@ class App {
             case 'u': {
               const url = decodeURIComponent(value);
               const urlStart = 'https://raw.githubusercontent.com/';
-              const shapoFontStart = 'shapofont/';
+              const shapoFontStart = '/shapofont/';
               if (url.startsWith(shapoFontStart)) {
                 srcUrl =
                     'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/' +
@@ -362,13 +362,11 @@ class App {
         const fontText = await fontSrc.text();
         (document.querySelector('#font-src') as HTMLTextAreaElement).value =
             fontText;
+        this.runParse();
       }
-
     } catch (error) {
-      this.logBox.textContent = 'Error fetching sample font:\n' + error;
+      this.logError(error.message);
     }
-
-    this.runParse();
   }
 
   private requestParse(): void {
@@ -382,18 +380,18 @@ class App {
     }
 
     const fontSrc = this.fontSrcBox.value;
-    this.logBox.innerHTML = '';
 
     try {
       const font = new Font(fontSrc);
       this.font = font;
 
-      this.logBox.textContent = `firstCode: ${codeToStr(font.firstCode)}, ` +
+      this.logInfo(
+          `firstCode: ${codeToStr(font.firstCode)}, ` +
           `lastCode: ${codeToStr(font.lastCode)}, ` +
-          `yAdvance: ${font.yAdvance}`;
+          `yAdvance: ${font.yAdvance}`);
     } catch (error) {
       this.font = null;
-      this.logBox.textContent = `Error: ${error.message}`;
+      this.logError(error.message);
     }
 
     this.requestUpdatePreview();
@@ -491,6 +489,17 @@ class App {
       }
     }
     return characters;
+  }
+
+  private logError(msg) {
+    console.error(msg);
+    this.logBox.textContent = `Error: ${msg}`;
+    this.logBox.style.color = '#c00';
+  }
+
+  private logInfo(msg) {
+    this.logBox.textContent = msg;
+    this.logBox.style.color = '#0cf';
   }
 }
 
