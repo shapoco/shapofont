@@ -190,19 +190,26 @@ class BitmapFont:
     ):
         # print(f"Generating MameFont: {self.full_name}")
 
+        glyph_height = self.max_glyph_height()
+
         builder = mamefont.MameFontBuilder(
             self.full_name,
-            self.max_glyph_height(),
-            self.normal_x_spacing,
-            self.line_height,
+            glyph_height,
+            self.line_height - glyph_height,
             vertical_frag=vertical_frag,
             msb1st=msb1st,
         )
 
         for glyph in self.glyphs:
+            x_negative_offset = glyph.left_anti_space
+            x_spacing = (
+                self.normal_x_spacing - x_negative_offset - glyph.right_anti_space
+            )
             builder.add_glyph(
                 glyph.code,
                 glyph.bmp,
+                x_spacing,
+                x_negative_offset,
             )
 
         mame_font = builder.build()

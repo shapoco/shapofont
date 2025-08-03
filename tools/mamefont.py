@@ -71,11 +71,11 @@ FONT_DIM_MAX_GLYPH_WIDTH = Field(0, 6, bias=1)
 
 GLYPH_DIM_WIDTH = Field(0, 6, bias=1)
 GLYPH_DIM_X_SPACING = Field(0, 5, bias=-16)
-GLYPH_DIM_X_LEFT_SHIFT = Field(5, 3)
+GLYPH_DIM_X_NEGATIVE_OFFSET = Field(5, 3)
 
 GLYPH_SHRINKED_DIM_WIDTH = Field(0, 4, bias=1)
 GLYPH_SHRINKED_DIM_X_SPACING = Field(4, 2)
-GLYPH_SHRINKED_DIM_LEFT_SHIFT = Field(6, 2)
+GLYPH_SHRINKED_DIM_X_NEGATIVE_OFFSET = Field(6, 2)
 
 RPT_REPEAT_COUNT = Field(0, 4, bias=1)
 
@@ -270,12 +270,18 @@ class Operation:
 
 class MameGlyph:
     def __init__(
-        self, code: int, operations: list[Operation], glyphWidth: int, x_spacing: int
+        self,
+        code: int,
+        operations: list[Operation],
+        glyphWidth: int,
+        x_spacing: int,
+        x_negative_offset: int = 0,
     ):
         self.code = code
         self.operations = operations
         self.glyph_width = glyphWidth
         self.x_spacing = x_spacing
+        self.x_negative_offset = x_negative_offset
         self.entry_point = 0xFFFF
 
 
@@ -525,15 +531,13 @@ class MameFontBuilder:
         self,
         name: str,
         glyph_height: int,
-        x_spacing: int,
-        y_advance: int,
+        y_spacing: int,
         vertical_frag: bool = False,
         msb1st: bool = False,
     ):
         self.name = name
         self.glyph_height = glyph_height
-        self.x_spacing = x_spacing
-        self.y_spacing = y_advance - glyph_height
+        self.y_spacing = y_spacing
         self.vertical_frag = vertical_frag
         self.msb1st = msb1st
         self.glyphs: dict[int, MameGlyph] = {}
@@ -556,6 +560,8 @@ class MameFontBuilder:
         self,
         code: int,
         bmp: GrayBitmap,
+        x_spacing: int,
+        x_negative_offset: int = 0,
     ):
         fragments = bmp.to_byte_segments(
             vertical_frag=self.vertical_frag,
@@ -913,7 +919,8 @@ class MameFontBuilder:
             code=code,
             operations=ops,
             glyphWidth=bmp.width,
-            x_spacing=self.x_spacing,
+            x_spacing=x_spacing,
+            x_negative_offset=x_negative_offset,
         )
 
         now = time.time()
@@ -1193,6 +1200,10 @@ class MameFontBuilder:
                 shrinked_glyph_table = False
                 cannot_shrink_reason = "X spacing is out of range."
                 break
+            if glyph.x_negative_offset not in GLYPH_DIM_X_NEGATIVE_OFFSET.range:
+                shrinked_glyph_table = False
+                cannot_shrink_reason = "X negative offset is out of range."
+                break
 
             # Check bytecode size
             for op in glyph.operations:
@@ -1205,9 +1216,13 @@ class MameFontBuilder:
                 break
 
         if shrinked_glyph_table:
-            verbose_print(f"[{self.name}:{self.acrh}] Applying Shrinked Glyph Table format.")
+            verbose_print(
+                f"[{self.name}:{self.acrh}] Applying Shrinked Glyph Table format."
+            )
         else:
-            verbose_print(f"[{self.name}:{self.acrh}] Shrinked Glyph Table format cannot be applied because: {cannot_shrink_reason}")
+            verbose_print(
+                f"[{self.name}:{self.acrh}] Shrinked Glyph Table format cannot be applied because: {cannot_shrink_reason}"
+            )
 
         # Construct bytecode block
         verbose_print(f"[{self.name}:{self.acrh}] Constructing bytecode block...")
@@ -1288,11 +1303,19 @@ class MameFontBuilder:
                 shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_X_SPACING.place(
                     glyph.x_spacing
                 )
+                shrinked_glyph_dim |= GLYPH_SHRINKED_DIM_X_NEGATIVE_OFFSET.place(
+                    glyph.x_negative_offset
+                )
                 blob.append((glyph.entry_point // 2) & 0xFF)
                 blob.append(shrinked_glyph_dim)
             else:
-                glyph_dim_0 = GLYPH_DIM_WIDTH.place(glyph.glyph_width)
-                glyph_dim_1 = GLYPH_DIM_X_SPACING.place(glyph.x_spacing)
+                glyph_dim_0 = 0
+                glyph_dim_0 |= GLYPH_DIM_WIDTH.place(glyph.glyph_width)
+                glyph_dim_1 = 0
+                glyph_dim_1 |= GLYPH_DIM_X_SPACING.place(glyph.x_spacing)
+                glyph_dim_1 |= GLYPH_DIM_X_NEGATIVE_OFFSET.place(
+                    glyph.x_negative_offset
+                )
                 blob.append(glyph.entry_point & 0xFF)
                 blob.append((glyph.entry_point >> 8) & 0xFF)
                 blob.append(glyph_dim_0)

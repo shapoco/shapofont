@@ -657,7 +657,7 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSansP_s48c40w08Glyphs[] SHAPOFONT
   { 0x096D, 24, 30, 27,  0, -35 },
   { 0x09C7, 24, 40, 27,  0, -40 },
   { 0x0A3F, 32, 40, 35,  0, -40 },
-  { 0x0ADF, 32, 40, 31, -2, -40 },
+  { 0x0ADF, 32, 40, 33, -1, -40 },
   { 0x0B7F, 32, 40, 35,  0, -40 },
   { 0x0C1F, 32, 40, 35,  0, -40 },
   { 0x0CBF, 32, 40, 35,  0, -40 },
