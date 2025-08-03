@@ -16,19 +16,13 @@ class RawGlyph:
         self,
         code: int,
         bmp: GrayBitmap,
-        negative_offset: int = 0,
-        explicit_advance: int | None = None,
+        left_anti_space: int = 0,
+        right_anti_space: int = 0,
     ):
         self.code = code
         self.bmp = bmp
-        self.negative_offset = negative_offset
-        self.explicit_advance = explicit_advance
-
-    def design_width(self) -> int:
-        if self.explicit_advance == None:
-            return self.bmp.width
-        else:
-            return max(self.bmp.width, self.negative_offset + self.explicit_advance)
+        self.left_anti_space = left_anti_space
+        self.right_anti_space = right_anti_space
 
 
 class BitmapFont:
@@ -64,7 +58,8 @@ class BitmapFont:
         self.line_height = dic.get(
             "h", math.ceil((self.type_size - self.ascender_spacing) * 1.2)
         )
-        self.normal_x_spacing = dic.get("p", math.ceil(self.type_size / 16))
+
+        self.normal_x_spacing = math.ceil(self.type_size / 16)
 
         # Load the image
         self.bmp = GrayBitmap.from_file(path.join(dir_path, "design.png"))
@@ -86,6 +81,10 @@ class BitmapFont:
                     start_code = int(code_range["from"])
                     end_code = int(code_range["to"])
                     self.codes.extend(range(start_code, end_code + 1))
+            if "x_spacing" in json_data:
+                x_spacing = json_data["x_spacing"]
+                if "default" in x_spacing:
+                    self.normal_x_spacing = int(x_spacing["default"])
 
         # Find Glyphs
         self.glyphs: list[RawGlyph] = []
@@ -102,7 +101,7 @@ class BitmapFont:
                     glyph_index += 1
 
                     self.glyphs.append(glyph)
-                    x += glyph.design_width()
+                    x += glyph.bmp.width
 
                     found = True
                 else:
@@ -115,34 +114,35 @@ class BitmapFont:
 
     def parse_glyph(self, x: int, y: int, code: int) -> RawGlyph:
         # Find end of glyph marker
-        glyph_marker_width = 0
-        while self.bmp.get(x + glyph_marker_width, y, 0) == Marker.GLYPH:
-            glyph_marker_width += 1
-        if glyph_marker_width <= 0:
+        w = 0
+        while self.bmp.get(x + w, y, 0) == Marker.GLYPH:
+            w += 1
+        if w <= 0:
             raise ValueError("Glyph marker not found")
+        glyph_width = w
 
-        # Find negative offset marker
-        negative_offset = 0
-        while self.bmp.get(x - negative_offset - 1, y, 0) == Marker.SPACING:
-            negative_offset += 1
+        # Find left side anti spacer
+        w = 0
+        while self.bmp.get(x + w, y + 1, 0) == Marker.SPACING:
+            w += 1
+        left_anti_space = w
 
-        # Find advance marker
-        x_advance = 0
-        while self.bmp.get(x + x_advance, y + 1, 0) == Marker.SPACING:
-            x_advance += 1
-        if x_advance <= 0:
-            x_advance = None
+        # Find right side anti spacer
+        w = 0
+        while self.bmp.get(x + glyph_width - 1 - w, y + 1, 0) == Marker.SPACING:
+            w += 1
+        right_anti_space = w
 
         # Extract Glyph Bitmap
         glyph_height = self.max_glyph_height()
         bmp = self.bmp.crop(
-            x - negative_offset,
+            x,
             y - glyph_height,
-            negative_offset + glyph_marker_width,
+            glyph_width,
             glyph_height,
         )
 
-        return RawGlyph(code, bmp, negative_offset, x_advance)
+        return RawGlyph(code, bmp, left_anti_space, right_anti_space)
 
     def max_glyph_height(self) -> int:
         return self.type_size
@@ -156,13 +156,22 @@ class BitmapFont:
             self.line_height,
             self.normal_x_spacing,
         )
+
         for glyph in self.glyphs:
+            x_offset = -glyph.left_anti_space
+            y_offset = -(self.cap_height + self.ascender_spacing)
+            x_advance = (
+                self.normal_x_spacing
+                + x_offset
+                + glyph.bmp.width
+                - glyph.right_anti_space
+            )
             builder.add_glyph(
                 glyph.code,
                 glyph.bmp,
-                x_offset=-glyph.negative_offset,
-                y_offset=-(self.cap_height + self.ascender_spacing),
-                x_advance=glyph.explicit_advance,
+                x_offset=x_offset,
+                y_offset=y_offset,
+                x_advance=x_advance,
             )
         gfx_font = builder.build()
         with open(out_file, "w") as f:

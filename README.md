@@ -83,6 +83,15 @@ Click thumbnail to open the font with [GFXfont Web Simulator](https://shapoco.gi
 
 <a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSeg7_s40c38w06.h&t=0.1234567%0a89ABCDEF" target="_blank"><img src="./bitmap/MameSeg7/s40c38w06/design.png"></a>
 
+# Using GFXfont in LovyanGFX
+
+Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=::lgfx::` macro so that it can be used with LovyanGFX.
+
+```c++
+#define SHAPOFONT_GFXFONT_NAMESPACE ::lgfx::
+#include "shapofont/ShapoSansP_s11c09w2a1.h"
+```
+
 # Designing Font with Painting Tool
 
 ShapoFonts are designed using painting tools such as Microsoft Paint and converted to GFXfont by Python scripts.<br>
@@ -115,12 +124,6 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
 
     ![](./img/how_to_design.svg)
 
-    If only red marker is given, when rendering it, the character's horizontal coordinate is advanced by the glyph width plus automatically calculated spacing. If you want to adjust the spacing, you can add blue lines.
-
-    ![](./img/spacing_adjustment.svg)
-
-    The blue line to the left of the glyph marker decreases the spacing from the previous character, and the blue line below the glyph marker indicates the horizontal origin of the next character.
-
 4. Save the image as `design.png`.
 5. In a JSON5 file `shapofont.json5`, list the characters contained in the image.
 
@@ -128,13 +131,26 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
     {
         "codes": [
             {"from": 0x20, "to": 0x7E},
-        ]
+        ],
+        "x_spacing": {
+            "default": 3,
+        },
     }
     ```
+
+    `x_spacing` is optional and it specifies spacing between each characters. If `x_spacing` is not specified, it will be automatically calculated based on glyph height.
 
 - The vertical positions of the glyph markers of the glyphs side by side must be aligned.
 - There must be at least Body Size pixels of space above the glyph marker (no overlap).
 - The order of characters in the image must exactly match the order of characters listed in the `shapofont.json5`.
+
+### Spacing Adjustment
+
+If only glyph marker (red line) is given in design image, when rendering it, the character's horizontal coordinate is advanced by the glyph width plus default spacing defined in JSON5. If you want to adjust the spacing for each character, you can add blue lines.
+
+![](./img/spacing_adjustment.svg)
+
+The blue line just below the left edge of the glyph marker (Left Side Anti-Spacer, LSAS) decreases the spacing on the left side, and the blue line just below the right edge (Right Side Anti-Spacer, RSAS) decreases the spacing on the right side.
 
 ## Directory Structure
 
@@ -175,15 +191,6 @@ In this repository, after creating the venv, simply run `make -j gfx_all` and al
 see [LICENSE](LICENSE).
 
 The rights to font files generated using the tools included in ShapoFont are subject to the rights of the original bitmap images and any fonts contained therein.
-
-# Using GFXfont in LovyanGFX
-
-Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=::lgfx::` macro so that it can be used with LovyanGFX.
-
-```c++
-#define SHAPOFONT_GFXFONT_NAMESPACE ::lgfx::
-#include "shapofont/ShapoSansP_s11c09w2a1.h"
-```
 
 # Related Project
 
