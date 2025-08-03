@@ -146,8 +146,8 @@ Since the script extracts a family name and a dimension identifier from the dire
 ```bash
 source venv-setup.shrc
 ./venv/bin/python3 ./tools/shapofont.py \
-      -i bitmap/ShapoSansP/s20c16w3a1 \
-      --outdir_gfx_c tmp.outdir/
+      -i bitmap/ShapoSansP/s21c16a01w03 \
+      --outdir_gfx_c path/to/output/dir/
 ```
 
 In this repository, after creating the venv, simply run `make all` and all fonts will be converted automatically.
