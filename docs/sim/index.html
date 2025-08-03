@@ -68,6 +68,7 @@
     input[type="number"],
     select {
       padding: 1px 5px;
+      font-size: 16px;
     }
 
     textarea,
@@ -109,12 +110,22 @@
     }
 
     input[type="number"] {
-      width: 5em;
+      width: 60px;
     }
 
     input[type="checkbox"],
     input[type="radio"] {
       accent-color: #08f;
+    }
+
+    .option-list {
+      padding: 0;
+    }
+
+    .option-list li {
+      display: inline-block;
+      margin-right: 20px;
+      white-space: nowrap;
     }
 
     .nowrap {
@@ -143,8 +154,8 @@
     <pre id="log"></pre>
 
     <h2>Rendering Options</h2>
-    <p id="render-options">
-      <span class="nowrap">
+    <ul id="render-options" class="option-list">
+      <li>
         Screen Size:
         <select id="screen-size">
           <option value="0x0" selected>Auto</option>
@@ -157,37 +168,36 @@
           <option value="640x480">640x480</option>
           <option value="800x600">800x600</option>
         </select>
-      </span> |
-      <span class="nowrap">
-        X:
-        <input type="number" id="origin-x" value="4" />
-      </span> |
-      <span class="nowrap">
-        Y:
-        <input type="number" id="origin-y" value="4" />
+      </li>
+      <li>
+        Origin: (
+        <input type="number" id="origin-x" value="4" />,
+        <input type="number" id="origin-y" value="4" />)
+      </li>
+      <li>
         <input type="checkbox" id="origin-y-auto-offset" checked />
-        <label for="origin-y-auto-offset">Auto Offset</label>
-      </span> |
-      <span class="nowrap">
+        <label for="origin-y-auto-offset">Auto Baseline Offset</label>
+      </li>
+      <li>
         Text Size:
         <input type="radio" id="text-size-1" name="text-size" value="1" checked /><label for="text-size-1">1x</label>
         <input type="radio" id="text-size-2" name="text-size" value="2" /><label for="text-size-2">2x</label>
         <input type="radio" id="text-size-3" name="text-size" value="3" /><label for="text-size-3">3x</label>
         <input type="radio" id="text-size-4" name="text-size" value="4" /><label for="text-size-4">4x</label>
-      </span> |
-      <span class="nowrap">
+      </li>
+      <li>
         X Advance Adjust:
         <input type="number" id="x-advance-adjust" value="0" />
-      </span> |
-      <span class="nowrap">
+      </li>
+      <li>
         Y Advance Adjust:
         <input type="number" id="y-advance-adjust" value="0" />
-      </span>
-    </p>
+      <li>
+    </ul>
 
     <h2>Preview Options</h2>
-    <p id="preview-options">
-      <span class="nowrap">
+    <ul id="preview-options" class="option-list">
+      <li>
         Zoom:
         <select id="zoom">
           <option value="1">x1 (Dot-by-Dot)</option>
@@ -197,12 +207,12 @@
           <option value="16">x16</option>
           <option value="0" selected>Fit to Page</option>
         </select>
-      </span>
-      <span class="nowrap">
+      </li>
+      <li>
         <input type="checkbox" id="dot-emphasis" checked />
         <label for="dot-emphasis">Dot Emphasis</label>
-      </span>
-    </p>
+      </li>
+    </ul>
 
     <h2>Sample Text</h2>
     <p>
@@ -215,7 +225,7 @@
     </p>
 
     <hr>
-    
+
     <p style="text-align: center;">
       This application is part of <a href="https://github.com/shapoco/shapofont">ShapoFont</a>.
     </p>
