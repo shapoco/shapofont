@@ -8,18 +8,6 @@
 - Tools for generating GFXfont from PNG images<br>
     「ペイント」などでデザインしたフォントから GFXfont を生成するツール
 
-## Naming Rule
-
-![](./img/dimensions.svg)
-
-|Option|Description|Default Value|
-|:--:|:--|:--:|
-|s|Body Size|(required)|
-|c|Cap Height|s|
-|a|Ascender Spacing|0|
-||Descent|s - c - a|
-|w|weight|1|
-
 # Catalog
 
 Click thumbnail to open the font with [GFXfont Web Simulator](https://shapoco.github.io/shapofont/sim/).<br>
@@ -107,13 +95,31 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
 - Painting Tool (I used mspaint)
 - Linux environment with Python (I used WSL2)
 
+## Naming Rule
+
+![](./img/dimensions.svg)
+
+|Option|Description|Default Value|
+|:--:|:--|:--:|
+|s|Body Size|(required)|
+|c|Cap Height|s|
+|a|Ascender Spacing|0|
+||Descent|s - c - a|
+|w|weight|1|
+
 ## How to Design Your Own Font
 
 1. Create a canvas of appropriate size with a black background.
 2. Design your glyphs in white.
-3. Draw a red line (**position marker**) of the same width at the bottom of each glyph.
+3. Add a red line (**Glyph Marker**) of the same width at the bottom of each glyph.
 
     ![](./img/how_to_design.svg)
+
+    If only red marker is given, when rendering it, the character's horizontal coordinate is advanced by the glyph width plus automatically calculated spacing. If you want to adjust the spacing, you can add blue lines.
+
+    ![](./img/spacing_adjustment.svg)
+
+    The blue line to the left of the glyph marker decreases the spacing from the previous character, and the blue line below the glyph marker indicates the horizontal origin of the next character.
 
 4. Save the image as `design.png`.
 5. In a JSON5 file `shapofont.json5`, list the characters contained in the image.
@@ -126,8 +132,8 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
     }
     ```
 
-- The vertical positions of the position markers of the glyphs side by side must be aligned.
-- There must be at least Body Size pixels of space above the position marker (no overlap).
+- The vertical positions of the glyph markers of the glyphs side by side must be aligned.
+- There must be at least Body Size pixels of space above the glyph marker (no overlap).
 - The order of characters in the image must exactly match the order of characters listed in the `shapofont.json5`.
 
 ## Directory Structure
@@ -162,7 +168,7 @@ source venv-setup.shrc
       --outdir_gfx_c path/to/output/dir/
 ```
 
-In this repository, after creating the venv, simply run `make all` and all fonts will be converted automatically.
+In this repository, after creating the venv, simply run `make -j gfx_all` and all fonts will be converted automatically.
 
 # License
 

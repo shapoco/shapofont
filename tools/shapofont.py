@@ -11,10 +11,24 @@ import mamefont
 from design import GrayBitmap, Marker
 
 
-class BitmapGlyph:
-    def __init__(self, code: int, bmp: GrayBitmap):
+class RawGlyph:
+    def __init__(
+        self,
+        code: int,
+        bmp: GrayBitmap,
+        negative_offset: int = 0,
+        explicit_advance: int | None = None,
+    ):
         self.code = code
         self.bmp = bmp
+        self.negative_offset = negative_offset
+        self.explicit_advance = explicit_advance
+
+    def design_width(self) -> int:
+        if self.explicit_advance == None:
+            return self.bmp.width
+        else:
+            return max(self.bmp.width, self.negative_offset + self.explicit_advance)
 
 
 class BitmapFont:
@@ -74,70 +88,63 @@ class BitmapFont:
                     self.codes.extend(range(start_code, end_code + 1))
 
         # Find Glyphs
-        self.glyphs: list[BitmapGlyph] = []
-        marker_y = 1
-        num_valid_glyphs = 0
-        code_index = 0
-        glyph_max_bmp_height = self.bitmap_height()
-        while marker_y < self.bmp.height:
+        self.glyphs: list[RawGlyph] = []
+        glyph_index = 0
+        max_glyph_height = self.max_glyph_height()
+        y = max_glyph_height
+        while y < self.bmp.height:
             # Find marker line
             found = False
-            for x in range(self.bmp.width):
-                col = self.bmp.get(x, marker_y)
-                if (
-                    col == Marker.VALID_BOTTOM_LINE
-                    or col == Marker.DISABLED_BOTTOM_LINE
-                ):
+            x = 0
+            while x < self.bmp.width:
+                if self.bmp.get(x, y) == Marker.GLYPH:
+                    glyph = self.parse_glyph(x, y, self.codes[glyph_index])
+                    glyph_index += 1
+
+                    self.glyphs.append(glyph)
+                    x += glyph.design_width()
+
                     found = True
-                    break
-            if not found:
-                marker_y += 1
-                continue
-
-            # Split into characters
-            last_is_valid = False
-            is_blue_marker = False
-            start_x = 0
-            for x in range(self.bmp.width):
-                col = self.bmp.get(x, marker_y)
-                curr_is_valid = col < 0
-                if not last_is_valid and curr_is_valid:
-                    # First pixel of marker line
-                    start_x = x
-                    is_blue_marker = col == Marker.DISABLED_BOTTOM_LINE
                 else:
-                    # Marker line continues
-                    is_end_of_marker = last_is_valid and not curr_is_valid
-                    is_end_of_line = curr_is_valid and x == self.bmp.width - 1
-                    if is_end_of_marker or is_end_of_line:
-                        if is_blue_marker:
-                            glyph_width = 0
-                        elif is_end_of_marker:
-                            glyph_width = x - start_x
-                        else:
-                            glyph_width = x + 1 - start_x
+                    x += 1
 
-                        bmp = self.bmp.crop(
-                            start_x,
-                            marker_y - glyph_max_bmp_height,
-                            glyph_width,
-                            glyph_max_bmp_height,
-                        )
+            if found:
+                y += 1 + max_glyph_height
+            else:
+                y += 1
 
-                        glyph = BitmapGlyph(self.codes[code_index], bmp)
-                        self.glyphs.append(glyph)
-                        glyph.valid = glyph_width != 0
+    def parse_glyph(self, x: int, y: int, code: int) -> RawGlyph:
+        # Find end of glyph marker
+        glyph_marker_width = 0
+        while self.bmp.get(x + glyph_marker_width, y, 0) == Marker.GLYPH:
+            glyph_marker_width += 1
+        if glyph_marker_width <= 0:
+            raise ValueError("Glyph marker not found")
 
-                        if glyph.valid:
-                            num_valid_glyphs += 1
+        # Find negative offset marker
+        negative_offset = 0
+        while self.bmp.get(x - negative_offset - 1, y, 0) == Marker.SPACING:
+            negative_offset += 1
 
-                        code_index += 1
+        # Find advance marker
+        x_advance = 0
+        while self.bmp.get(x + x_advance, y + 1, 0) == Marker.SPACING:
+            x_advance += 1
+        if x_advance <= 0:
+            x_advance = None
 
-                last_is_valid = curr_is_valid
+        # Extract Glyph Bitmap
+        glyph_height = self.max_glyph_height()
+        bmp = self.bmp.crop(
+            x - negative_offset,
+            y - glyph_height,
+            negative_offset + glyph_marker_width,
+            glyph_height,
+        )
 
-            marker_y += 1
+        return RawGlyph(code, bmp, negative_offset, x_advance)
 
-    def bitmap_height(self) -> int:
+    def max_glyph_height(self) -> int:
         return self.type_size
 
     def to_gfx_font(self, outdir: str):
@@ -153,7 +160,9 @@ class BitmapFont:
             builder.add_glyph(
                 glyph.code,
                 glyph.bmp,
+                x_offset=-glyph.negative_offset,
                 y_offset=-(self.cap_height + self.ascender_spacing),
+                x_advance=glyph.explicit_advance,
             )
         gfx_font = builder.build()
         with open(out_file, "w") as f:
@@ -171,7 +180,7 @@ class BitmapFont:
 
         builder = mamefont.MameFontBuilder(
             self.full_name,
-            self.bitmap_height(),
+            self.max_glyph_height(),
             self.normal_x_spacing,
             self.line_height,
             vertical_frag=vertical_frag,

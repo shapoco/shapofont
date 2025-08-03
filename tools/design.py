@@ -2,8 +2,26 @@ from PIL import Image
 
 
 class Marker:
-    VALID_BOTTOM_LINE = -1
-    DISABLED_BOTTOM_LINE = -2
+    GLYPH = -1
+    SPACING = -2
+
+
+def to_hsv(rgb) -> tuple[float, float, float]:
+    r = rgb[0]
+    g = rgb[1]
+    b = rgb[2]
+    mx = max(r, g, b)
+    mn = min(r, g, b)
+    dr = mx - mn
+    if mx == mn:
+        h = 0
+    elif mn == b:
+        h = 60 + (g - r) * 60 / dr
+    elif mn == r:
+        h = 180 + (b - g) * 60 / dr
+    elif mn == g:
+        h = 300 + (r - b) * 60 / dr
+    return (h, dr, mx)
 
 
 class GrayBitmap:
@@ -17,26 +35,34 @@ class GrayBitmap:
 
     def from_file(file_path: str):
         pil_img = Image.open(file_path)
-        w, h = pil_img.size
+        width, height = pil_img.size
         data: list[int] = []
-        for y in range(h):
-            for x in range(w):
-                (r, g, b, a) = pil_img.getpixel((x, y))
-                if r > 192 and g < 64 and b < 64:
-                    data.append(Marker.VALID_BOTTOM_LINE)
-                elif r < 64 and g < 64 and b > 192:
-                    data.append(Marker.DISABLED_BOTTOM_LINE)
-                else:
-                    gray = (r + g + b) // 3
-                    data.append(gray)
+        for y in range(height):
+            for x in range(width):
+                (h, s, v) = to_hsv(pil_img.getpixel((x, y)))
+                if s < 64:
+                    data.append(v)
+                    continue
+                elif s >= 128 and v > 128:
+                    if h < 30 or 330 <= h:
+                        # red
+                        data.append(Marker.GLYPH)
+                    elif 210 < h <= 270:
+                        # blue
+                        data.append(Marker.SPACING)
+                    else:
+                        raise ValueError("Unknown pixel color")
 
         pil_img.close()
 
-        return GrayBitmap(data, w, h, 0, w)
+        return GrayBitmap(data, width, height, 0, width)
 
-    def get(self, x: int, y: int) -> Marker:
+    def get(self, x: int, y: int, default_col: int | None = None) -> Marker:
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
-            raise IndexError(f"Index out of bounds: ({x}, {y})")
+            if default_col == None:
+                raise IndexError(f"Index out of bounds: ({x}, {y})")
+            else:
+                return default_col
         return self.data[self.offset + y * self.stride + x]
 
     def crop(self, x: int, y: int, width: int, height: int):

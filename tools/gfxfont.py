@@ -165,7 +165,9 @@ class GFXfontBuilder:
         self,
         code: int,
         bmp: GrayBitmap,
-        y_offset: int,
+        x_offset: int = 0,
+        y_offset: int = 0,
+        x_advance: int | None = None,
     ):
         # Cropping
         x_min = bmp.width
@@ -203,12 +205,15 @@ class GFXfontBuilder:
                 else:
                     i_bit -= 1
 
+        if x_advance == None:
+            x_advance = x_offset + bmp.width + self.normal_x_spacing
+
         glyph = GFXglyph(
             bitmap_offset=0,
             width=type_w,
             height=type_h,
-            x_advance=bmp.width + self.normal_x_spacing,
-            x_offset=x_min,
+            x_advance=x_advance,
+            x_offset=x_offset + x_min,
             y_offset=y_offset + y_min,
             orig_bmp_width=bmp.width,
             orig_bmp_height=bmp.height,
