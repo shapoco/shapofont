@@ -1,4 +1,6 @@
-# ShapoFont
+<p align="center"><img src="./img/logo.svg" width="50"></p>
+<h1 align="center">ShapoFont</h1>
+<p align="center"><img src="./img/cover.jpg" width="100%"></p>
 
 - Bitmap fonts made primarily for embedded projects
 - a Tool for generating font files from PNG images
