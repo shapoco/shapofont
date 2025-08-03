@@ -1,9 +1,12 @@
 <p align="center"><img src="./img/logo.svg" width="50"></p>
 <h1 align="center">ShapoFont</h1>
+<p align="center">シャポフォント</p>
 <p align="center"><img src="./img/cover.jpg" width="100%"></p>
 
-- Bitmap fonts made primarily for embedded projects
-- a Tool for generating font files from PNG images
+- Bitmap fonts for embedded projects<br>
+    組み込み向けビットマップフォント
+- Tools for generating GFXfont from PNG images<br>
+    「ペイント」などでデザインしたフォントから GFXfont を生成するツール
 
 ## Naming Rule
 
@@ -17,9 +20,10 @@
 ||Descent|s - c - a|
 |w|weight|1|
 
-# Fonts
+# Catalog
 
-Click thumbnail to open the font with GFXfont Web Simulator.
+Click thumbnail to open the font with [GFXfont Web Simulator](https://shapoco.github.io/shapofont/sim/).<br>
+サムネイルをクリックすると[ブラウザ上のシミュレータ](https://shapoco.github.io/shapofont/sim/)でお試しできます。
 
 ## ShapoSansP
 
@@ -93,11 +97,17 @@ Click thumbnail to open the font with GFXfont Web Simulator.
 
 # Designing Font with Painting Tool
 
-ShapoFonts are designed using Microsoft Paint and converted to some font formats by Python scripts.
+ShapoFonts are designed using painting tools such as Microsoft Paint and converted to GFXfont by Python scripts.<br>
+ShapoFont は「ペイント」などのペイントソフトでデザインされ、Python スクリプトを使って GFXfont に変換されています。
 
 ![](./img/designing_with_mspaint.png)
 
-## How to Design
+## Requirements
+
+- Painting Tool (I used mspaint)
+- Linux environment with Python (I used WSL2)
+
+## How to Design Your Own Font
 
 1. Create a canvas of appropriate size with a black background.
 2. Design your glyphs in white.
@@ -117,29 +127,31 @@ ShapoFonts are designed using Microsoft Paint and converted to some font formats
     ```
 
 - The vertical positions of the position markers of the glyphs side by side must be aligned.
-- There must be at least typeSize + ascenderSpacing pixels of space above the position marker.
-- The order of characters in the image must exactly match the order of characters listed in the meta information.
+- There must be at least Body Size pixels of space above the position marker (no overlap).
+- The order of characters in the image must exactly match the order of characters listed in the `shapofont.json5`.
 
 ## Directory Structure
 
 Create a directory for each dimension identifier under the family name directory and place a design image and meta information in it.
 
+### Example:
+
 ```
-ShapoSansP/  .................. Family Name
-+-- s20c16w3a1/  ............. Dimension Identifier
+ShapoSansP/  ................ Family Name
++-- s21c16a01w03/  .......... Dimension Identifier
     +-- design.png  ......... Font Design File
     +-- shapofont.json5  .... Meta Information
 ```
 
-## Converting to Font Files
+The generator script extracts a family name and a dimension identifier from the directory path, so they must be named correctly.
+
+## Converting to GFXfont
 
 1. Create a Python virtual environment using `venv-setup.shrc`.
     - `Pillow` and `json5` will be installed.
 2. Specify the above design directory in `tools/shapofont.py` to convert to each font format.
     - `-i`: path to input directory (dimension identifier)
     - `--outdir_gfx_c`: output directory for GFXfont format
-
-Since the script extracts a family name and a dimension identifier from the directory path, they must be named correctly.
 
 ### Example:
 
@@ -166,6 +178,10 @@ Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=
 #define SHAPOFONT_GFXFONT_NAMESPACE ::lgfx::
 #include "shapofont/ShapoSansP_s11c09w2a1.h"
 ```
+
+# Related Project
+
+- [MameFont](https://github.com/shapoco/mamefont)
 
 # Memo
 
