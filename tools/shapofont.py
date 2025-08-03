@@ -128,10 +128,13 @@ class BitmapFont:
         left_anti_space = w
 
         # Find right side anti spacer
-        w = 0
-        while self.bmp.get(x + glyph_width - 1 - w, y + 1, 0) == Marker.SPACING:
-            w += 1
-        right_anti_space = w
+        if left_anti_space < glyph_width:
+            w = 0
+            while self.bmp.get(x + glyph_width - 1 - w, y + 1, 0) == Marker.SPACING:
+                w += 1
+            right_anti_space = w
+        else:
+            right_anti_space = 0
 
         # Extract Glyph Bitmap
         glyph_height = self.max_glyph_height()

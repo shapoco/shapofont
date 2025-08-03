@@ -2,5 +2,8 @@
     "codes": [
         {"from": 0x2e, "to": 0x2e}, // .
         {"from": 0x30, "to": 0x39}, // 0-9
-    ]
+    ],
+    "x_spacing": {
+        "default": 1,
+    },
 }
