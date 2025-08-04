@@ -17,6 +17,26 @@ function parseCInt(name: string, s: string): number {
   throw new Error(`Failed to parse ${name}: ${s}`);
 }
 
+function parseColor(colorStr: string): number[] {
+  const rgb6 = colorStr.match(/^#([0-9a-fA-F]{6})$/);
+  if (rgb6) {
+    return [
+      parseInt(rgb6[1].slice(0, 2), 16),
+      parseInt(rgb6[1].slice(2, 4), 16),
+      parseInt(rgb6[1].slice(4, 6), 16),
+    ];
+  }
+  const rgb3 = colorStr.match(/^#([0-9a-fA-F]{3})$/);
+  if (rgb3) {
+    return [
+      parseInt(rgb3[1].charAt(0) + rgb3[1].charAt(0), 16),
+      parseInt(rgb3[1].charAt(1) + rgb3[1].charAt(1), 16),
+      parseInt(rgb3[1].charAt(2) + rgb3[1].charAt(2), 16),
+    ];
+  }
+  throw new Error(`Invalid color format: ${colorStr}`);
+}
+
 function codeToStr(code: number): string {
   if (code < 0 || code > 0x10FFFF) {
     throw new Error(`Invalid Unicode code point: ${code}`);
@@ -94,10 +114,12 @@ class Glyph {
 
   public render(
       ctx: CanvasRenderingContext2D, x: number, y: number, textSize: number,
-      dotSize: number, dotEmphasis: boolean, rgb: string) {
+      dotSize: number, dotEmphasis: boolean, color: string) {
     if (!this.bitmap) return;
 
     const multSize = textSize * dotSize;
+
+    const [colR, colG, colB] = parseColor(color);
 
     ctx.save();
     ctx.translate(x + this.xOffset * multSize, y + this.yOffset * multSize);
@@ -105,7 +127,7 @@ class Glyph {
       for (let x = 0; x < this.width; x++) {
         const pixel =
             Math.round(100 * this.bitmap.grayData[y * this.width + x] / 255);
-        ctx.fillStyle = `rgb(${rgb} / ${pixel}%)`;
+        ctx.fillStyle = `rgb(${colR} ${colG} ${colB} / ${pixel}%)`;
         if (dotSize < 2 || !dotEmphasis) {
           ctx.fillRect(x * multSize, y * multSize, multSize, multSize);
         } else {
@@ -278,6 +300,8 @@ class App {
   private yAdvanceAdjustBox: HTMLInputElement;
   private zoomBox: HTMLSelectElement;
   private dotEmphasisBox: HTMLInputElement;
+  private fgColorBox: HTMLInputElement;
+  private bgColorBox: HTMLInputElement;
   private logBox: HTMLPreElement;
 
   constructor() {
@@ -298,6 +322,8 @@ class App {
     this.zoomBox = document.querySelector('#zoom') as HTMLSelectElement;
     this.dotEmphasisBox =
         document.querySelector('#dot-emphasis') as HTMLInputElement;
+    this.fgColorBox = document.querySelector('#fg-color') as HTMLInputElement;
+    this.bgColorBox = document.querySelector('#bg-color') as HTMLInputElement;
     this.logBox = document.querySelector('#log') as HTMLPreElement;
 
     this.fontSrcBox.addEventListener('input', () => {
@@ -309,16 +335,14 @@ class App {
 
     const renderOptions = document.querySelector('#render-options');
     for (let box of renderOptions.querySelectorAll('input, select')) {
-      box.addEventListener('change', () => {
-        this.requestUpdatePreview();
-      });
+      box.addEventListener('change', () => this.requestUpdatePreview());
+      box.addEventListener('input', () => this.requestUpdatePreview());
     }
 
     const previewOptions = document.querySelector('#preview-options');
     for (let box of previewOptions.querySelectorAll('input, select')) {
-      box.addEventListener('change', () => {
-        this.requestUpdatePreview();
-      });
+      box.addEventListener('change', () => this.requestUpdatePreview());
+      box.addEventListener('input', () => this.requestUpdatePreview());
     }
   }
 
@@ -442,6 +466,9 @@ class App {
     }
     const xAdvanceAdjust = Number(this.xAdvanceAdjustBox.value);
     const yAdvanceAdjust = Number(this.yAdvanceAdjustBox.value);
+    const zoom = Number(this.zoomBox.value);
+    const bgColorStr = this.bgColorBox.value;
+    const fgColorStr = this.fgColorBox.value;
 
     const chars = this.layoutChars(
         font, text, originX, offsettedOriginY, textSize, xAdvanceAdjust,
@@ -465,7 +492,6 @@ class App {
       screenHeight = Math.max(32, Math.ceil(textBottom * 1.1 / 20) * 20);
     }
 
-    const zoom = Number(this.zoomBox.value);
     const dotEmphasisAllowed = screenWidth < 320 && screenHeight < 320;
     this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
     const dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
@@ -488,7 +514,7 @@ class App {
     }
 
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#002';
+    ctx.fillStyle = bgColorStr;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     {
@@ -522,7 +548,7 @@ class App {
     for (const c of chars) {
       c.glyph.render(
           ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis,
-          '192 224 255');
+          fgColorStr);
     }
   }
 

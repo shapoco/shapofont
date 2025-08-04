@@ -34,17 +34,6 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-    if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
-};
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -60,6 +49,17 @@ var __read = (this && this.__read) || function (o, n) {
         finally { if (e) throw e.error; }
     }
     return ar;
+};
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var _this = this;
 function parseCInt(name, s) {
@@ -82,6 +82,25 @@ function parseCInt(name, s) {
         return sign * parseInt(s, 10);
     }
     throw new Error("Failed to parse ".concat(name, ": ").concat(s));
+}
+function parseColor(colorStr) {
+    var rgb6 = colorStr.match(/^#([0-9a-fA-F]{6})$/);
+    if (rgb6) {
+        return [
+            parseInt(rgb6[1].slice(0, 2), 16),
+            parseInt(rgb6[1].slice(2, 4), 16),
+            parseInt(rgb6[1].slice(4, 6), 16),
+        ];
+    }
+    var rgb3 = colorStr.match(/^#([0-9a-fA-F]{3})$/);
+    if (rgb3) {
+        return [
+            parseInt(rgb3[1].charAt(0) + rgb3[1].charAt(0), 16),
+            parseInt(rgb3[1].charAt(1) + rgb3[1].charAt(1), 16),
+            parseInt(rgb3[1].charAt(2) + rgb3[1].charAt(2), 16),
+        ];
+    }
+    throw new Error("Invalid color format: ".concat(colorStr));
 }
 function codeToStr(code) {
     if (code < 0 || code > 0x10FFFF) {
@@ -159,16 +178,17 @@ var Glyph = /** @class */ (function () {
         this.xOffset = xOffset;
         this.yOffset = yOffset;
     }
-    Glyph.prototype.render = function (ctx, x, y, textSize, dotSize, dotEmphasis, rgb) {
+    Glyph.prototype.render = function (ctx, x, y, textSize, dotSize, dotEmphasis, color) {
         if (!this.bitmap)
             return;
         var multSize = textSize * dotSize;
+        var _a = __read(parseColor(color), 3), colR = _a[0], colG = _a[1], colB = _a[2];
         ctx.save();
         ctx.translate(x + this.xOffset * multSize, y + this.yOffset * multSize);
         for (var y_1 = 0; y_1 < this.height; y_1++) {
             for (var x_1 = 0; x_1 < this.width; x_1++) {
                 var pixel = Math.round(100 * this.bitmap.grayData[y_1 * this.width + x_1] / 255);
-                ctx.fillStyle = "rgb(".concat(rgb, " / ").concat(pixel, "%)");
+                ctx.fillStyle = "rgb(".concat(colR, " ").concat(colG, " ").concat(colB, " / ").concat(pixel, "%)");
                 if (dotSize < 2 || !dotEmphasis) {
                     ctx.fillRect(x_1 * multSize, y_1 * multSize, multSize, multSize);
                 }
@@ -350,6 +370,8 @@ var App = /** @class */ (function () {
         this.zoomBox = document.querySelector('#zoom');
         this.dotEmphasisBox =
             document.querySelector('#dot-emphasis');
+        this.fgColorBox = document.querySelector('#fg-color');
+        this.bgColorBox = document.querySelector('#bg-color');
         this.logBox = document.querySelector('#log');
         this.fontSrcBox.addEventListener('input', function () {
             _this.requestParse();
@@ -361,9 +383,8 @@ var App = /** @class */ (function () {
         try {
             for (var _c = __values(renderOptions.querySelectorAll('input, select')), _d = _c.next(); !_d.done; _d = _c.next()) {
                 var box = _d.value;
-                box.addEventListener('change', function () {
-                    _this.requestUpdatePreview();
-                });
+                box.addEventListener('change', function () { return _this.requestUpdatePreview(); });
+                box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
         catch (e_3_1) { e_3 = { error: e_3_1 }; }
@@ -377,9 +398,8 @@ var App = /** @class */ (function () {
         try {
             for (var _e = __values(previewOptions.querySelectorAll('input, select')), _f = _e.next(); !_f.done; _f = _e.next()) {
                 var box = _f.value;
-                box.addEventListener('change', function () {
-                    _this.requestUpdatePreview();
-                });
+                box.addEventListener('change', function () { return _this.requestUpdatePreview(); });
+                box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
         catch (e_4_1) { e_4 = { error: e_4_1 }; }
@@ -521,6 +541,9 @@ var App = /** @class */ (function () {
         }
         var xAdvanceAdjust = Number(this.xAdvanceAdjustBox.value);
         var yAdvanceAdjust = Number(this.yAdvanceAdjustBox.value);
+        var zoom = Number(this.zoomBox.value);
+        var bgColorStr = this.bgColorBox.value;
+        var fgColorStr = this.fgColorBox.value;
         var chars = this.layoutChars(font, text, originX, offsettedOriginY, textSize, xAdvanceAdjust, yAdvanceAdjust);
         var textRight = originX;
         var textBottom = originY;
@@ -548,7 +571,6 @@ var App = /** @class */ (function () {
         if (screenHeight <= 0) {
             screenHeight = Math.max(32, Math.ceil(textBottom * 1.1 / 20) * 20);
         }
-        var zoom = Number(this.zoomBox.value);
         var dotEmphasisAllowed = screenWidth < 320 && screenHeight < 320;
         this.dotEmphasisBox.disabled = !dotEmphasisAllowed;
         var dotEmphasis = this.dotEmphasisBox.checked && dotEmphasisAllowed;
@@ -568,7 +590,7 @@ var App = /** @class */ (function () {
             canvas.style.width = '100%';
         }
         var ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#002';
+        ctx.fillStyle = bgColorStr;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         {
             var lw = Math.max(1, screenWidth * dotSize / 900);
@@ -591,7 +613,7 @@ var App = /** @class */ (function () {
         try {
             for (var chars_2 = __values(chars), chars_2_1 = chars_2.next(); !chars_2_1.done; chars_2_1 = chars_2.next()) {
                 var c = chars_2_1.value;
-                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, '192 224 255');
+                c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, fgColorStr);
             }
         }
         catch (e_7_1) { e_7 = { error: e_7_1 }; }
