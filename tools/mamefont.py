@@ -84,6 +84,12 @@ SFT_SHIFT_SIZE = Field(2, 2, bias=1)
 SFT_POST_OP = Field(4, 1)
 SFT_SHIFT_DIR = Field(5, 1)
 
+SFI_REPEAT_COUNT = Field(0, 3, bias=1)
+SFI_PRE_SHIFT = Field(3, 1)
+SFI_POST_OP = SFT_POST_OP
+SFI_SHIFT_DIR = SFT_SHIFT_DIR
+SFI_PERIOD = Field(6, 2, bias=2)
+
 XOR_MASK_POS = Field(0, 3)
 XOR_MASK_WIDTH = Field(3, 1, bias=1)
 
@@ -141,20 +147,22 @@ CPY = Operator(
     "CPY",
     0x40,
     [(0x41, 0x5F), (0x61, 0x67), (0x69, 0x6F), (0x71, 0x77), (0x79, 0x7F)],
-    1002,
+    1003,
 )
 XOR = Operator("XOR", 0xF0, [(0xF0, 0xFE)], 1004)
 SFT = Operator("SFT", 0x00, [(0x00, 0x3F)], 1005)
 LUP = Operator("LUP", 0x80, [(0x80, 0xBF)], 1006)
 LUD = Operator("LUD", 0xC0, [(0xC0, 0xDF)], 1006)
-LDI = Operator("LDI", 0x60, [(0x60, 0x60)], 1009)
+SFI = Operator("SFI", 0x68, [(0x68, 0x68)], 2000)
+LDI = Operator("LDI", 0x60, [(0x60, 0x60)], 2001)
 CPX = Operator("CPX", 0x40, [(0x40, 0x40)], 3100)
-ABO = Operator("ABO", 0xFF, [(0xFF, 0xFF)], 2000)
+ABO = Operator("ABO", 0xFF, [(0xFF, 0xFF)], 9999)
 
 UNKNOWN = Operator("(unknown)", -1, [], 999999)
 
 opcodes = [
     RPT,
+    SFI,
     CPY,
     XOR,
     SFT,
@@ -192,58 +200,75 @@ def parse_instruction(
     bytecode: list[int], offset: int
 ) -> tuple[Operator, int, int, dict[str, int]]:
     byte1 = bytecode[offset]
-    operator = parse_opcode(byte1)
-    if operator == LUP:
-        return (LUP, 1, 1, {"index": byte1 & 0x3F})
-    elif operator == LUD:
-        return (LUD, 1, 2, {"index": byte1 & 0x0F, "step": (byte1 >> 4) & 0x01})
-    elif operator == SFT:
-        repeat_count = (byte1 & 0x03) + 1
+    opr = parse_opcode(byte1)
+    if opr == LUP:
+        return (opr, 1, 1, {"index": byte1 & 0x3F})
+    elif opr == LUD:
+        return (opr, 1, 2, {"index": byte1 & 0x0F, "step": (byte1 >> 4) & 0x01})
+    elif opr == SFT:
+        repeat_count = SFT_REPEAT_COUNT.read(byte1)
         params = {
             "shift_size": SFT_SHIFT_SIZE.read(byte1),
-            "repeat_count": SFT_REPEAT_COUNT.read(byte1),
+            "repeat_count": repeat_count,
             "post_op": SFT_POST_OP.read(byte1),
             "shift_dir": SFT_SHIFT_DIR.read(byte1),
         }
-        return (operator, 1, repeat_count, params)
-    elif operator == LDI:
+        return (opr, 1, repeat_count, params)
+    elif opr == SFI:
+        byte2 = bytecode[offset + 1]
+        repeat_count = SFI_REPEAT_COUNT.read(byte2)
+        pre_shift = SFI_PRE_SHIFT.read(byte2)
+        period = SFI_PERIOD.read(byte2)
+        length = period * repeat_count
+        if pre_shift != 0:
+            length += 1
+        params = {
+            "repeat_count": repeat_count,
+            "pre_shift": pre_shift,
+            "period": period,
+            "post_op": SFI_POST_OP.read(byte2),
+            "shift_dir": SFI_SHIFT_DIR.read(byte2),
+        }
+        return (opr, 2, length, params)
+    elif opr == LDI:
         params = {
             "byte": bytecode[offset + 1],
         }
-        return (LDI, 2, 1, params)
-    elif operator == XOR:
+        return (opr, 2, 1, params)
+    elif opr == XOR:
         params = {
             "mask_width": XOR_MASK_WIDTH.read(byte1),
             "mask_pos": XOR_MASK_POS.read(byte1),
         }
-        return (XOR, 1, 1, params)
-    elif operator == RPT:
+        return (opr, 1, 1, params)
+    elif opr == RPT:
         repeat_count = RPT_REPEAT_COUNT.read(byte1)
         params = {
             "repeat_count": repeat_count,
         }
-        return (RPT, 1, repeat_count, params)
-    elif operator == CPY:
+        return (opr, 1, repeat_count, params)
+    elif opr == CPY:
         length = CPY_LENGTH.read(byte1)
         params = {
             "offset": CPY_OFFSET.read(byte1),
             "length": length,
             "byte_reverse": CPY_BYTE_REVERSE.read(byte1),
         }
-        return (CPY, 1, length, params)
-    elif operator == CPX:
+        return (opr, 1, length, params)
+    elif opr == CPX:
         byte2 = bytecode[offset + 1]
         byte3 = bytecode[offset + 2]
+        length = CPX_LENGTH.read(byte3)
         params = {
             "offset": ((CPX_OFFSET_H.read(byte3) << 8) | byte2),
-            "length": CPX_LENGTH.read(byte3),
+            "length": length,
             "inverse": CPX_INVERSE.read(byte3),
             "byte_reverse": CPX_BYTE_REVERSE.read(byte3),
             "bit_reverse": CPX_BIT_REVERSE.read(byte3),
         }
-        return (CPX, 3, params["length"], params)
-    elif operator == ABO:
-        return (ABO, 1, 0, {})
+        return (opr, 3, length, params)
+    elif opr == ABO:
+        return (opr, 1, 0, {})
     else:
         return (UNKNOWN, 0, 0, {})
 
@@ -600,11 +625,13 @@ class MameFontBuilder:
                         self.next_ops[i_next] = cand
 
         def suggest_operation(i_src: int, i_dst: int) -> Operation | None:
+            prev_seq = fragments[0 : i_src + 1]
             goal_seq = fragments[i_src + 1 : i_dst + 1]
             best_op: Operation | None = None
             best_op = try_ldi(best_op, i_src, i_dst, goal_seq)
             best_op = try_xor(best_op, i_src, i_dst, goal_seq)
             best_op = try_sft(best_op, i_src, i_dst, goal_seq)
+            best_op = self.try_sfi(best_op, prev_seq, goal_seq)
             best_op = try_rpt(best_op, i_src, i_dst, goal_seq)
             best_op = try_cpy(best_op, i_src, i_dst, goal_seq)
             best_op = try_cpx(best_op, i_src, i_dst, goal_seq)
@@ -1336,3 +1363,66 @@ class MameFontBuilder:
             print(f"[{self.name}:{self.acrh}] Build succeeded")
 
         return result
+
+    # slow shift
+    def try_sfi(
+        self, best_opr: Operation | None, past: list[int], future: list[int]
+    ) -> Operation | None:
+        if best_opr and best_opr.cost < SFI.cost:
+            return best_opr
+
+        # rough length check
+        orig_len_min = SFI_PERIOD.min * SFI_REPEAT_COUNT.min
+        orig_len_max = SFI_PERIOD.max * SFI_REPEAT_COUNT.max + 1
+        future_len = len(future)
+        if future_len < orig_len_min or orig_len_max < future_len:
+            return best_opr
+
+        # find matching lengths
+        for repeat_count, pre_shift, period in product(
+            SFI_REPEAT_COUNT.range, SFI_PRE_SHIFT.range, SFI_PERIOD.range
+        ):
+            generating_len = period * repeat_count
+            if pre_shift != 0:
+                generating_len += 1
+
+            if generating_len != future_len:
+                continue
+
+            # find matching shift pattern
+            for post_op, shift_dir in product(SFI_POST_OP.range, SFI_SHIFT_DIR.range):
+                modifier = 0x01 if shift_dir == ShiftDir.LEFT else 0x80
+                if post_op == ShiftPostOp.CLR:
+                    modifier = modifier ^ 0xFF
+
+                work = past[-1]
+                shift_timing = 1 if pre_shift else period
+                fail = False
+                for expected in future:
+                    shift_timing -= 1
+                    if shift_timing == 0:
+                        shift_timing = period
+                        if shift_dir == ShiftDir.LEFT:
+                            work = work << 1
+                        else:
+                            work = work >> 1
+                        if post_op == ShiftPostOp.SET:
+                            work |= modifier
+                        else:
+                            work &= modifier
+                    if work != expected:
+                        fail = True
+                        break
+
+                if fail:
+                    continue
+
+                byte2 = 0
+                byte2 |= SFI_REPEAT_COUNT.place(repeat_count)
+                byte2 |= SFI_PRE_SHIFT.place(pre_shift)
+                byte2 |= SFI_PERIOD.place(period)
+                byte2 |= SFI_POST_OP.place(post_op)
+                byte2 |= SFI_SHIFT_DIR.place(shift_dir)
+                return Operation([SFI.code, byte2], future, SFI.cost)
+
+        return best_opr
