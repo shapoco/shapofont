@@ -85,6 +85,10 @@ class BitmapFont:
                 x_spacing = json_data["x_spacing"]
                 if "default" in x_spacing:
                     self.normal_x_spacing = int(x_spacing["default"])
+            if "y_spacing" in json_data:
+                y_spacing = json_data["y_spacing"]
+                if "default" in y_spacing:
+                    self.line_height = self.type_size + int(y_spacing["default"])
 
         # Find Glyphs
         self.glyphs: list[RawGlyph] = []
