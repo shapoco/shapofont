@@ -525,6 +525,12 @@ var App = /** @class */ (function () {
                                         case 's':
                                             this.screenSizeBox.value = decodeURIComponent(value);
                                             break;
+                                        case 'fg':
+                                            this.fgColorBox.value = '#' + decodeURIComponent(value);
+                                            break;
+                                        case 'bg':
+                                            this.bgColorBox.value = '#' + decodeURIComponent(value);
+                                            break;
                                     }
                                 }
                             }

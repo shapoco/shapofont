@@ -411,9 +411,8 @@ class App {
                 if (url.startsWith(prefix)) {
                   srcUrl = url;
                   accepted = true;
-                }
-                else if (url.startsWith(key)) {
-                  srcUrl = prefix+ url.slice(key.length) ;
+                } else if (url.startsWith(key)) {
+                  srcUrl = prefix + url.slice(key.length);
                   accepted = true;
                   break;
                 }
@@ -429,6 +428,14 @@ class App {
 
             case 's':
               this.screenSizeBox.value = decodeURIComponent(value);
+              break;
+
+            case 'fg':
+              this.fgColorBox.value = '#'+ decodeURIComponent(value);
+              break;
+
+            case 'bg':
+              this.bgColorBox.value = '#'+ decodeURIComponent(value);
               break;
           }
         }
