@@ -34,6 +34,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __values = (this && this.__values) || function(o) {
+    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
+    if (m) return m.call(o);
+    if (o && typeof o.length === "number") return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
+};
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -49,17 +60,6 @@ var __read = (this && this.__read) || function (o, n) {
         finally { if (e) throw e.error; }
     }
     return ar;
-};
-var __values = (this && this.__values) || function(o) {
-    var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
-    if (m) return m.call(o);
-    if (o && typeof o.length === "number") return {
-        next: function () {
-            if (o && i >= o.length) o = void 0;
-            return { value: o && o[i++], done: !o };
-        }
-    };
-    throw new TypeError(s ? "Object is not iterable." : "Symbol.iterator is not defined.");
 };
 var _this = this;
 function parseCInt(name, s) {
@@ -101,6 +101,32 @@ function parseColor(colorStr) {
         ];
     }
     throw new Error("Invalid color format: ".concat(colorStr));
+}
+function encodeColor(rgb) {
+    var e_1, _a;
+    var threeDigits = true;
+    try {
+        for (var rgb_1 = __values(rgb), rgb_1_1 = rgb_1.next(); !rgb_1_1.done; rgb_1_1 = rgb_1.next()) {
+            var ch = rgb_1_1.value;
+            if (Math.floor(ch / 16) != ch % 16) {
+                threeDigits = false;
+                break;
+            }
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (rgb_1_1 && !rgb_1_1.done && (_a = rgb_1.return)) _a.call(rgb_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    if (threeDigits) {
+        return "#".concat(rgb.map(function (ch) { return ch.toString(16).slice(0, 1); }).join(''));
+    }
+    else {
+        return "#".concat(rgb.map(function (ch) { return ch.toString(16).padStart(2, '0'); }).join(''));
+    }
 }
 function codeToStr(code) {
     if (code < 0 || code > 0x10FFFF) {
@@ -217,7 +243,7 @@ var Font = /** @class */ (function () {
             throw new Error('Unknown Font Format');
     }
     Font.prototype.tryParseGfxFont = function (src) {
-        var e_1, _a;
+        var e_2, _a;
         src = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
         var mGfxFont = /GFXfont\s+(\w+)(\s*\w+)?\s*=\s*\{([^\}]+)\}/gm.exec(src);
         if (!mGfxFont)
@@ -299,17 +325,17 @@ var Font = /** @class */ (function () {
                 code++;
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_1) throw e_1.error; }
+            finally { if (e_2) throw e_2.error; }
         }
         return true;
     };
     Font.prototype.getPreferredOriginY = function () {
-        var e_2, _a;
+        var e_3, _a;
         var y = 0;
         try {
             for (var _b = __values(this.glyphs.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -319,12 +345,12 @@ var Font = /** @class */ (function () {
                 }
             }
         }
-        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_2) throw e_2.error; }
+            finally { if (e_3) throw e_3.error; }
         }
         return y;
     };
@@ -348,7 +374,7 @@ var Character = /** @class */ (function () {
 }());
 var App = /** @class */ (function () {
     function App() {
-        var e_3, _a, e_4, _b;
+        var e_4, _a, e_5, _b;
         var _this = this;
         this.parseRequestId = -1;
         this.updatePreviewRequestId = -1;
@@ -387,12 +413,12 @@ var App = /** @class */ (function () {
                 box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_3) throw e_3.error; }
+            finally { if (e_4) throw e_4.error; }
         }
         var previewOptions = document.querySelector('#preview-options');
         try {
@@ -402,18 +428,47 @@ var App = /** @class */ (function () {
                 box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_4) throw e_4.error; }
+            finally { if (e_5) throw e_5.error; }
         }
+        document.querySelector('#color-swap').addEventListener('click', function () {
+            var fg = _this.fgColorBox.value;
+            var bg = _this.bgColorBox.value;
+            _this.fgColorBox.value = bg;
+            _this.bgColorBox.value = fg;
+            _this.requestUpdatePreview();
+        });
+        document.querySelector('#color-rotate').addEventListener('click', function () {
+            var e_6, _a;
+            try {
+                for (var _b = __values([_this.fgColorBox, _this.bgColorBox]), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var box = _c.value;
+                    var rgb = parseColor(box.value);
+                    var tmp = rgb[2];
+                    rgb[2] = rgb[1];
+                    rgb[1] = rgb[0];
+                    rgb[0] = tmp;
+                    box.value = encodeColor(rgb);
+                }
+            }
+            catch (e_6_1) { e_6 = { error: e_6_1 }; }
+            finally {
+                try {
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                }
+                finally { if (e_6) throw e_6.error; }
+            }
+            _this.requestUpdatePreview();
+        });
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
             var hash, srcUrl, sampleText, params, params_1, params_1_1, param, _a, key, value, url, urlStart, shapoFontStart, fontSrc, fontText, error_1;
-            var e_5, _b;
+            var e_7, _b;
             return __generator(this, function (_c) {
                 switch (_c.label) {
                     case 0:
@@ -456,12 +511,12 @@ var App = /** @class */ (function () {
                                     }
                                 }
                             }
-                            catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                            catch (e_7_1) { e_7 = { error: e_7_1 }; }
                             finally {
                                 try {
                                     if (params_1_1 && !params_1_1.done && (_b = params_1.return)) _b.call(params_1);
                                 }
-                                finally { if (e_5) throw e_5.error; }
+                                finally { if (e_7) throw e_7.error; }
                             }
                         }
                         this.sampleTextBox.value = sampleText;
@@ -518,7 +573,7 @@ var App = /** @class */ (function () {
         this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
     };
     App.prototype.updatePreview = function () {
-        var e_6, _a, e_7, _b;
+        var e_8, _a, e_9, _b;
         if (this.updatePreviewRequestId >= 0) {
             clearTimeout(this.updatePreviewRequestId);
             this.updatePreviewRequestId = -1;
@@ -554,12 +609,12 @@ var App = /** @class */ (function () {
                 textBottom = Math.max(textBottom, c.getBottom());
             }
         }
-        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
         finally {
             try {
                 if (chars_1_1 && !chars_1_1.done && (_a = chars_1.return)) _a.call(chars_1);
             }
-            finally { if (e_6) throw e_6.error; }
+            finally { if (e_8) throw e_8.error; }
         }
         var textWidth = textRight - originX;
         var textHeight = textBottom - originY;
@@ -616,16 +671,16 @@ var App = /** @class */ (function () {
                 c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, fgColorStr);
             }
         }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
         finally {
             try {
                 if (chars_2_1 && !chars_2_1.done && (_b = chars_2.return)) _b.call(chars_2);
             }
-            finally { if (e_7) throw e_7.error; }
+            finally { if (e_9) throw e_9.error; }
         }
     };
     App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
-        var e_8, _a;
+        var e_10, _a;
         var cursorX = x;
         var cursorY = y;
         var characters = [];
@@ -646,12 +701,12 @@ var App = /** @class */ (function () {
                 }
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_10) throw e_10.error; }
         }
         return characters;
     };

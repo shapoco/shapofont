@@ -85,7 +85,8 @@
 
     input[type="text"],
     input[type="number"],
-    select {
+    select,
+    button {
       padding: 1px 5px;
       font-size: 16px;
     }
@@ -95,6 +96,13 @@
     input[type="number"],
     select {
       background: #000;
+    }
+
+    button {
+      color: #fff;
+      background: #666;
+      border: solid 1px #444;
+      border-radius: 5px;
     }
 
     #font-src {
@@ -233,10 +241,11 @@
         <label for="dot-emphasis">Dot Emphasis</label>
       </li>
       <li>
-        BG color:<input type="text" id="bg-color" value="#002" />
-      </li>
-      <li>
-        FG color:<input type="text" id="fg-color" value="#cef" />
+        FG/BG:
+        <input type="text" id="fg-color" value="#cde" />
+        <button id="color-swap">↔</button>
+        <input type="text" id="bg-color" value="#123" />
+        <button id="color-rotate">rotate</button>
       </li>
     </ul>
 

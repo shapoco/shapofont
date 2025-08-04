@@ -37,6 +37,21 @@ function parseColor(colorStr: string): number[] {
   throw new Error(`Invalid color format: ${colorStr}`);
 }
 
+function encodeColor(rgb: number[]): string {
+  let threeDigits = true;
+  for (const ch of rgb) {
+    if (Math.floor(ch / 16) != ch % 16) {
+      threeDigits = false;
+      break;
+    }
+  }
+  if (threeDigits) {
+    return `#${rgb.map(ch => ch.toString(16).slice(0, 1)).join('')}`;
+  } else {
+    return `#${rgb.map(ch => ch.toString(16).padStart(2, '0')).join('')}`;
+  }
+}
+
 function codeToStr(code: number): string {
   if (code < 0 || code > 0x10FFFF) {
     throw new Error(`Invalid Unicode code point: ${code}`);
@@ -344,6 +359,26 @@ class App {
       box.addEventListener('change', () => this.requestUpdatePreview());
       box.addEventListener('input', () => this.requestUpdatePreview());
     }
+
+    document.querySelector('#color-swap').addEventListener('click', () => {
+      const fg = this.fgColorBox.value;
+      const bg = this.bgColorBox.value;
+      this.fgColorBox.value = bg;
+      this.bgColorBox.value = fg;
+      this.requestUpdatePreview();
+    });
+
+    document.querySelector('#color-rotate').addEventListener('click', () => {
+      for (const box of [this.fgColorBox, this.bgColorBox]) {
+        const rgb = parseColor(box.value);
+        const tmp = rgb[2];
+        rgb[2] = rgb[1];
+        rgb[1] = rgb[0];
+        rgb[0] = tmp;
+        box.value = encodeColor(rgb);
+      }
+      this.requestUpdatePreview();
+    });
   }
 
   async init() {
