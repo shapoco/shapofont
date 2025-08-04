@@ -467,15 +467,20 @@ var App = /** @class */ (function () {
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var hash, srcUrl, sampleText, params, params_1, params_1_1, param, _a, key, value, url, urlStart, shapoFontStart, fontSrc, fontText, error_1;
-            var e_7, _b;
-            return __generator(this, function (_c) {
-                switch (_c.label) {
+            var hash, srcUrl, sampleText, allowedUrls, params, params_1, params_1_1, param, _a, key, value, url, accepted, _b, _c, _d, key_1, prefix, fontSrc, fontText, error_1;
+            var e_7, _e, e_8, _f;
+            return __generator(this, function (_g) {
+                switch (_g.label) {
                     case 0:
-                        _c.trys.push([0, 4, , 5]);
+                        _g.trys.push([0, 4, , 5]);
                         hash = window.location.hash;
                         srcUrl = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
                         sampleText = ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
+                        allowedUrls = {
+                            '/shapofont/': 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/',
+                            '/ghuc/': 'https://raw.githubusercontent.com/',
+                            '/gist/': 'https://gist.githubusercontent.com/',
+                        };
                         if (hash.startsWith('#')) {
                             hash = hash.slice(1);
                             params = hash.split('&');
@@ -487,18 +492,30 @@ var App = /** @class */ (function () {
                                         case 'u':
                                             {
                                                 url = decodeURIComponent(value);
-                                                urlStart = 'https://raw.githubusercontent.com/';
-                                                shapoFontStart = '/shapofont/';
-                                                if (url.startsWith(shapoFontStart)) {
-                                                    srcUrl =
-                                                        'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/' +
-                                                            url.slice(shapoFontStart.length);
+                                                accepted = false;
+                                                try {
+                                                    for (_b = (e_8 = void 0, __values(Object.entries(allowedUrls))), _c = _b.next(); !_c.done; _c = _b.next()) {
+                                                        _d = __read(_c.value, 2), key_1 = _d[0], prefix = _d[1];
+                                                        if (url.startsWith(prefix)) {
+                                                            srcUrl = url;
+                                                            accepted = true;
+                                                        }
+                                                        else if (url.startsWith(key_1)) {
+                                                            srcUrl = prefix + url.slice(key_1.length);
+                                                            accepted = true;
+                                                            break;
+                                                        }
+                                                    }
                                                 }
-                                                else if (url.startsWith(urlStart)) {
-                                                    srcUrl = url;
+                                                catch (e_8_1) { e_8 = { error: e_8_1 }; }
+                                                finally {
+                                                    try {
+                                                        if (_c && !_c.done && (_f = _b.return)) _f.call(_b);
+                                                    }
+                                                    finally { if (e_8) throw e_8.error; }
                                                 }
-                                                else {
-                                                    throw new Error("Only URLs from '".concat(urlStart, "' are allowed."));
+                                                if (!accepted) {
+                                                    throw new Error('Disallowed URL.');
                                                 }
                                             }
                                             break;
@@ -514,7 +531,7 @@ var App = /** @class */ (function () {
                             catch (e_7_1) { e_7 = { error: e_7_1 }; }
                             finally {
                                 try {
-                                    if (params_1_1 && !params_1_1.done && (_b = params_1.return)) _b.call(params_1);
+                                    if (params_1_1 && !params_1_1.done && (_e = params_1.return)) _e.call(params_1);
                                 }
                                 finally { if (e_7) throw e_7.error; }
                             }
@@ -523,17 +540,17 @@ var App = /** @class */ (function () {
                         if (!srcUrl) return [3 /*break*/, 3];
                         return [4 /*yield*/, fetch(srcUrl)];
                     case 1:
-                        fontSrc = _c.sent();
+                        fontSrc = _g.sent();
                         return [4 /*yield*/, fontSrc.text()];
                     case 2:
-                        fontText = _c.sent();
+                        fontText = _g.sent();
                         document.querySelector('#font-src').value =
                             fontText;
                         this.runParse();
-                        _c.label = 3;
+                        _g.label = 3;
                     case 3: return [3 /*break*/, 5];
                     case 4:
-                        error_1 = _c.sent();
+                        error_1 = _g.sent();
                         this.logError(error_1.message);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
@@ -573,7 +590,7 @@ var App = /** @class */ (function () {
         this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
     };
     App.prototype.updatePreview = function () {
-        var e_8, _a, e_9, _b;
+        var e_9, _a, e_10, _b;
         if (this.updatePreviewRequestId >= 0) {
             clearTimeout(this.updatePreviewRequestId);
             this.updatePreviewRequestId = -1;
@@ -609,12 +626,12 @@ var App = /** @class */ (function () {
                 textBottom = Math.max(textBottom, c.getBottom());
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_9_1) { e_9 = { error: e_9_1 }; }
         finally {
             try {
                 if (chars_1_1 && !chars_1_1.done && (_a = chars_1.return)) _a.call(chars_1);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_9) throw e_9.error; }
         }
         var textWidth = textRight - originX;
         var textHeight = textBottom - originY;
@@ -671,16 +688,16 @@ var App = /** @class */ (function () {
                 c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, fgColorStr);
             }
         }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (chars_2_1 && !chars_2_1.done && (_b = chars_2.return)) _b.call(chars_2);
             }
-            finally { if (e_9) throw e_9.error; }
+            finally { if (e_10) throw e_10.error; }
         }
     };
     App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
-        var e_10, _a;
+        var e_11, _a;
         var cursorX = x;
         var cursorY = y;
         var characters = [];
@@ -701,12 +718,12 @@ var App = /** @class */ (function () {
                 }
             }
         }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
                 if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
             }
-            finally { if (e_10) throw e_10.error; }
+            finally { if (e_11) throw e_11.error; }
         }
         return characters;
     };

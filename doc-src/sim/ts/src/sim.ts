@@ -389,6 +389,14 @@ class App {
       let sampleText =
           ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
 
+      const allowedUrls = {
+        '/shapofont/':
+            'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/',
+        '/ghuc/': 'https://raw.githubusercontent.com/',
+        '/gist/': 'https://gist.githubusercontent.com/',
+
+      };
+
       if (hash.startsWith('#')) {
         hash = hash.slice(1);
 
@@ -398,16 +406,20 @@ class App {
           switch (key) {
             case 'u': {
               const url = decodeURIComponent(value);
-              const urlStart = 'https://raw.githubusercontent.com/';
-              const shapoFontStart = '/shapofont/';
-              if (url.startsWith(shapoFontStart)) {
-                srcUrl =
-                    'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/' +
-                    url.slice(shapoFontStart.length);
-              } else if (url.startsWith(urlStart)) {
-                srcUrl = url;
-              } else {
-                throw new Error(`Only URLs from '${urlStart}' are allowed.`);
+              let accepted = false;
+              for (const [key, prefix] of Object.entries(allowedUrls)) {
+                if (url.startsWith(prefix)) {
+                  srcUrl = url;
+                  accepted = true;
+                }
+                else if (url.startsWith(key)) {
+                  srcUrl = prefix+ url.slice(key.length) ;
+                  accepted = true;
+                  break;
+                }
+              }
+              if (!accepted) {
+                throw new Error('Disallowed URL.');
               }
             } break;
 
