@@ -125,7 +125,7 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
     ![](./img/how_to_design.svg)
 
 4. Save the image as `design.png`.
-5. In a JSON5 file `shapofont.json5`, list the characters contained in the image.
+5. In a JSON5 file `design.json5`, list the characters contained in the image.
 
     ```json5
     {
@@ -142,7 +142,7 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
 
 - The vertical positions of the glyph markers of the glyphs side by side must be aligned.
 - There must be at least Body Size pixels of space above the glyph marker (no overlap).
-- The order of characters in the image must exactly match the order of characters listed in the `shapofont.json5`.
+- The order of characters in the image must exactly match the order of characters listed in the `design.json5`.
 
 ### Spacing Adjustment
 
@@ -161,7 +161,7 @@ Create a directory with full font name and place a design image and meta informa
 ```
 ShapoSansP_s21c16a01w03/  ... Full Font Name
 +-- design.png  ............. Font Design File
-+-- shapofont.json5  ........ Meta Information
++-- design.json5  ........ Meta Information
 ```
 
 The generator script extracts a family name and a dimension identifier from the directory name, so they must be named correctly.

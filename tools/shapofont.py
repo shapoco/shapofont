@@ -70,7 +70,7 @@ class BitmapFont:
         self.codes = list(range(0x20, 0x7F))
 
         # Load JSON
-        json_path = path.join(dir_path, "shapofont.json5")
+        json_path = path.join(dir_path, "design.json5")
         if not path.exists(json_path):
             json_path = path.join(dir_path, "shapofont.json")
         if path.exists(json_path):
