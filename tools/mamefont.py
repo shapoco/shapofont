@@ -660,163 +660,18 @@ class MameFontBuilder:
                         self.next_ops[i_next] = cand
 
         def suggest_operation(i_src: int, i_dst: int) -> Operation | None:
-            prev_seq = fragments[0 : i_src + 1]
-            goal_seq = fragments[i_src + 1 : i_dst + 1]
+            past = fragments[0 : i_src + 1]
+            future = fragments[i_src + 1 : i_dst + 1]
             best_op: Operation | None = None
-            best_op = self.try_ldi(best_op, prev_seq, goal_seq)
-            best_op = try_xor(best_op, i_src, i_dst, goal_seq)
-            best_op = self.try_sft(best_op, prev_seq, goal_seq)
+            best_op = self.try_ldi(best_op, past, future)
+            best_op = self.try_xor(best_op, past, future)
+            best_op = self.try_sft(best_op, past, future)
             if not self.no_sfi:
-                best_op = self.try_sfi(best_op, prev_seq, goal_seq)
-            best_op = try_rpt(best_op, i_src, i_dst, goal_seq)
-            best_op = try_cpy(best_op, i_src, i_dst, goal_seq)
+                best_op = self.try_sfi(best_op, past, future)
+            best_op = self.try_rpt(best_op, past, future)
+            best_op = self.try_cpy(best_op, past, future)
             if not self.no_cpx:
-                best_op = try_cpx(best_op, i_src, i_dst, goal_seq)
-            return best_op
-
-        def try_cpy(
-            best_op: Operation | None, i_src: int, i_dst: int, goal_seq: list[int]
-        ) -> Operation | None:
-            cost_limit = CPY.cost
-            if best_op and best_op.cost < cost_limit:
-                return best_op
-
-            length = i_dst - i_src
-            if length not in CPY_LENGTH.range:
-                return best_op
-
-            for byte_reverse in CPY_BYTE_REVERSE.range:
-                search_sequence = goal_seq.copy()
-                if byte_reverse != 0:
-                    search_sequence = search_sequence[::-1]
-
-                for offset in CPY_OFFSET.range:
-                    if byte_reverse == 0 and length == 1 and offset == 0:
-                        # Reserved for other instructions
-                        continue
-
-                    if byte_reverse != 0 and length == 1:
-                        # Reserved for other instructions
-                        continue
-
-                    i_copy_start = i_src + 1 - length - offset
-                    i_copy_end = i_copy_start + length
-                    if i_copy_end <= 0:
-                        copy_src = [0] * length
-                    elif i_copy_start < 0:
-                        copy_src = [0] * (-i_copy_start) + fragments[0:i_copy_end]
-                    else:
-                        copy_src = fragments[i_copy_start:i_copy_end]
-
-                    if copy_src == search_sequence:
-                        cost = CPY.cost
-                        if byte_reverse != 0:
-                            cost += 1
-
-                        inst_code = CPY.code
-                        inst_code |= CPY_LENGTH.place(length)
-                        inst_code |= CPY_OFFSET.place(offset)
-                        inst_code |= CPY_BYTE_REVERSE.place(byte_reverse)
-                        return Operation([inst_code], goal_seq, cost)
-
-            return best_op
-
-        def try_cpx(
-            best_op: Operation | None, i_src: int, i_dst: int, goal_seq: list[int]
-        ) -> Operation | None:
-            if best_op and best_op.cost < CPX.cost:
-                return best_op
-
-            length = i_dst - i_src
-            if length not in CPX_LENGTH.range:
-                return best_op
-
-            for byte_reverse, bit_reverse, inverse in product(
-                CPX_BYTE_REVERSE.range, CPX_BIT_REVERSE.range, CPX_INVERSE.range
-            ):
-                search_sequence = goal_seq.copy()
-                if byte_reverse != 0:
-                    search_sequence = search_sequence[::-1]
-                if bit_reverse != 0:
-                    for i in range(len(search_sequence)):
-                        byte = search_sequence[i]
-                        byte = ((byte & 0x0F) << 4) | ((byte & 0xF0) >> 4)
-                        byte = ((byte & 0x33) << 2) | ((byte & 0xCC) >> 2)
-                        byte = ((byte & 0x55) << 1) | ((byte & 0xAA) >> 1)
-                        search_sequence[i] = byte
-                if inverse != 0:
-                    for i in range(len(search_sequence)):
-                        search_sequence[i] = search_sequence[i] ^ 0xFF
-
-                reversal_cost = byte_reverse + bit_reverse * 2
-
-                # from recent sequence
-                for offset in range(min(i_src + length + 2, 1 << CPX_OFFSET_BITS)):
-                    i_copy_start = i_src + 1 - offset
-                    i_copy_end = i_copy_start + length
-
-                    if i_copy_end > i_src:
-                        continue
-
-                    if i_copy_end <= 0:
-                        copy_src = [0] * length
-                    elif i_copy_start < 0:
-                        copy_src = [0] * (-i_copy_start) + fragments[0:i_copy_end]
-                    else:
-                        copy_src = fragments[i_copy_start:i_copy_end]
-
-                    if copy_src == search_sequence:
-                        byte2 = offset & 0xFF
-
-                        byte3 = 0
-                        byte3 |= CPX_OFFSET_H.place(offset >> 8)
-                        byte3 |= CPX_LENGTH.place(length)
-                        byte3 |= CPX_BYTE_REVERSE.place(byte_reverse)
-                        byte3 |= CPX_BIT_REVERSE.place(bit_reverse)
-                        byte3 |= CPX_INVERSE.place(inverse)
-
-                        cost = CPX.cost + reversal_cost
-
-                        return Operation([CPX.code, byte2, byte3], goal_seq, cost)
-
-            return best_op
-
-        def try_rpt(
-            best_op: Operation | None, i_src: int, i_dst: int, goal_seq: list[int]
-        ) -> Operation | None:
-            if best_op and best_op.cost < RPT.cost:
-                return best_op
-
-            repeat_count = i_dst - i_src
-            if repeat_count not in RPT_REPEAT_COUNT.range:
-                return best_op
-
-            for i in range(repeat_count):
-                if fragments[i_src] != goal_seq[i]:
-                    return best_op
-
-            inst_code = RPT.code | (repeat_count - 1)
-            return Operation([inst_code], goal_seq, RPT.cost)
-
-        def try_xor(
-            best_op: Operation | None, i_src: int, i_dst: int, goal_seq: list[int]
-        ) -> Operation | None:
-            if best_op and best_op.cost < XOR.cost:
-                return best_op
-
-            if i_src + 1 != i_dst:
-                return best_op
-
-            mask_width_range = range(1, 2)
-            mask_pos_range = range(0, 8)
-
-            for mask_width, mask_pos in product(mask_width_range, mask_pos_range):
-                mask = (1 << mask_width) - 1
-                mask <<= mask_pos
-                if fragments[i_src] ^ mask == fragments[i_dst]:
-                    inst_code = XOR.code | ((mask_width - 1) << 3) | mask_pos
-                    return Operation([inst_code], goal_seq, XOR.cost)
-
+                best_op = self.try_cpx(best_op, past, future)
             return best_op
 
         # Solve with Dijkstra's algorithm
@@ -1377,7 +1232,6 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
-        mask: int = 0xFF,
     ) -> Operation | None:
         if best_opr and best_opr.cost < LDI.cost:
             return best_opr
@@ -1390,7 +1244,6 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
-        mask: int = 0xFF,
     ) -> Operation | None:
         if best_opr and best_opr.cost < SFT.cost:
             return best_opr
@@ -1412,14 +1265,14 @@ class MameFontBuilder:
             work = past[-1]
             for expected in future:
                 if shift_dir == ShiftDir.LEFT:
-                    work = work << shift_size
+                    work = (work << shift_size) & 0xFF
                 else:
                     work = work >> shift_size
                 if post_op == ShiftPostOp.SET:
                     work |= modifier
                 else:
                     work &= modifier
-                if (work & mask) != (expected & mask):
+                if work != expected:
                     fail = True
                     break
 
@@ -1441,7 +1294,6 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
-        mask: int = 0xFF,
     ) -> Operation | None:
         if best_opr and best_opr.cost < SFI.cost:
             return best_opr
@@ -1478,14 +1330,14 @@ class MameFontBuilder:
                     if shift_timing == 0:
                         shift_timing = period
                         if shift_dir == ShiftDir.LEFT:
-                            work = work << 1
+                            work = (work << 1) & 0xFF
                         else:
                             work = work >> 1
                         if post_op == ShiftPostOp.SET:
                             work |= modifier
                         else:
                             work &= modifier
-                    if (work & mask) != (expected & mask):
+                    if work != expected:
                         fail = True
                         break
 
@@ -1499,5 +1351,162 @@ class MameFontBuilder:
                 byte2 |= SFI_POST_OP.place(post_op)
                 byte2 |= SFI_SHIFT_DIR.place(shift_dir)
                 return Operation([SFI.code, byte2], future, SFI.cost)
+
+        return best_opr
+
+    def try_rpt(
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+    ) -> Operation | None:
+        if best_opr and best_opr.cost < RPT.cost:
+            return best_opr
+
+        repeat_count = len(future)
+        if repeat_count not in RPT_REPEAT_COUNT.range:
+            return best_opr
+
+        for i in range(repeat_count):
+            if past[-1] != future[i]:
+                return best_opr
+
+        inst_code = RPT.code | (repeat_count - 1)
+        return Operation([inst_code], future, RPT.cost)
+
+    def try_xor(
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+    ) -> Operation | None:
+        if best_opr and best_opr.cost < XOR.cost:
+            return best_opr
+
+        if len(future) != 1:
+            return best_opr
+
+        mask_width_range = range(1, 2)
+        mask_pos_range = range(0, 8)
+
+        for mask_width, mask_pos in product(mask_width_range, mask_pos_range):
+            xor_mask = (1 << mask_width) - 1
+            xor_mask <<= mask_pos
+            if (past[-1] ^ xor_mask) == future[0]:
+                inst_code = XOR.code | ((mask_width - 1) << 3) | mask_pos
+                return Operation([inst_code], future, XOR.cost)
+
+        return best_opr
+
+    def try_cpy(
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+    ) -> Operation | None:
+        cost_limit = CPY.cost
+        if best_opr and best_opr.cost < cost_limit:
+            return best_opr
+
+        length = len(future)
+        if length not in CPY_LENGTH.range:
+            return best_opr
+
+        for byte_reverse in CPY_BYTE_REVERSE.range:
+            search_sequence = future.copy()
+            if byte_reverse != 0:
+                search_sequence = search_sequence[::-1]
+
+            for offset in CPY_OFFSET.range:
+                if byte_reverse == 0 and length == 1 and offset == 0:
+                    # Reserved for other instructions
+                    continue
+
+                if byte_reverse != 0 and length == 1:
+                    # Reserved for other instructions
+                    continue
+
+                i_copy_start = len(past) - length - offset
+                i_copy_end = i_copy_start + length
+                if i_copy_end <= 0:
+                    copy_src = [0] * length
+                elif i_copy_start < 0:
+                    copy_src = [0] * (-i_copy_start) + past[0:i_copy_end]
+                else:
+                    copy_src = past[i_copy_start:i_copy_end]
+
+                if copy_src == search_sequence:
+                    cost = CPY.cost
+                    if byte_reverse != 0:
+                        cost += 1
+
+                    inst_code = CPY.code
+                    inst_code |= CPY_LENGTH.place(length)
+                    inst_code |= CPY_OFFSET.place(offset)
+                    inst_code |= CPY_BYTE_REVERSE.place(byte_reverse)
+                    return Operation([inst_code], future, cost)
+
+        return best_opr
+
+    def try_cpx(
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+    ) -> Operation | None:
+        if best_opr and best_opr.cost < CPX.cost:
+            return best_opr
+
+        length = len(future)
+        if length not in CPX_LENGTH.range:
+            return best_opr
+
+        for byte_reverse, bit_reverse, inverse in product(
+            CPX_BYTE_REVERSE.range, CPX_BIT_REVERSE.range, CPX_INVERSE.range
+        ):
+            search_sequence = future.copy()
+            if byte_reverse != 0:
+                search_sequence = search_sequence[::-1]
+            if bit_reverse != 0:
+                for i in range(len(search_sequence)):
+                    byte = search_sequence[i]
+                    byte = ((byte & 0x0F) << 4) | ((byte & 0xF0) >> 4)
+                    byte = ((byte & 0x33) << 2) | ((byte & 0xCC) >> 2)
+                    byte = ((byte & 0x55) << 1) | ((byte & 0xAA) >> 1)
+                    search_sequence[i] = byte
+            if inverse != 0:
+                for i in range(len(search_sequence)):
+                    search_sequence[i] = search_sequence[i] ^ 0xFF
+
+            reversal_cost = byte_reverse + bit_reverse * 2
+
+            # from recent sequence
+            for offset in range(min(len(past) + length + 1, 1 << CPX_OFFSET_BITS)):
+                i_copy_start = len(past) - offset
+                i_copy_end = i_copy_start + length
+
+                if i_copy_end >= len(past):
+                    continue
+
+                if i_copy_end <= 0:
+                    copy_src = [0] * length
+                elif i_copy_start < 0:
+                    copy_src = [0] * (-i_copy_start) + past[0:i_copy_end]
+                else:
+                    copy_src = past[i_copy_start:i_copy_end]
+
+                if copy_src == search_sequence:
+                    byte2 = offset & 0xFF
+
+                    byte3 = 0
+                    byte3 |= CPX_OFFSET_H.place(offset >> 8)
+                    byte3 |= CPX_LENGTH.place(length)
+                    byte3 |= CPX_BYTE_REVERSE.place(byte_reverse)
+                    byte3 |= CPX_BIT_REVERSE.place(bit_reverse)
+                    byte3 |= CPX_INVERSE.place(inverse)
+
+                    cost = CPX.cost + reversal_cost
+
+                    return Operation([CPX.code, byte2, byte3], future, cost)
 
         return best_opr
