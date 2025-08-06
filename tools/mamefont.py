@@ -297,17 +297,22 @@ class MameGlyph:
     def __init__(
         self,
         code: int,
+        fragments: list[int],
         operations: list[Operation],
-        glyphWidth: int,
+        glyph_width: int,
         x_spacing: int,
         x_negative_offset: int = 0,
+        fragments_same_as_code: int | None = None,
     ):
         self.code = code
+        self.fragments = fragments
         self.operations = operations
-        self.glyph_width = glyphWidth
+        self.glyph_width = glyph_width
         self.x_spacing = x_spacing
         self.x_negative_offset = x_negative_offset
         self.entry_point = 0xFFFF
+        self.bytecode_size = 0
+        self.fragments_same_as_code = fragments_same_as_code
 
 
 class MameFont:
@@ -559,6 +564,8 @@ class MameFontBuilder:
         y_spacing: int,
         vertical_frag: bool = False,
         msb1st: bool = False,
+        no_cpx: bool = False,
+        no_sfi: bool = False,
     ):
         self.name = name
         self.glyph_height = glyph_height
@@ -566,6 +573,8 @@ class MameFontBuilder:
         self.vertical_frag = vertical_frag
         self.msb1st = msb1st
         self.glyphs: dict[int, MameGlyph] = {}
+        self.no_cpx = no_cpx
+        self.no_sfi = no_sfi
 
         if vertical_frag:
             if msb1st:
@@ -607,6 +616,32 @@ class MameFontBuilder:
         fragments.insert(0, 0x00)
         num_bytes = len(fragments)
 
+        # lane_length = bmp.width if self.vertical_frag else bmp.height
+        # frag_dir_length = bmp.height if self.vertical_frag else bmp.width
+        # num_lanes = (frag_dir_length + 7) // 8
+        # padding_width = num_lanes * 8 - frag_dir_length
+        # if padding_width > 0:
+        #     mask = (1 << (8 - padding_width)) - 1
+        #     if self.msb1st:
+        #         mask <<= padding_width
+        #     self.optimize_padding(fragments, lane_length, mask)
+
+        for src_code, src_glyph in self.glyphs.items():
+            if fragments == src_glyph.fragments:
+                verbose_print(
+                    f"[{self.name}:{self.acrh}] Fragments same as: {format_char(code)}"
+                )
+                self.glyphs[code] = MameGlyph(
+                    code=code,
+                    fragments=fragments,
+                    operations=[],
+                    glyph_width=bmp.width,
+                    x_spacing=x_spacing,
+                    x_negative_offset=x_negative_offset,
+                    fragments_same_as_code=src_code,
+                )
+                return
+
         verbose_print(f"  Generating Instructions with Dijkstra's algorithm...")
         t_start = time.time()
 
@@ -628,13 +663,15 @@ class MameFontBuilder:
             prev_seq = fragments[0 : i_src + 1]
             goal_seq = fragments[i_src + 1 : i_dst + 1]
             best_op: Operation | None = None
-            best_op = try_ldi(best_op, i_src, i_dst, goal_seq)
+            best_op = self.try_ldi(best_op, prev_seq, goal_seq)
             best_op = try_xor(best_op, i_src, i_dst, goal_seq)
-            best_op = try_sft(best_op, i_src, i_dst, goal_seq)
-            best_op = self.try_sfi(best_op, prev_seq, goal_seq)
+            best_op = self.try_sft(best_op, prev_seq, goal_seq)
+            if not self.no_sfi:
+                best_op = self.try_sfi(best_op, prev_seq, goal_seq)
             best_op = try_rpt(best_op, i_src, i_dst, goal_seq)
             best_op = try_cpy(best_op, i_src, i_dst, goal_seq)
-            best_op = try_cpx(best_op, i_src, i_dst, goal_seq)
+            if not self.no_cpx:
+                best_op = try_cpx(best_op, i_src, i_dst, goal_seq)
             return best_op
 
         def try_cpy(
@@ -741,61 +778,6 @@ class MameFontBuilder:
                         cost = CPX.cost + reversal_cost
 
                         return Operation([CPX.code, byte2, byte3], goal_seq, cost)
-
-            return best_op
-
-        def try_ldi(
-            best_op: Operation | None, i_src: int, i_dst: int, goal_seq: list[int]
-        ) -> Operation | None:
-            if best_op and best_op.cost < LDI.cost:
-                return best_op
-            if i_src + 1 != i_dst:
-                return best_op
-            return Operation([LDI.code, fragments[i_dst]], goal_seq, LDI.cost)
-
-        def try_sft(
-            best_op: Operation | None, i_src: int, i_dst: int, goal_seq: list[int]
-        ) -> Operation | None:
-            if best_op and best_op.cost < SFT.cost:
-                return best_op
-
-            repeat_count = i_dst - i_src
-            if repeat_count not in SFT_REPEAT_COUNT.range:
-                return best_op
-
-            for shift_dir, shift_size, post_op in product(
-                SFT_SHIFT_DIR.range, SFT_SHIFT_SIZE.range, SFT_POST_OP.range
-            ):
-                fail = False
-                modifier = (1 << shift_size) - 1
-                if shift_dir != 0:
-                    modifier <<= 8 - shift_size
-                if post_op == 0:
-                    modifier = modifier ^ 0xFF
-
-                work = fragments[i_src]
-                for i_step in range(i_src, i_dst):
-                    if shift_dir == ShiftDir.LEFT:
-                        work = work << shift_size
-                    else:
-                        work = work >> shift_size
-                    if post_op == ShiftPostOp.SET:
-                        work |= modifier
-                    else:
-                        work &= modifier
-                    if work != fragments[i_step + 1]:
-                        fail = True
-                        break
-
-                if fail:
-                    continue
-
-                inst_code = SFT.code
-                inst_code |= SFT_SHIFT_DIR.place(shift_dir)
-                inst_code |= SFT_SHIFT_SIZE.place(shift_size)
-                inst_code |= SFT_POST_OP.place(post_op)
-                inst_code |= SFT_REPEAT_COUNT.place(repeat_count)
-                return Operation([inst_code], goal_seq, SFT.cost)
 
             return best_op
 
@@ -944,8 +926,9 @@ class MameFontBuilder:
 
         self.glyphs[code] = MameGlyph(
             code=code,
+            fragments=fragments,
             operations=ops,
-            glyphWidth=bmp.width,
+            glyph_width=bmp.width,
             x_spacing=x_spacing,
             x_negative_offset=x_negative_offset,
         )
@@ -1258,6 +1241,13 @@ class MameFontBuilder:
             if False:
                 verbose_print(f"  {format_char(code)}:")
             glyph = self.glyphs[code]
+
+            if glyph.fragments_same_as_code != None:
+                dup_glyph = self.glyphs[glyph.fragments_same_as_code]
+                glyph.entry_point = dup_glyph.entry_point
+                glyph.bytecode_size = dup_glyph.bytecode_size
+                continue
+
             glyph.entry_point = len(bytecodes)
             for op in glyph.operations:
                 if False and VERBOSE:
@@ -1267,6 +1257,7 @@ class MameFontBuilder:
             if shrinked_glyph_table:
                 while len(bytecodes) % ALIGN_SIZE != 0:
                     bytecodes.append(ABO.code)
+            self.bytecode_size = len(bytecodes) - glyph.entry_point
 
         for _ in range(3):
             bytecodes.append(ABO.code)
@@ -1311,7 +1302,7 @@ class MameFontBuilder:
 
         # Glyph Table
         for code in range(code_first, code_last + 1):
-            if code not in self.glyphs:
+            if code not in self.glyphs or self.glyphs[code].glyph_width == 0:
                 # Dummy Entry for missing glyphs
                 if shrinked_glyph_table:
                     blob.append(0xFF)
@@ -1364,9 +1355,93 @@ class MameFontBuilder:
 
         return result
 
+    def optimize_padding(self, fragments: list[int], length: int, mask: int):
+        while length > 0:
+            next = fragments[-length]
+            past = fragments[:-length]
+            last = past[-1]
+
+            cands: dict[int, int] = {}
+
+            cands[0x00] = 1
+
+            if (last & mask) < (next & mask):
+                cands[last] = cands.get(last, 0) + 10
+
+            best = max(cands, key=cands.get, default=None)
+            fragments[-length] = best
+            length -= 1
+
+    def try_ldi(
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+        mask: int = 0xFF,
+    ) -> Operation | None:
+        if best_opr and best_opr.cost < LDI.cost:
+            return best_opr
+        if len(future) != 1:
+            return best_opr
+        return Operation([LDI.code, future[0]], future, LDI.cost)
+
+    def try_sft(
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+        mask: int = 0xFF,
+    ) -> Operation | None:
+        if best_opr and best_opr.cost < SFT.cost:
+            return best_opr
+
+        repeat_count = len(future)
+        if repeat_count not in SFT_REPEAT_COUNT.range:
+            return best_opr
+
+        for shift_dir, shift_size, post_op in product(
+            SFT_SHIFT_DIR.range, SFT_SHIFT_SIZE.range, SFT_POST_OP.range
+        ):
+            fail = False
+            modifier = (1 << shift_size) - 1
+            if shift_dir != 0:
+                modifier <<= 8 - shift_size
+            if post_op == 0:
+                modifier = modifier ^ 0xFF
+
+            work = past[-1]
+            for expected in future:
+                if shift_dir == ShiftDir.LEFT:
+                    work = work << shift_size
+                else:
+                    work = work >> shift_size
+                if post_op == ShiftPostOp.SET:
+                    work |= modifier
+                else:
+                    work &= modifier
+                if (work & mask) != (expected & mask):
+                    fail = True
+                    break
+
+            if fail:
+                continue
+
+            inst_code = SFT.code
+            inst_code |= SFT_SHIFT_DIR.place(shift_dir)
+            inst_code |= SFT_SHIFT_SIZE.place(shift_size)
+            inst_code |= SFT_POST_OP.place(post_op)
+            inst_code |= SFT_REPEAT_COUNT.place(repeat_count)
+            return Operation([inst_code], future, SFT.cost)
+
+        return best_opr
+
     # slow shift
     def try_sfi(
-        self, best_opr: Operation | None, past: list[int], future: list[int]
+        self,
+        best_opr: Operation | None,
+        past: list[int],
+        future: list[int],
+        mask: int = 0xFF,
     ) -> Operation | None:
         if best_opr and best_opr.cost < SFI.cost:
             return best_opr
@@ -1410,7 +1485,7 @@ class MameFontBuilder:
                             work |= modifier
                         else:
                             work &= modifier
-                    if work != expected:
+                    if (work & mask) != (expected & mask):
                         fail = True
                         break
 

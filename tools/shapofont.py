@@ -193,6 +193,8 @@ class BitmapFont:
         json_outdir: str = None,
         vertical_frag: bool = False,
         msb1st: bool = False,
+        no_cpx: bool = False,
+        no_sfi: bool = False,
     ):
         # print(f"Generating MameFont: {self.full_name}")
 
@@ -204,6 +206,8 @@ class BitmapFont:
             self.line_height - glyph_height,
             vertical_frag=vertical_frag,
             msb1st=msb1st,
+            no_cpx=no_cpx,
+            no_sfi=no_sfi,
         )
 
         for glyph in self.glyphs:
@@ -240,6 +244,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", required=True)
     parser.add_argument("--mame_arch", default="HL")
+    parser.add_argument("--mame_no_cpx", action="store_true", default=False)
+    parser.add_argument("--mame_no_sfi", action="store_true", default=False)
     parser.add_argument("--outdir_gfx_c")
     parser.add_argument("--outdir_mame_hpp")
     parser.add_argument("--outdir_mame_cpp")
@@ -275,6 +281,8 @@ def main():
             args.outdir_mame_json,
             vertical_frag=vertical_frag,
             msb1st=msb1st,
+            no_cpx=args.mame_no_cpx,
+            no_sfi=args.mame_no_sfi,
         )
 
 

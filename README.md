@@ -161,7 +161,7 @@ Create a directory with full font name and place a design image and meta informa
 ```
 ShapoSansP_s21c16a01w03/  ... Full Font Name
 +-- design.png  ............. Font Design File
-+-- design.json5  ........ Meta Information
++-- design.json5  ........... Meta Information
 ```
 
 The generator script extracts a family name and a dimension identifier from the directory name, so they must be named correctly.
@@ -179,7 +179,7 @@ The generator script extracts a family name and a dimension identifier from the 
 ```bash
 source venv-setup.shrc
 ./venv/bin/python3 ./tools/shapofont.py \
-      -i bitmap/ShapoSansP_s21c16a01w03 \
+      -i design/ShapoSansP_s21c16a01w03 \
       --outdir_gfx_c path/to/output/dir/
 ```
 
