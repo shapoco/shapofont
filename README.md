@@ -17,71 +17,71 @@ Click thumbnail to open the font with [GFXfont Web Simulator](https://shapoco.gi
 
 ### s05
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s05.h" target="_blank"><img src="./bitmap/ShapoSansP/s05/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s05.h" target="_blank"><img src="./design/ShapoSansP_s05/design.png"></a>
 
 ### s07c05a01
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s07c05a01.h" target="_blank"><img src="./bitmap/ShapoSansP/s07c05a01/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s07c05a01.h" target="_blank"><img src="./design/ShapoSansP_s07c05a01/design.png"></a>
 
 ### s08c07
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s08c07.h" target="_blank"><img src="./bitmap/ShapoSansP/s08c07/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s08c07.h" target="_blank"><img src="./design/ShapoSansP_s08c07/design.png"></a>
 
 ### s12c09a01w02
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s12c09a01w02.h" target="_blank"><img src="./bitmap/ShapoSansP/s12c09a01w02/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s12c09a01w02.h" target="_blank"><img src="./design/ShapoSansP_s12c09a01w02/design.png"></a>
 
 ### s21c16a01w03
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s21c16a01w03.h" target="_blank"><img src="./bitmap/ShapoSansP/s21c16a01w03/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s21c16a01w03.h" target="_blank"><img src="./design/ShapoSansP_s21c16a01w03/design.png"></a>
 
 ### s27c22a01w04
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s27c22a01w04.h" target="_blank"><img src="./bitmap/ShapoSansP/s27c22a01w04/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s27c22a01w04.h" target="_blank"><img src="./design/ShapoSansP_s27c22a01w04/design.png"></a>
 
 ## ShapoSansMono
 
 ### s08c07
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansMono_s08c07.h" target="_blank"><img src="./bitmap/ShapoSansMono/s08c07/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansMono_s08c07.h" target="_blank"><img src="./design/ShapoSansMono_s08c07/design.png"></a>
 
 ## ShapoSansDigitP
 
 ### s16c14w02
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s16c14w02.h&t=0.123456789" target="_blank"><img src="./bitmap/ShapoSansDigitP/s16c14w02/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s16c14w02.h&t=0.123456789" target="_blank"><img src="./design/ShapoSansDigitP_s16c14w02/design.png"></a>
 
 ### s24c23w04
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s24c23w04.h&t=0.123456789" target="_blank"><img src="./bitmap/ShapoSansDigitP/s24c23w04/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s24c23w04.h&t=0.123456789" target="_blank"><img src="./design/ShapoSansDigitP_s24c23w04/design.png"></a>
 
 ### s32c30w04
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s32c30w04.h&t=0.123456789" target="_blank"><img src="./bitmap/ShapoSansDigitP/s32c30w04/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s32c30w04.h&t=0.123456789" target="_blank"><img src="./design/ShapoSansDigitP_s32c30w04/design.png"></a>
 
 ## MameSansP
 
 ### s48c40w08
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s48c40w08.h" target="_blank"><img src="./bitmap/MameSansP/s48c40w08/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s48c40w08.h" target="_blank"><img src="./design/MameSansP_s48c40w08/design.png"></a>
 
 ## MameSquareWide
 
 ### s64c48a04w16
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSquareWide_s64c48a04w16.h" target="_blank"><img src="./bitmap/MameSquareWide/s64c48a04w16/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSquareWide_s64c48a04w16.h" target="_blank"><img src="./design/MameSquareWide_s64c48a04w16/design.png"></a>
 
 ## MameSansDigitP
 
 ### s64w08
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansDigitP_s64w08.h&t=0.123456789" target="_blank"><img src="./bitmap/MameSansDigitP/s64w08/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansDigitP_s64w08.h&t=0.123456789" target="_blank"><img src="./design/MameSansDigitP_s64w08/design.png"></a>
 
 ## MameSeg7
 
 ### s40c38w06
 
-<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSeg7_s40c38w06.h&t=0.1234567%0a89ABCDEF" target="_blank"><img src="./bitmap/MameSeg7/s40c38w06/design.png"></a>
+<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSeg7_s40c38w06.h&t=0.1234567%0a89ABCDEF" target="_blank"><img src="./design/MameSeg7_s40c38w06/design.png"></a>
 
 # Using GFXfont in LovyanGFX
 
@@ -154,18 +154,17 @@ The blue line just below the left edge of the glyph marker (Left Side Anti-Space
 
 ## Directory Structure
 
-Create a directory for each dimension identifier under the family name directory and place a design image and meta information in it.
+Create a directory with full font name and place a design image and meta information in it.
 
 ### Example:
 
 ```
-ShapoSansP/  ................ Family Name
-+-- s21c16a01w03/  .......... Dimension Identifier
-    +-- design.png  ......... Font Design File
-    +-- shapofont.json5  .... Meta Information
+ShapoSansP_s21c16a01w03/  ... Full Font Name
++-- design.png  ............. Font Design File
++-- shapofont.json5  ........ Meta Information
 ```
 
-The generator script extracts a family name and a dimension identifier from the directory path, so they must be named correctly.
+The generator script extracts a family name and a dimension identifier from the directory name, so they must be named correctly.
 
 ## Converting to GFXfont
 
@@ -180,7 +179,7 @@ The generator script extracts a family name and a dimension identifier from the 
 ```bash
 source venv-setup.shrc
 ./venv/bin/python3 ./tools/shapofont.py \
-      -i bitmap/ShapoSansP/s21c16a01w03 \
+      -i bitmap/ShapoSansP_s21c16a01w03 \
       --outdir_gfx_c path/to/output/dir/
 ```
 

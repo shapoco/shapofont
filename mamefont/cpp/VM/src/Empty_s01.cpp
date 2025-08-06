@@ -5,8 +5,8 @@
 //   Font Height     : 1 px
 //   Max Glyph Width : 1 px
 //   Total Pixels    : 1 px
-//   Fragment Shape  : Horizontal
-//   Bit Order       : LSB First
+//   Fragment Shape  : Vertical
+//   Bit Order       : MSB First
 //   Shrinked Format : Yes
 //   Estimated Footprint:
 //     Header        :    8 Bytes
@@ -29,9 +29,9 @@
 #define MAMEFONT_PROGMEM
 #endif
 
-const uint8_t ShapoEmpty_s01_blob[] MAMEFONT_PROGMEM = {
+const uint8_t Empty_s01_blob[] MAMEFONT_PROGMEM = {
   // Font Header
-  0x01, 0x20, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00,
+  0x01, 0xE0, 0x20, 0x00, 0x01, 0x00, 0x01, 0x00,
   // Glyph Table
   0x00, 0x10,
   // Lookup Table
@@ -40,6 +40,6 @@ const uint8_t ShapoEmpty_s01_blob[] MAMEFONT_PROGMEM = {
   0xE0, 0xFF, 0xFF, 0xFF, 0xFF,
 };
 
-extern const mamefont::Font ShapoEmpty_s01(ShapoEmpty_s01_blob);
+extern const mamefont::Font Empty_s01(Empty_s01_blob);
 
 #undef MAMEFONT_PROGMEM

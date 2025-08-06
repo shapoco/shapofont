@@ -6,55 +6,45 @@ import re
 MAME_ARCH_LIST = ["HL", "HM", "VL", "VM"]
 MAME_ARCH_VAR = "$(ARCH)"
 
-BMP_DIR = "bitmap"
+BMP_DIR = "design"
 GFX_C_OUT_DIR = os.path.join("gfxfont", "cpp", "include")
 MAME_HPP_OUT_DIR = os.path.join("mamefont", "cpp", MAME_ARCH_VAR, "include")
 MAME_CPP_OUT_DIR = os.path.join("mamefont", "cpp", MAME_ARCH_VAR, "src")
 MAME_JSON_OUT_DIR = os.path.join("mamefont", "json", MAME_ARCH_VAR)
 
-KEY_DIM_DIR = "design_dir"
-KEY_DIM_BMP = "design_bmp"
-KEY_DIM_JSON = "design_json"
-KEY_GFX_HEADER = "gfx_header"
-KEY_MAME_HPP = "mame_hpp"
-KEY_MAME_CPP = "mame_cpp"
-KEY_MAME_JSON = "mame_json"
 
-families: dict[str, dict[str, dict[str, str]]] = {}
+class Font:
+    def __init__(self):
+        self.design_dir: str = ""
+        self.design_bmp: str = ""
+        self.design_json: str = ""
+        self.gfx_header: str = ""
+        self.mame_hpp: str = ""
+        self.mame_cpp: str = ""
+        self.mame_json: str = ""
+
+
+all_fonts: list[Font] = []
 
 # Listup all font designs
-for family in os.listdir(BMP_DIR):
-    if not os.path.isdir(os.path.join("bitmap", family)):
+for font_name in os.listdir(BMP_DIR):
+    dim_dir = os.path.join(BMP_DIR, font_name)
+    bmp_path = os.path.join(dim_dir, "design.png")
+    if not os.path.exists(bmp_path):
         continue
 
-    family_dir = os.path.join("bitmap", family)
-    families[family] = {}
-
-    for dim in os.listdir(family_dir):
-        dim_dir = os.path.join(family_dir, dim)
-        bmp_path = os.path.join(dim_dir, "design.png")
-        if not os.path.exists(bmp_path):
-            continue
-
-        families[family][dim] = {
-            KEY_DIM_DIR: dim_dir,
-            KEY_DIM_BMP: os.path.join(dim_dir, "design.png"),
-            KEY_DIM_JSON: os.path.join(dim_dir, "shapofont.json5"),
-            KEY_GFX_HEADER: os.path.join(GFX_C_OUT_DIR, f"{family}_{dim}.h"),
-            KEY_MAME_HPP: os.path.join(MAME_HPP_OUT_DIR, f"{family}_{dim}.hpp"),
-            KEY_MAME_CPP: os.path.join(MAME_CPP_OUT_DIR, f"{family}_{dim}.cpp"),
-            KEY_MAME_JSON: os.path.join(MAME_JSON_OUT_DIR, f"{family}_{dim}.json"),
-        }
-
-all_fonts = []
-for family, dims in families.items():
-    for dim, info in dims.items():
-        all_fonts.append(info)
+    font = Font()
+    font.design_dir = dim_dir
+    font.design_bmp = os.path.join(dim_dir, "design.png")
+    font.design_json = os.path.join(dim_dir, "shapofont.json5")
+    font.gfx_header = os.path.join(GFX_C_OUT_DIR, f"{font_name}.h")
+    font.mame_hpp = os.path.join(MAME_HPP_OUT_DIR, f"{font_name}.hpp")
+    font.mame_cpp = os.path.join(MAME_CPP_OUT_DIR, f"{font_name}.cpp")
+    font.mame_json = os.path.join(MAME_JSON_OUT_DIR, f"{font_name}.json")
+    all_fonts.append(font)
 
 # Sort fonts by size of bitmap for optimize batch processing
-all_fonts = sorted(
-    all_fonts, key=lambda x: os.path.getsize(x[KEY_DIM_BMP]), reverse=True
-)
+all_fonts = sorted(all_fonts, key=lambda x: os.path.getsize(x.design_bmp), reverse=True)
 
 with open("tmp.Makefile.batch.mk", "w") as f:
     f.write(".PHONY: gfx_all mame_all\n")
@@ -71,24 +61,24 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     f.write("\n")
 
     f.write("GFX_HEADER_LIST =")
-    for info in all_fonts:
-        f.write(f" \\\n\t{info[KEY_GFX_HEADER]}")
+    for font in all_fonts:
+        f.write(f" \\\n\t{font.gfx_header}")
     f.write("\n\n")
 
     for arch in MAME_ARCH_LIST:
         f.write(f"MAME_{arch}_HPP_LIST =")
-        for info in all_fonts:
-            hpp_path = info[KEY_MAME_HPP].replace(MAME_ARCH_VAR, arch)
+        for font in all_fonts:
+            hpp_path = font.mame_hpp.replace(MAME_ARCH_VAR, arch)
             f.write(f" \\\n\t{hpp_path}")
         f.write("\n\n")
         f.write(f"MAME_{arch}_CPP_LIST =")
-        for info in all_fonts:
-            cpp_path = info[KEY_MAME_CPP].replace(MAME_ARCH_VAR, arch)
+        for font in all_fonts:
+            cpp_path = font.mame_cpp.replace(MAME_ARCH_VAR, arch)
             f.write(f" \\\n\t{cpp_path}")
         f.write("\n\n")
         f.write(f"MAME_{arch}_JSON_LIST =")
-        for info in all_fonts:
-            json_path = info[KEY_MAME_JSON].replace(MAME_ARCH_VAR, arch)
+        for font in all_fonts:
+            json_path = font.mame_json.replace(MAME_ARCH_VAR, arch)
             f.write(f" \\\n\t{json_path}")
         f.write("\n\n")
     f.write("\n")
@@ -107,29 +97,29 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     )
     f.write("\n")
 
-    for info in all_fonts:
+    for font in all_fonts:
         # GFXfont
         dependencies = [
-            info[KEY_DIM_BMP],
-            info[KEY_DIM_JSON],
+            font.design_bmp,
+            font.design_json,
             "$(GFXFONT_PY)",
             "$(COMMON_DEPENDENCIES)",
         ]
-        f.write(f"{info[KEY_GFX_HEADER]}: {' '.join(dependencies)}\n")
+        f.write(f"{font.gfx_header}: {' '.join(dependencies)}\n")
         f.write(f"\t@mkdir -p $(dir $@)\n")
         f.write(f"\t$(CMD_PYTHON) $(SHAPOFONT_PY)")
         f.write(f" --outdir_gfx_c $(dir $@)")
-        f.write(f" -i {info[KEY_DIM_DIR]}\n")
+        f.write(f" -i {font.design_dir}\n")
         f.write("\n")
 
         # MameFont (C++)
         for arch in MAME_ARCH_LIST:
-            hpp_path = info[KEY_MAME_HPP].replace(MAME_ARCH_VAR, arch)
-            cpp_path = info[KEY_MAME_CPP].replace(MAME_ARCH_VAR, arch)
+            hpp_path = font.mame_hpp.replace(MAME_ARCH_VAR, arch)
+            cpp_path = font.mame_cpp.replace(MAME_ARCH_VAR, arch)
             outdir_hpp = os.path.dirname(hpp_path)
             dependencies = [
-                info[KEY_DIM_BMP],
-                info[KEY_DIM_JSON],
+                font.design_bmp,
+                font.design_json,
                 "$(MAMEFONT_PY)",
                 "$(COMMON_DEPENDENCIES)",
             ]
@@ -140,15 +130,15 @@ with open("tmp.Makefile.batch.mk", "w") as f:
             f.write(f" --mame_arch {arch}")
             f.write(f" --outdir_mame_hpp {outdir_hpp}")
             f.write(f" --outdir_mame_cpp $(dir $@)")
-            f.write(f" -i {info[KEY_DIM_DIR]}\n")
+            f.write(f" -i {font.design_dir}\n")
             f.write("\n")
 
         # MameFont (JSON)
         for arch in MAME_ARCH_LIST:
-            json_path = info[KEY_MAME_JSON].replace(MAME_ARCH_VAR, arch)
+            json_path = font.mame_json.replace(MAME_ARCH_VAR, arch)
             dependencies = [
-                info[KEY_DIM_BMP],
-                info[KEY_DIM_JSON],
+                font.design_bmp,
+                font.design_json,
                 "$(MAMEFONT_PY)",
                 "$(COMMON_DEPENDENCIES)",
             ]
@@ -157,7 +147,7 @@ with open("tmp.Makefile.batch.mk", "w") as f:
             f.write(f"\t$(CMD_PYTHON) $(SHAPOFONT_PY)")
             f.write(f" --mame_arch {arch}")
             f.write(f" --outdir_mame_json $(dir $@)")
-            f.write(f" -i {info[KEY_DIM_DIR]}\n")
+            f.write(f" -i {font.design_dir}\n")
             f.write("\n")
 
     f.write("distclean_all: distclean_gfx_all distclean_mame_all\n")

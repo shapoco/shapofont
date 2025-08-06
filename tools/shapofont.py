@@ -33,9 +33,11 @@ class BitmapFont:
 
         self.path = dir_path
 
-        self.family_name = path.basename(path.dirname(dir_path))
-        self.dim_identifier = path.basename(dir_path)
-        self.full_name = f"{self.family_name}_{self.dim_identifier}"
+        self.full_name = path.basename(dir_path)
+
+        last_underline_pos = self.full_name.rfind("_")
+        self.family_name = self.full_name[:last_underline_pos]
+        self.dim_identifier = self.full_name[last_underline_pos + 1 :]
 
         # Extract options from directory name
         tmp = self.dim_identifier

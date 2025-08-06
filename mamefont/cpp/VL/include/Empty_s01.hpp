@@ -5,5 +5,5 @@
 #include <stdint.h>
 #include <mamefont/mamefont.hpp>
 
-extern const mamefont::Font ShapoEmpty_s01;
+extern const mamefont::Font Empty_s01;
 
