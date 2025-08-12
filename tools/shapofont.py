@@ -72,7 +72,7 @@ class BitmapFont:
         # Load JSON
         json_path = path.join(dir_path, "design.json5")
         if not path.exists(json_path):
-            json_path = path.join(dir_path, "shapofont.json")
+            json_path = path.join(dir_path, "design.json")
         if path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
                 json_data = json5.load(f)

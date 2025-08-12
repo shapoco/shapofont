@@ -3,13 +3,12 @@
 import os
 import re
 
-MAME_ARCH_LIST = ["HL", "HM", "VL", "VM"]
+MAME_ENC_LIST = ["HL", "HM", "VL", "VM"]
 MAME_ARCH_VAR = "$(ARCH)"
 
 BMP_DIR = "design"
 GFX_C_OUT_DIR = os.path.join("gfxfont", "cpp", "include")
 MAME_HPP_OUT_DIR = os.path.join("mamefont", "cpp", MAME_ARCH_VAR, "include")
-MAME_CPP_OUT_DIR = os.path.join("mamefont", "cpp", MAME_ARCH_VAR, "src")
 MAME_JSON_OUT_DIR = os.path.join("mamefont", "json", MAME_ARCH_VAR)
 
 
@@ -20,7 +19,6 @@ class Font:
         self.design_json: str = ""
         self.gfx_header: str = ""
         self.mame_hpp: str = ""
-        self.mame_cpp: str = ""
         self.mame_json: str = ""
 
 
@@ -39,7 +37,6 @@ for font_name in os.listdir(BMP_DIR):
     font.design_json = os.path.join(dim_dir, "design.json")
     font.gfx_header = os.path.join(GFX_C_OUT_DIR, f"{font_name}.h")
     font.mame_hpp = os.path.join(MAME_HPP_OUT_DIR, f"{font_name}.hpp")
-    font.mame_cpp = os.path.join(MAME_CPP_OUT_DIR, f"{font_name}.cpp")
     font.mame_json = os.path.join(MAME_JSON_OUT_DIR, f"{font_name}.json")
     all_fonts.append(font)
 
@@ -48,11 +45,11 @@ all_fonts = sorted(all_fonts, key=lambda x: os.path.getsize(x.design_bmp), rever
 
 with open("tmp.Makefile.batch.mk", "w") as f:
     f.write(".PHONY: gfx_all mame_all\n")
-    f.write(f".PHONY: {' '.join(f'mame_{arch}' for arch in MAME_ARCH_LIST)}\n")
+    f.write(f".PHONY: {' '.join(f'mame_{enc}' for enc in MAME_ENC_LIST)}\n")
     f.write(f".PHONY: mame_cpp mame_json\n")
     f.write(".PHONY: distclean_all distclean_gfx_all distclean_mame_all\n")
     f.write(
-        f".PHONY: {' '.join(f'distclean_mame_{arch}' for arch in MAME_ARCH_LIST)}\n"
+        f".PHONY: {' '.join(f'distclean_mame_{enc}' for enc in MAME_ENC_LIST)}\n"
     )
     f.write(f".PHONY: distclean_mame_cpp distclean_mame_json\n")
     f.write("\n")
@@ -65,20 +62,15 @@ with open("tmp.Makefile.batch.mk", "w") as f:
         f.write(f" \\\n\t{font.gfx_header}")
     f.write("\n\n")
 
-    for arch in MAME_ARCH_LIST:
-        f.write(f"MAME_{arch}_HPP_LIST =")
+    for enc in MAME_ENC_LIST:
+        f.write(f"MAME_{enc}_HPP_LIST =")
         for font in all_fonts:
-            hpp_path = font.mame_hpp.replace(MAME_ARCH_VAR, arch)
+            hpp_path = font.mame_hpp.replace(MAME_ARCH_VAR, enc)
             f.write(f" \\\n\t{hpp_path}")
         f.write("\n\n")
-        f.write(f"MAME_{arch}_CPP_LIST =")
+        f.write(f"MAME_{enc}_JSON_LIST =")
         for font in all_fonts:
-            cpp_path = font.mame_cpp.replace(MAME_ARCH_VAR, arch)
-            f.write(f" \\\n\t{cpp_path}")
-        f.write("\n\n")
-        f.write(f"MAME_{arch}_JSON_LIST =")
-        for font in all_fonts:
-            json_path = font.mame_json.replace(MAME_ARCH_VAR, arch)
+            json_path = font.mame_json.replace(MAME_ARCH_VAR, enc)
             f.write(f" \\\n\t{json_path}")
         f.write("\n\n")
     f.write("\n")
@@ -86,14 +78,14 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     f.write("gfx_all: $(GFX_HEADER_LIST)\n")
     f.write("\n")
 
-    f.write(f"mame_all: {' '.join(f'mame_{arch}' for arch in MAME_ARCH_LIST)}\n")
-    for arch in MAME_ARCH_LIST:
-        f.write(f"mame_{arch}: $(MAME_{arch}_HPP_LIST) $(MAME_{arch}_JSON_LIST)\n")
+    f.write(f"mame_all: {' '.join(f'mame_{enc}' for enc in MAME_ENC_LIST)}\n")
+    for enc in MAME_ENC_LIST:
+        f.write(f"mame_{enc}: $(MAME_{enc}_HPP_LIST) $(MAME_{enc}_JSON_LIST)\n")
     f.write(
-        f"mame_cpp: {' '.join(f'$(MAME_{arch}_HPP_LIST)' for arch in MAME_ARCH_LIST)}\n"
+        f"mame_cpp: {' '.join(f'$(MAME_{enc}_HPP_LIST)' for enc in MAME_ENC_LIST)}\n"
     )
     f.write(
-        f"mame_json: {' '.join(f'$(MAME_{arch}_JSON_LIST)' for arch in MAME_ARCH_LIST)}\n"
+        f"mame_json: {' '.join(f'$(MAME_{enc}_JSON_LIST)' for enc in MAME_ENC_LIST)}\n"
     )
     f.write("\n")
 
@@ -113,41 +105,32 @@ with open("tmp.Makefile.batch.mk", "w") as f:
         f.write("\n")
 
         # MameFont (C++)
-        for arch in MAME_ARCH_LIST:
-            hpp_path = font.mame_hpp.replace(MAME_ARCH_VAR, arch)
-            cpp_path = font.mame_cpp.replace(MAME_ARCH_VAR, arch)
+        for enc in MAME_ENC_LIST:
+            json_path = font.mame_json.replace(MAME_ARCH_VAR, enc)
+            hpp_path = font.mame_hpp.replace(MAME_ARCH_VAR, enc)
             outdir_hpp = os.path.dirname(hpp_path)
             dependencies = [
-                font.design_bmp,
-                font.design_json,
-                "$(MAMEFONT_PY)",
+                json_path,
+                "$(CMD_MAMEC)",
                 "$(COMMON_DEPENDENCIES)",
             ]
-            f.write(f"{hpp_path}: {cpp_path}\n")
-            f.write(f"{cpp_path}: {' '.join(dependencies)}\n")
-            f.write(f"\t@mkdir -p {outdir_hpp} $(dir $@)\n")
-            f.write(f"\t$(CMD_PYTHON) $(SHAPOFONT_PY)")
-            f.write(f" --mame_arch {arch}")
-            f.write(f" --outdir_mame_hpp {outdir_hpp}")
-            f.write(f" --outdir_mame_cpp $(dir $@)")
-            f.write(f" -i {font.design_dir}\n")
+            f.write(f"{hpp_path}: {' '.join(dependencies)}\n")
+            f.write(f"\t@mkdir -p $(dir $@)\n")
+            f.write(f"\t$(CMD_MAMEC) -i {json_path} -o {hpp_path}\n")
             f.write("\n")
 
         # MameFont (JSON)
-        for arch in MAME_ARCH_LIST:
-            json_path = font.mame_json.replace(MAME_ARCH_VAR, arch)
+        for enc in MAME_ENC_LIST:
+            json_path = font.mame_json.replace(MAME_ARCH_VAR, enc)
             dependencies = [
                 font.design_bmp,
                 font.design_json,
-                "$(MAMEFONT_PY)",
+                "$(CMD_MAMEC)",
                 "$(COMMON_DEPENDENCIES)",
             ]
             f.write(f"{json_path}: {' '.join(dependencies)}\n")
             f.write(f"\t@mkdir -p $(dir $@)\n")
-            f.write(f"\t$(CMD_PYTHON) $(SHAPOFONT_PY)")
-            f.write(f" --mame_arch {arch}")
-            f.write(f" --outdir_mame_json $(dir $@)")
-            f.write(f" -i {font.design_dir}\n")
+            f.write(f"\t$(CMD_MAMEC) -e {enc} -i {font.design_bmp} -o $@\n")
             f.write("\n")
 
     f.write("distclean_all: distclean_gfx_all distclean_mame_all\n")
@@ -158,24 +141,22 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     f.write("\n")
 
     f.write(
-        f"distclean_mame_all: {' '.join(f'distclean_mame_{arch}' for arch in MAME_ARCH_LIST)}\n"
+        f"distclean_mame_all: {' '.join(f'distclean_mame_{enc}' for enc in MAME_ENC_LIST)}\n"
     )
-    for arch in MAME_ARCH_LIST:
-        f.write(f"distclean_mame_{arch}:\n")
-        f.write(f"\trm -rf {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, arch)}\n")
-        f.write(f"\trm -rf {MAME_CPP_OUT_DIR.replace(MAME_ARCH_VAR, arch)}\n")
-        f.write(f"\trm -rf {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, arch)}\n")
+    for enc in MAME_ENC_LIST:
+        f.write(f"distclean_mame_{enc}:\n")
+        f.write(f"\trm -rf {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
+        f.write(f"\trm -rf {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
         f.write("\n")
 
     f.write("distclean_mame_cpp:\n")
-    for arch in MAME_ARCH_LIST:
-        f.write(f"\trm -rf {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, arch)}\n")
-        f.write(f"\trm -rf {MAME_CPP_OUT_DIR.replace(MAME_ARCH_VAR, arch)}\n")
+    for enc in MAME_ENC_LIST:
+        f.write(f"\trm -rf {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
     f.write("\n")
 
     f.write("distclean_mame_json:\n")
-    for arch in MAME_ARCH_LIST:
-        f.write(f"\trm -rf {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, arch)}\n")
+    for enc in MAME_ENC_LIST:
+        f.write(f"\trm -rf {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
     f.write("\n")
 
 
