@@ -1,8 +1,0 @@
-{
-    "codes": [
-        {"from": 0x20, "to": 0x7E},
-    ],
-    "x_spacing": {
-        "default": 1,
-    },
-}

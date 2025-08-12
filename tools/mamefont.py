@@ -123,6 +123,30 @@ def format_char(c: int) -> str:
         return f"\\x{c:02x}"
 
 
+def masked_equal(a: list[int], b: list[int], compare_mask: list[int]) -> bool:
+    return all((x & m) == (y & m) for x, y, m in zip(a, b, compare_mask))
+
+
+def reverse_array(
+    a: list[int],
+    byte_reverse: bool = False,
+    bit_reverse: bool = False,
+    inverse: bool = False,
+):
+    n = len(a)
+    ret = [0] * n
+    for i in range(n):
+        value = a[n - 1 - i] if byte_reverse else a[i]
+        if bit_reverse:
+            value = ((value << 4) & 0xF0) | ((value >> 4) & 0x0F)
+            value = ((value << 2) & 0xCC) | ((value >> 2) & 0x33)
+            value = ((value << 1) & 0xAA) | ((value >> 1) & 0x55)
+        if inverse:
+            value ^= 0xFF
+        ret[i] = value
+    return ret
+
+
 class Operator:
     def __init__(
         self, mnemonic, base_code: int, ranges: list[tuple[int, int]], cost: int
@@ -274,9 +298,9 @@ def parse_instruction(
 
 
 class Operation:
-    def __init__(self, bytecode: list[int], orig_seq: list[int], cost: float):
+    def __init__(self, bytecode: list[int], generated: list[int], cost: float):
         self.bytecode = bytecode
-        self.orig_seq = orig_seq
+        self.generated = generated
         self.cost = cost
 
     def operator(self) -> Operator:
@@ -616,16 +640,6 @@ class MameFontBuilder:
         fragments.insert(0, 0x00)
         num_bytes = len(fragments)
 
-        # lane_length = bmp.width if self.vertical_frag else bmp.height
-        # frag_dir_length = bmp.height if self.vertical_frag else bmp.width
-        # num_lanes = (frag_dir_length + 7) // 8
-        # padding_width = num_lanes * 8 - frag_dir_length
-        # if padding_width > 0:
-        #     mask = (1 << (8 - padding_width)) - 1
-        #     if self.msb1st:
-        #         mask <<= padding_width
-        #     self.optimize_padding(fragments, lane_length, mask)
-
         for src_code, src_glyph in self.glyphs.items():
             if fragments == src_glyph.fragments:
                 verbose_print(
@@ -662,16 +676,15 @@ class MameFontBuilder:
         def suggest_operation(i_src: int, i_dst: int) -> Operation | None:
             past = fragments[0 : i_src + 1]
             future = fragments[i_src + 1 : i_dst + 1]
+            compare_mask = [0xFF] * len(future)
             best_op: Operation | None = None
             best_op = self.try_ldi(best_op, past, future)
             best_op = self.try_xor(best_op, past, future)
-            best_op = self.try_sft(best_op, past, future)
-            if not self.no_sfi:
-                best_op = self.try_sfi(best_op, past, future)
-            best_op = self.try_rpt(best_op, past, future)
-            best_op = self.try_cpy(best_op, past, future)
-            if not self.no_cpx:
-                best_op = self.try_cpx(best_op, past, future)
+            best_op = self.try_sft(best_op, past, future, compare_mask)
+            best_op = self.try_sfi(best_op, past, future, compare_mask)
+            best_op = self.try_rpt(best_op, past, future, compare_mask)
+            best_op = self.try_cpy(best_op, past, future, compare_mask)
+            best_op = self.try_cpx(best_op, past, future, compare_mask)
             return best_op
 
         # Solve with Dijkstra's algorithm
@@ -830,8 +843,8 @@ class MameFontBuilder:
             glyph = self.glyphs[code]
             byte1 = -1
             for op in glyph.operations:
-                if len(op.orig_seq) == 1 and op.orig_seq[0] in lut:
-                    byte2 = op.orig_seq[0]
+                if len(op.generated) == 1 and op.generated[0] in lut:
+                    byte2 = op.generated[0]
                     if byte1 >= 0:
                         byte_seq_count[byte1][byte2] += 1
                     byte1 = byte2
@@ -1007,8 +1020,8 @@ class MameFontBuilder:
         for code in codes:
             glyph = self.glyphs[code]
             for op in glyph.operations:
-                if len(op.orig_seq) == 1 and op.orig_seq[0] in lut:
-                    index = lut.index(op.orig_seq[0])
+                if len(op.generated) == 1 and op.generated[0] in lut:
+                    index = lut.index(op.generated[0])
                     op.bytecode = [LUP.code | index]
 
         # Replace instructions with LUD as possible
@@ -1210,23 +1223,6 @@ class MameFontBuilder:
 
         return result
 
-    def optimize_padding(self, fragments: list[int], length: int, mask: int):
-        while length > 0:
-            next = fragments[-length]
-            past = fragments[:-length]
-            last = past[-1]
-
-            cands: dict[int, int] = {}
-
-            cands[0x00] = 1
-
-            if (last & mask) < (next & mask):
-                cands[last] = cands.get(last, 0) + 10
-
-            best = max(cands, key=cands.get, default=None)
-            fragments[-length] = best
-            length -= 1
-
     def try_ldi(
         self,
         best_opr: Operation | None,
@@ -1244,6 +1240,7 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
+        compare_mask: list[int],
     ) -> Operation | None:
         if best_opr and best_opr.cost < SFT.cost:
             return best_opr
@@ -1263,7 +1260,9 @@ class MameFontBuilder:
                 modifier = modifier ^ 0xFF
 
             work = past[-1]
-            for expected in future:
+            for i in range(repeat_count):
+                expected = future[i]
+                mask = compare_mask[i]
                 if shift_dir == ShiftDir.LEFT:
                     work = (work << shift_size) & 0xFF
                 else:
@@ -1272,7 +1271,7 @@ class MameFontBuilder:
                     work |= modifier
                 else:
                     work &= modifier
-                if work != expected:
+                if (work & mask) != (expected & mask):
                     fail = True
                     break
 
@@ -1294,7 +1293,10 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
+        compare_mask: list[int],
     ) -> Operation | None:
+        if self.no_sfi:
+            return best_opr
         if best_opr and best_opr.cost < SFI.cost:
             return best_opr
 
@@ -1323,9 +1325,12 @@ class MameFontBuilder:
                     modifier = modifier ^ 0xFF
 
                 work = past[-1]
+                generated = []
                 shift_timing = 1 if pre_shift else period
                 fail = False
-                for expected in future:
+                for i in range(future_len):
+                    expected = future[i]
+                    mask = compare_mask[i]
                     shift_timing -= 1
                     if shift_timing == 0:
                         shift_timing = period
@@ -1337,9 +1342,10 @@ class MameFontBuilder:
                             work |= modifier
                         else:
                             work &= modifier
-                    if work != expected:
+                    if (work & mask) != (expected & mask):
                         fail = True
                         break
+                    generated.append(work)
 
                 if fail:
                     continue
@@ -1350,7 +1356,7 @@ class MameFontBuilder:
                 byte2 |= SFI_PERIOD.place(period)
                 byte2 |= SFI_POST_OP.place(post_op)
                 byte2 |= SFI_SHIFT_DIR.place(shift_dir)
-                return Operation([SFI.code, byte2], future, SFI.cost)
+                return Operation([SFI.code, byte2], generated, SFI.cost)
 
         return best_opr
 
@@ -1359,6 +1365,7 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
+        compare_mask: list[int],
     ) -> Operation | None:
         if best_opr and best_opr.cost < RPT.cost:
             return best_opr
@@ -1367,12 +1374,16 @@ class MameFontBuilder:
         if repeat_count not in RPT_REPEAT_COUNT.range:
             return best_opr
 
+        last = past[-1]
         for i in range(repeat_count):
-            if past[-1] != future[i]:
+            frag = future[i]
+            mask = compare_mask[i]
+            if (last & mask) != (frag & mask):
                 return best_opr
 
         inst_code = RPT.code | (repeat_count - 1)
-        return Operation([inst_code], future, RPT.cost)
+        generated = [last] * repeat_count
+        return Operation([inst_code], generated, RPT.cost)
 
     def try_xor(
         self,
@@ -1403,6 +1414,7 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
+        compare_mask: list[int],
     ) -> Operation | None:
         cost_limit = CPY.cost
         if best_opr and best_opr.cost < cost_limit:
@@ -1413,9 +1425,10 @@ class MameFontBuilder:
             return best_opr
 
         for byte_reverse in CPY_BYTE_REVERSE.range:
-            search_sequence = future.copy()
-            if byte_reverse != 0:
-                search_sequence = search_sequence[::-1]
+            search_sequence = reverse_array(future, byte_reverse=byte_reverse)
+            reversed_compare_mask = reverse_array(
+                compare_mask, byte_reverse=byte_reverse
+            )
 
             for offset in CPY_OFFSET.range:
                 if byte_reverse == 0 and length == 1 and offset == 0:
@@ -1435,7 +1448,7 @@ class MameFontBuilder:
                 else:
                     copy_src = past[i_copy_start:i_copy_end]
 
-                if copy_src == search_sequence:
+                if masked_equal(copy_src, search_sequence, reversed_compare_mask):
                     cost = CPY.cost
                     if byte_reverse != 0:
                         cost += 1
@@ -1444,7 +1457,10 @@ class MameFontBuilder:
                     inst_code |= CPY_LENGTH.place(length)
                     inst_code |= CPY_OFFSET.place(offset)
                     inst_code |= CPY_BYTE_REVERSE.place(byte_reverse)
-                    return Operation([inst_code], future, cost)
+
+                    generated = reverse_array(copy_src, byte_reverse=byte_reverse)
+
+                    return Operation([inst_code], generated, cost)
 
         return best_opr
 
@@ -1453,7 +1469,10 @@ class MameFontBuilder:
         best_opr: Operation | None,
         past: list[int],
         future: list[int],
+        compare_mask: list[int],
     ) -> Operation | None:
+        if self.no_cpx:
+            return best_opr
         if best_opr and best_opr.cost < CPX.cost:
             return best_opr
 
@@ -1464,21 +1483,19 @@ class MameFontBuilder:
         for byte_reverse, bit_reverse, inverse in product(
             CPX_BYTE_REVERSE.range, CPX_BIT_REVERSE.range, CPX_INVERSE.range
         ):
-            search_sequence = future.copy()
-            if byte_reverse != 0:
-                search_sequence = search_sequence[::-1]
-            if bit_reverse != 0:
-                for i in range(len(search_sequence)):
-                    byte = search_sequence[i]
-                    byte = ((byte & 0x0F) << 4) | ((byte & 0xF0) >> 4)
-                    byte = ((byte & 0x33) << 2) | ((byte & 0xCC) >> 2)
-                    byte = ((byte & 0x55) << 1) | ((byte & 0xAA) >> 1)
-                    search_sequence[i] = byte
-            if inverse != 0:
-                for i in range(len(search_sequence)):
-                    search_sequence[i] = search_sequence[i] ^ 0xFF
-
+            search_sequence = reverse_array(
+                future,
+                byte_reverse=byte_reverse,
+                bit_reverse=bit_reverse,
+                inverse=inverse,
+            )
             reversal_cost = byte_reverse + bit_reverse * 2
+
+            reversed_compare_mask = reverse_array(
+                compare_mask,
+                byte_reverse=byte_reverse,
+                bit_reverse=bit_reverse,
+            )
 
             # from recent sequence
             for offset in range(min(len(past) + length + 1, 1 << CPX_OFFSET_BITS)):
@@ -1495,7 +1512,7 @@ class MameFontBuilder:
                 else:
                     copy_src = past[i_copy_start:i_copy_end]
 
-                if copy_src == search_sequence:
+                if masked_equal(copy_src, search_sequence, reversed_compare_mask):
                     byte2 = offset & 0xFF
 
                     byte3 = 0
@@ -1505,8 +1522,15 @@ class MameFontBuilder:
                     byte3 |= CPX_BIT_REVERSE.place(bit_reverse)
                     byte3 |= CPX_INVERSE.place(inverse)
 
+                    generated = reverse_array(
+                        copy_src,
+                        byte_reverse=byte_reverse,
+                        bit_reverse=bit_reverse,
+                        inverse=inverse,
+                    )
+
                     cost = CPX.cost + reversal_cost
 
-                    return Operation([CPX.code, byte2, byte3], future, cost)
+                    return Operation([CPX.code, byte2, byte3], generated, cost)
 
         return best_opr

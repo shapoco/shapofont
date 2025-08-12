@@ -1,0 +1,9 @@
+{
+    "codes": [
+        {"from": 46, "to": 46},
+        {"from": 48, "to": 57}
+    ],
+    "x_spacing": {
+        "default": 1
+    }
+}

@@ -36,7 +36,7 @@ for font_name in os.listdir(BMP_DIR):
     font = Font()
     font.design_dir = dim_dir
     font.design_bmp = os.path.join(dim_dir, "design.png")
-    font.design_json = os.path.join(dim_dir, "design.json5")
+    font.design_json = os.path.join(dim_dir, "design.json")
     font.gfx_header = os.path.join(GFX_C_OUT_DIR, f"{font_name}.h")
     font.mame_hpp = os.path.join(MAME_HPP_OUT_DIR, f"{font_name}.hpp")
     font.mame_cpp = os.path.join(MAME_CPP_OUT_DIR, f"{font_name}.cpp")
