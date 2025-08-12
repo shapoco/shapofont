@@ -20,14 +20,14 @@
 //     Total         :  654 Bytes (  6.88 Bytes/glyph)
 //   Compression Performance:
 //     CPY   :   56 -->   23 (- 7.22%)
-//     LDI   :    3 -->    3 (  0.00%)
+//     LDI   :    3 -->    6 (+ 0.66%)
 //     LUD   :   76 -->   38 (- 8.32%)
 //     LUP   :  218 -->  218 (  0.00%)
 //     RPT   :   54 -->   25 (- 6.35%)
-//     SFI   :    2 -->    1 (- 0.22%)
+//     SFI   :    2 -->    2 (  0.00%)
 //     SFT   :   23 -->   11 (- 2.63%)
 //     XOR   :   25 -->   25 (  0.00%)
-//     Total :  457 -->  344 (-24.73%)
+//     Total :  457 -->  348 (-23.85%)
 //   Memory Efficiency:  5.590 px/Byte
 
 #include <stdint.h>

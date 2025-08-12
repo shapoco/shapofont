@@ -19,15 +19,15 @@
 //     Bytecodes     :  236 Bytes ( 19.67 Bytes/glyph)
 //     Total         :  280 Bytes ( 23.33 Bytes/glyph)
 //   Compression Performance:
-//     CPX   :  100 -->   11 (-17.66%)
+//     CPX   :  100 -->   33 (-13.29%)
 //     CPY   :   53 -->   11 (- 8.33%)
 //     LUD   :   22 -->   11 (- 2.18%)
 //     LUP   :   55 -->   55 (  0.00%)
 //     RPT   :  131 -->   36 (-18.85%)
-//     SFI   :   67 -->   15 (-10.32%)
+//     SFI   :   67 -->   30 (- 7.34%)
 //     SFT   :   46 -->   24 (- 4.37%)
 //     XOR   :   30 -->   30 (  0.00%)
-//     Total :  504 -->  193 (-61.71%)
+//     Total :  504 -->  230 (-54.37%)
 //   Memory Efficiency: 14.143 px/Byte
 
 #include <stdint.h>
