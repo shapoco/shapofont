@@ -18,5 +18,8 @@
         "cap_height": 38,
         "weight": 6,
         "x_spacing": 0
+    },
+    "sample": {
+        "text": "0.1234\n5678.9\nABCDEF"
     }
 }

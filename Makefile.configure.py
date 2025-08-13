@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import re
 
 MAME_ENC_LIST = ["HL", "HM", "VL", "VM"]
 MAME_ARCH_VAR = "$(ARCH)"
@@ -10,7 +9,7 @@ BMP_DIR = "design"
 GFX_C_OUT_DIR = os.path.join("gfxfont", "cpp", "include")
 MAME_HPP_OUT_DIR = os.path.join("mamefont", "cpp", MAME_ARCH_VAR, "include")
 MAME_JSON_OUT_DIR = os.path.join("mamefont", "json", MAME_ARCH_VAR)
-
+SAMPLE_OUT_DIR = os.path.join("img", "sample")
 
 class Font:
     def __init__(self):
@@ -35,6 +34,7 @@ for font_name in os.listdir(BMP_DIR):
     font.design_dir = dim_dir
     font.design_bmp = os.path.join(dim_dir, "design.png")
     font.design_json = os.path.join(dim_dir, "design.json")
+    font.sample_png = os.path.join(SAMPLE_OUT_DIR, f"{font_name}.png")
     font.gfx_header = os.path.join(GFX_C_OUT_DIR, f"{font_name}.h")
     font.mame_hpp = os.path.join(MAME_HPP_OUT_DIR, f"{font_name}.hpp")
     font.mame_json = os.path.join(MAME_JSON_OUT_DIR, f"{font_name}.json")
@@ -44,10 +44,10 @@ for font_name in os.listdir(BMP_DIR):
 all_fonts = sorted(all_fonts, key=lambda x: os.path.getsize(x.design_bmp), reverse=True)
 
 with open("tmp.Makefile.batch.mk", "w") as f:
-    f.write(".PHONY: gfx_all mame_all\n")
+    f.write(".PHONY: gfx_all mame_all sample_all\n")
     f.write(f".PHONY: {' '.join(f'mame_{enc}' for enc in MAME_ENC_LIST)}\n")
     f.write(f".PHONY: mame_cpp mame_json\n")
-    f.write(".PHONY: distclean_all distclean_gfx_all distclean_mame_all\n")
+    f.write(".PHONY: distclean_all distclean_gfx_all distclean_mame_all distclean_sample_all\n")
     f.write(
         f".PHONY: {' '.join(f'distclean_mame_{enc}' for enc in MAME_ENC_LIST)}\n"
     )
@@ -75,6 +75,11 @@ with open("tmp.Makefile.batch.mk", "w") as f:
         f.write("\n\n")
     f.write("\n")
 
+    f.write("SAMPLE_IMAGE_LIST =")
+    for font in all_fonts:
+        f.write(f" \\\n\t{font.sample_png}")
+    f.write("\n\n")
+
     f.write("gfx_all: $(GFX_HEADER_LIST)\n")
     f.write("\n")
 
@@ -87,6 +92,9 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     f.write(
         f"mame_json: {' '.join(f'$(MAME_{enc}_JSON_LIST)' for enc in MAME_ENC_LIST)}\n"
     )
+    f.write("\n")
+
+    f.write("sample_all: $(SAMPLE_IMAGE_LIST)\n")
     f.write("\n")
 
     for font in all_fonts:
@@ -133,11 +141,24 @@ with open("tmp.Makefile.batch.mk", "w") as f:
             f.write(f"\t$(CMD_MAMEC) -e {enc} -i {font.design_bmp} -o $@\n")
             f.write("\n")
 
-    f.write("distclean_all: distclean_gfx_all distclean_mame_all\n")
+        # Sample Image
+        dependencies = [
+            font.design_bmp,
+            font.design_json,
+            "$(COMMON_DEPENDENCIES)",
+        ]
+        f.write(f"{font.sample_png}: {' '.join(dependencies)}\n")
+        f.write(f"\t@mkdir -p $(dir $@)\n")
+        f.write(f"\t$(CMD_PYTHON) $(SHAPOFONT_PY)")
+        f.write(f" --sample_img $@")
+        f.write(f" -i {font.design_dir}\n")
+        f.write("\n")
+
+    f.write("distclean_all: distclean_gfx_all distclean_mame_all distclean_sample_all\n")
     f.write("\n")
 
     f.write("distclean_gfx_all:\n")
-    f.write(f"\trm -rf {GFX_C_OUT_DIR}\n")
+    f.write(f"\trm -f {GFX_C_OUT_DIR}/*.h\n")
     f.write("\n")
 
     f.write(
@@ -145,18 +166,22 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     )
     for enc in MAME_ENC_LIST:
         f.write(f"distclean_mame_{enc}:\n")
-        f.write(f"\trm -rf {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
-        f.write(f"\trm -rf {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
+        f.write(f"\trm -f {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, enc)}/*.hpp\n")
+        f.write(f"\trm -f {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, enc)}/*.json\n")
         f.write("\n")
 
     f.write("distclean_mame_cpp:\n")
     for enc in MAME_ENC_LIST:
-        f.write(f"\trm -rf {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
+        f.write(f"\trm -f {MAME_HPP_OUT_DIR.replace(MAME_ARCH_VAR, enc)}/*.hpp\n")
     f.write("\n")
 
     f.write("distclean_mame_json:\n")
     for enc in MAME_ENC_LIST:
-        f.write(f"\trm -rf {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, enc)}\n")
+        f.write(f"\trm -f {MAME_JSON_OUT_DIR.replace(MAME_ARCH_VAR, enc)}/*.json\n")
+    f.write("\n")
+
+    f.write("distclean_sample_all:\n")
+    f.write(f"\trm -f {SAMPLE_OUT_DIR}/*.png\n")
     f.write("\n")
 
 

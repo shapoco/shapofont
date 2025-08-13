@@ -1,4 +1,4 @@
-.PHONY: all configure doc_test
+.PHONY: all configure catalog doc_test
 
 TOOLS_DIR := tools
 MAMEFONT_DIR := $(shell cd ../mamefont && pwd)
@@ -22,9 +22,12 @@ COMMON_DEPENDENCIES := \
 all: gfx_all mame_all
 
 configure:
-	$(CMD_PYTHON) Makefile.update.py
+	$(CMD_PYTHON) Makefile.configure.py
 
 include Makefile.batch.mk
+
+catalog:
+	$(CMD_PYTHON) Makefile.catalog.py
 
 doc_test:
 	python3 -m http.server -d $(DOC_TEST_DIR) $(DOC_TEST_PORT)

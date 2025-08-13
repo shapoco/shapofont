@@ -5,6 +5,8 @@ build/
 __pycache__/
 tmp.*/
 tmp.*
+bak.*/
+bak.*
 a.out
 *.o
 *.log

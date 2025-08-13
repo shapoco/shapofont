@@ -33,6 +33,9 @@ class GrayBitmap:
         self.offset = offset
         self.stride = stride
 
+    def create(w: int, h: int):
+        return GrayBitmap([0] * (w * h), w, h, 0, w)
+
     def from_file(file_path: str):
         pil_img = Image.open(file_path)
         width, height = pil_img.size
@@ -57,6 +60,15 @@ class GrayBitmap:
 
         return GrayBitmap(data, width, height, 0, width)
 
+    def export(self, file_path: str):
+        pil_img = Image.new("L", (self.width, self.height))
+        for y in range(self.height):
+            for x in range(self.width):
+                value = self.get(x, y, 0)
+                pil_img.putpixel((x, y), 255 if value < 128 else 0)
+        pil_img.save(file_path)
+        pil_img.close()
+
     def get(self, x: int, y: int, default_col: int | None = None) -> Marker:
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
             if default_col == None:
@@ -64,6 +76,14 @@ class GrayBitmap:
             else:
                 return default_col
         return self.data[self.offset + y * self.stride + x]
+
+    def set(self, x: int, y: int, value: int):
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            raise IndexError(f"Index out of bounds: ({x}, {y})")
+        self.data[self.offset + y * self.stride + x] = value
+
+    def draw(self, src, x: int, y: int, size: int = 1):
+        drawBitmap(self, x, y, src, size)
 
     def crop(self, x: int, y: int, width: int, height: int):
         if x < 0 or y < 0 or x + width > self.width or y + height > self.height:
@@ -97,3 +117,15 @@ class GrayBitmap:
                     array.append(byte)
 
         return array
+
+def drawBitmap(dst: GrayBitmap, x: int, y: int, src: GrayBitmap, size: int = 1):
+    for sy in range(src.height):
+        for sx in range(src.width):
+            for y_sub in range(size):
+                for x_sub in range(size):
+                    dx = x + sx * size + x_sub
+                    dy = y + sy * size + y_sub
+                    bg = dst.get(dx, dy, 0)
+                    col = src.get(sx, sy)
+                    col = bg + ((255 - bg) * col + 128) // 255
+                    dst.set(dx, dy, col)

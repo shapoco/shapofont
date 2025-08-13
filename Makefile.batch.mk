@@ -1,7 +1,7 @@
-.PHONY: gfx_all mame_all
+.PHONY: gfx_all mame_all sample_all
 .PHONY: mame_HL mame_HM mame_VL mame_VM
 .PHONY: mame_cpp mame_json
-.PHONY: distclean_all distclean_gfx_all distclean_mame_all
+.PHONY: distclean_all distclean_gfx_all distclean_mame_all distclean_sample_all
 .PHONY: distclean_mame_HL distclean_mame_HM distclean_mame_VL distclean_mame_VM
 .PHONY: distclean_mame_cpp distclean_mame_json
 
@@ -179,6 +179,25 @@ MAME_VM_JSON_LIST = \
 	mamefont/json/VM/Empty_s01.json
 
 
+SAMPLE_IMAGE_LIST = \
+	img/sample/MameSansP_s48c40w08.png \
+	img/sample/MameSquareWide_s64c48a04w16.png \
+	img/sample/ShapoSansP_s27c22a01w04.png \
+	img/sample/ShapoSansP_s21c16a01w03.png \
+	img/sample/MameSansDigitP_s64w08.png \
+	img/sample/MameSeg7_s40c38w06.png \
+	img/sample/ShapoSansP_s12c09a01w02.png \
+	img/sample/ShapoSansP_s08c07.png \
+	img/sample/ShapoSansMono_s08c07.png \
+	img/sample/ShapoSansDigitP_s32c30w04.png \
+	img/sample/ShapoSansDigitP_s24c23w04.png \
+	img/sample/ShapoSansP_s07c05a01.png \
+	img/sample/ShapoSansP_s05.png \
+	img/sample/ShapoSansDigitP_s16c14w02.png \
+	img/sample/TestF_s16w04.png \
+	img/sample/TestF_s08w02.png \
+	img/sample/Empty_s01.png
+
 gfx_all: $(GFX_HEADER_LIST)
 
 mame_all: mame_HL mame_HM mame_VL mame_VM
@@ -188,6 +207,8 @@ mame_VL: $(MAME_VL_HPP_LIST) $(MAME_VL_JSON_LIST)
 mame_VM: $(MAME_VM_HPP_LIST) $(MAME_VM_JSON_LIST)
 mame_cpp: $(MAME_HL_HPP_LIST) $(MAME_HM_HPP_LIST) $(MAME_VL_HPP_LIST) $(MAME_VM_HPP_LIST)
 mame_json: $(MAME_HL_JSON_LIST) $(MAME_HM_JSON_LIST) $(MAME_VL_JSON_LIST) $(MAME_VM_JSON_LIST)
+
+sample_all: $(SAMPLE_IMAGE_LIST)
 
 gfxfont/cpp/include/MameSansP_s48c40w08.h: design/MameSansP_s48c40w08/design.png design/MameSansP_s48c40w08/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -225,6 +246,10 @@ mamefont/json/VM/MameSansP_s48c40w08.json: design/MameSansP_s48c40w08/design.png
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/MameSansP_s48c40w08/design.png -o $@
 
+img/sample/MameSansP_s48c40w08.png: design/MameSansP_s48c40w08/design.png design/MameSansP_s48c40w08/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSansP_s48c40w08
+
 gfxfont/cpp/include/MameSquareWide_s64c48a04w16.h: design/MameSquareWide_s64c48a04w16/design.png design/MameSquareWide_s64c48a04w16/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/MameSquareWide_s64c48a04w16
@@ -260,6 +285,10 @@ mamefont/json/VL/MameSquareWide_s64c48a04w16.json: design/MameSquareWide_s64c48a
 mamefont/json/VM/MameSquareWide_s64c48a04w16.json: design/MameSquareWide_s64c48a04w16/design.png design/MameSquareWide_s64c48a04w16/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/MameSquareWide_s64c48a04w16/design.png -o $@
+
+img/sample/MameSquareWide_s64c48a04w16.png: design/MameSquareWide_s64c48a04w16/design.png design/MameSquareWide_s64c48a04w16/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSquareWide_s64c48a04w16
 
 gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h: design/ShapoSansP_s27c22a01w04/design.png design/ShapoSansP_s27c22a01w04/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -297,6 +326,10 @@ mamefont/json/VM/ShapoSansP_s27c22a01w04.json: design/ShapoSansP_s27c22a01w04/de
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansP_s27c22a01w04/design.png -o $@
 
+img/sample/ShapoSansP_s27c22a01w04.png: design/ShapoSansP_s27c22a01w04/design.png design/ShapoSansP_s27c22a01w04/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansP_s27c22a01w04
+
 gfxfont/cpp/include/ShapoSansP_s21c16a01w03.h: design/ShapoSansP_s21c16a01w03/design.png design/ShapoSansP_s21c16a01w03/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/ShapoSansP_s21c16a01w03
@@ -332,6 +365,10 @@ mamefont/json/VL/ShapoSansP_s21c16a01w03.json: design/ShapoSansP_s21c16a01w03/de
 mamefont/json/VM/ShapoSansP_s21c16a01w03.json: design/ShapoSansP_s21c16a01w03/design.png design/ShapoSansP_s21c16a01w03/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansP_s21c16a01w03/design.png -o $@
+
+img/sample/ShapoSansP_s21c16a01w03.png: design/ShapoSansP_s21c16a01w03/design.png design/ShapoSansP_s21c16a01w03/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansP_s21c16a01w03
 
 gfxfont/cpp/include/MameSansDigitP_s64w08.h: design/MameSansDigitP_s64w08/design.png design/MameSansDigitP_s64w08/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -369,6 +406,10 @@ mamefont/json/VM/MameSansDigitP_s64w08.json: design/MameSansDigitP_s64w08/design
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/MameSansDigitP_s64w08/design.png -o $@
 
+img/sample/MameSansDigitP_s64w08.png: design/MameSansDigitP_s64w08/design.png design/MameSansDigitP_s64w08/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSansDigitP_s64w08
+
 gfxfont/cpp/include/MameSeg7_s40c38w06.h: design/MameSeg7_s40c38w06/design.png design/MameSeg7_s40c38w06/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/MameSeg7_s40c38w06
@@ -404,6 +445,10 @@ mamefont/json/VL/MameSeg7_s40c38w06.json: design/MameSeg7_s40c38w06/design.png d
 mamefont/json/VM/MameSeg7_s40c38w06.json: design/MameSeg7_s40c38w06/design.png design/MameSeg7_s40c38w06/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/MameSeg7_s40c38w06/design.png -o $@
+
+img/sample/MameSeg7_s40c38w06.png: design/MameSeg7_s40c38w06/design.png design/MameSeg7_s40c38w06/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSeg7_s40c38w06
 
 gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h: design/ShapoSansP_s12c09a01w02/design.png design/ShapoSansP_s12c09a01w02/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -441,6 +486,10 @@ mamefont/json/VM/ShapoSansP_s12c09a01w02.json: design/ShapoSansP_s12c09a01w02/de
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansP_s12c09a01w02/design.png -o $@
 
+img/sample/ShapoSansP_s12c09a01w02.png: design/ShapoSansP_s12c09a01w02/design.png design/ShapoSansP_s12c09a01w02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansP_s12c09a01w02
+
 gfxfont/cpp/include/ShapoSansP_s08c07.h: design/ShapoSansP_s08c07/design.png design/ShapoSansP_s08c07/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/ShapoSansP_s08c07
@@ -476,6 +525,10 @@ mamefont/json/VL/ShapoSansP_s08c07.json: design/ShapoSansP_s08c07/design.png des
 mamefont/json/VM/ShapoSansP_s08c07.json: design/ShapoSansP_s08c07/design.png design/ShapoSansP_s08c07/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansP_s08c07/design.png -o $@
+
+img/sample/ShapoSansP_s08c07.png: design/ShapoSansP_s08c07/design.png design/ShapoSansP_s08c07/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansP_s08c07
 
 gfxfont/cpp/include/ShapoSansMono_s08c07.h: design/ShapoSansMono_s08c07/design.png design/ShapoSansMono_s08c07/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -513,6 +566,10 @@ mamefont/json/VM/ShapoSansMono_s08c07.json: design/ShapoSansMono_s08c07/design.p
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansMono_s08c07/design.png -o $@
 
+img/sample/ShapoSansMono_s08c07.png: design/ShapoSansMono_s08c07/design.png design/ShapoSansMono_s08c07/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansMono_s08c07
+
 gfxfont/cpp/include/ShapoSansDigitP_s32c30w04.h: design/ShapoSansDigitP_s32c30w04/design.png design/ShapoSansDigitP_s32c30w04/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/ShapoSansDigitP_s32c30w04
@@ -548,6 +605,10 @@ mamefont/json/VL/ShapoSansDigitP_s32c30w04.json: design/ShapoSansDigitP_s32c30w0
 mamefont/json/VM/ShapoSansDigitP_s32c30w04.json: design/ShapoSansDigitP_s32c30w04/design.png design/ShapoSansDigitP_s32c30w04/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansDigitP_s32c30w04/design.png -o $@
+
+img/sample/ShapoSansDigitP_s32c30w04.png: design/ShapoSansDigitP_s32c30w04/design.png design/ShapoSansDigitP_s32c30w04/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansDigitP_s32c30w04
 
 gfxfont/cpp/include/ShapoSansDigitP_s24c23w04.h: design/ShapoSansDigitP_s24c23w04/design.png design/ShapoSansDigitP_s24c23w04/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -585,6 +646,10 @@ mamefont/json/VM/ShapoSansDigitP_s24c23w04.json: design/ShapoSansDigitP_s24c23w0
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansDigitP_s24c23w04/design.png -o $@
 
+img/sample/ShapoSansDigitP_s24c23w04.png: design/ShapoSansDigitP_s24c23w04/design.png design/ShapoSansDigitP_s24c23w04/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansDigitP_s24c23w04
+
 gfxfont/cpp/include/ShapoSansP_s07c05a01.h: design/ShapoSansP_s07c05a01/design.png design/ShapoSansP_s07c05a01/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/ShapoSansP_s07c05a01
@@ -620,6 +685,10 @@ mamefont/json/VL/ShapoSansP_s07c05a01.json: design/ShapoSansP_s07c05a01/design.p
 mamefont/json/VM/ShapoSansP_s07c05a01.json: design/ShapoSansP_s07c05a01/design.png design/ShapoSansP_s07c05a01/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansP_s07c05a01/design.png -o $@
+
+img/sample/ShapoSansP_s07c05a01.png: design/ShapoSansP_s07c05a01/design.png design/ShapoSansP_s07c05a01/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansP_s07c05a01
 
 gfxfont/cpp/include/ShapoSansP_s05.h: design/ShapoSansP_s05/design.png design/ShapoSansP_s05/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -657,6 +726,10 @@ mamefont/json/VM/ShapoSansP_s05.json: design/ShapoSansP_s05/design.png design/Sh
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansP_s05/design.png -o $@
 
+img/sample/ShapoSansP_s05.png: design/ShapoSansP_s05/design.png design/ShapoSansP_s05/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansP_s05
+
 gfxfont/cpp/include/ShapoSansDigitP_s16c14w02.h: design/ShapoSansDigitP_s16c14w02/design.png design/ShapoSansDigitP_s16c14w02/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/ShapoSansDigitP_s16c14w02
@@ -692,6 +765,10 @@ mamefont/json/VL/ShapoSansDigitP_s16c14w02.json: design/ShapoSansDigitP_s16c14w0
 mamefont/json/VM/ShapoSansDigitP_s16c14w02.json: design/ShapoSansDigitP_s16c14w02/design.png design/ShapoSansDigitP_s16c14w02/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/ShapoSansDigitP_s16c14w02/design.png -o $@
+
+img/sample/ShapoSansDigitP_s16c14w02.png: design/ShapoSansDigitP_s16c14w02/design.png design/ShapoSansDigitP_s16c14w02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/ShapoSansDigitP_s16c14w02
 
 gfxfont/cpp/include/TestF_s16w04.h: design/TestF_s16w04/design.png design/TestF_s16w04/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -729,6 +806,10 @@ mamefont/json/VM/TestF_s16w04.json: design/TestF_s16w04/design.png design/TestF_
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/TestF_s16w04/design.png -o $@
 
+img/sample/TestF_s16w04.png: design/TestF_s16w04/design.png design/TestF_s16w04/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/TestF_s16w04
+
 gfxfont/cpp/include/TestF_s08w02.h: design/TestF_s08w02/design.png design/TestF_s08w02/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/TestF_s08w02
@@ -764,6 +845,10 @@ mamefont/json/VL/TestF_s08w02.json: design/TestF_s08w02/design.png design/TestF_
 mamefont/json/VM/TestF_s08w02.json: design/TestF_s08w02/design.png design/TestF_s08w02/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/TestF_s08w02/design.png -o $@
+
+img/sample/TestF_s08w02.png: design/TestF_s08w02/design.png design/TestF_s08w02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/TestF_s08w02
 
 gfxfont/cpp/include/Empty_s01.h: design/Empty_s01/design.png design/Empty_s01/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
@@ -801,37 +886,44 @@ mamefont/json/VM/Empty_s01.json: design/Empty_s01/design.png design/Empty_s01/de
 	@mkdir -p $(dir $@)
 	$(CMD_MAMEC) -e VM -i design/Empty_s01/design.png -o $@
 
-distclean_all: distclean_gfx_all distclean_mame_all
+img/sample/Empty_s01.png: design/Empty_s01/design.png design/Empty_s01/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/Empty_s01
+
+distclean_all: distclean_gfx_all distclean_mame_all distclean_sample_all
 
 distclean_gfx_all:
-	rm -rf gfxfont/cpp/include
+	rm -f gfxfont/cpp/include/*.h
 
 distclean_mame_all: distclean_mame_HL distclean_mame_HM distclean_mame_VL distclean_mame_VM
 distclean_mame_HL:
-	rm -rf mamefont/cpp/HL/include
-	rm -rf mamefont/json/HL
+	rm -f mamefont/cpp/HL/include/*.hpp
+	rm -f mamefont/json/HL/*.json
 
 distclean_mame_HM:
-	rm -rf mamefont/cpp/HM/include
-	rm -rf mamefont/json/HM
+	rm -f mamefont/cpp/HM/include/*.hpp
+	rm -f mamefont/json/HM/*.json
 
 distclean_mame_VL:
-	rm -rf mamefont/cpp/VL/include
-	rm -rf mamefont/json/VL
+	rm -f mamefont/cpp/VL/include/*.hpp
+	rm -f mamefont/json/VL/*.json
 
 distclean_mame_VM:
-	rm -rf mamefont/cpp/VM/include
-	rm -rf mamefont/json/VM
+	rm -f mamefont/cpp/VM/include/*.hpp
+	rm -f mamefont/json/VM/*.json
 
 distclean_mame_cpp:
-	rm -rf mamefont/cpp/HL/include
-	rm -rf mamefont/cpp/HM/include
-	rm -rf mamefont/cpp/VL/include
-	rm -rf mamefont/cpp/VM/include
+	rm -f mamefont/cpp/HL/include/*.hpp
+	rm -f mamefont/cpp/HM/include/*.hpp
+	rm -f mamefont/cpp/VL/include/*.hpp
+	rm -f mamefont/cpp/VM/include/*.hpp
 
 distclean_mame_json:
-	rm -rf mamefont/json/HL
-	rm -rf mamefont/json/HM
-	rm -rf mamefont/json/VL
-	rm -rf mamefont/json/VM
+	rm -f mamefont/json/HL/*.json
+	rm -f mamefont/json/HM/*.json
+	rm -f mamefont/json/VL/*.json
+	rm -f mamefont/json/VM/*.json
+
+distclean_sample_all:
+	rm -f img/sample/*.png
 
