@@ -154,10 +154,10 @@ class GFXfont:
 
 
 class GFXfontBuilder:
-    def __init__(self, name: str, y_advance: int, normal_x_spacing: int):
+    def __init__(self, name: str, y_advance: int, default_x_spacing: int):
         self.name = name
         self.y_advance = y_advance
-        self.normal_x_spacing = normal_x_spacing
+        self.default_x_spacing = default_x_spacing
         self.bitmaps: dict[int, list[int]] = {}
         self.glyphs: dict[int, GFXglyph] = {}
 
@@ -206,7 +206,7 @@ class GFXfontBuilder:
                     i_bit -= 1
 
         if x_advance == None:
-            x_advance = x_offset + bmp.width + self.normal_x_spacing
+            x_advance = x_offset + bmp.width + self.default_x_spacing
 
         glyph = GFXglyph(
             bitmap_offset=0,

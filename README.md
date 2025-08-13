@@ -8,7 +8,7 @@
 - Tools for generating GFXfont from PNG images<br>
     「ペイント」などでデザインしたフォントから GFXfont を生成するツール
 
-# Catalog
+# Font Catalog
 
 Click thumbnail to open the font with [GFXfont Web Simulator](https://shapoco.github.io/shapofont/sim/).<br>
 サムネイルをクリックすると[ブラウザ上のシミュレータ](https://shapoco.github.io/shapofont/sim/)でお試しできます。
@@ -125,28 +125,36 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
     ![](./img/how_to_design.svg)
 
 4. Save the image as `design.png`.
-5. In a JSON5 file `design.json5`, list the characters contained in the image.
+5. In a JSON file `design.json`, list the characters contained in the image.
 
-    ```json5
+    ```json
     {
         "codes": [
-            {"from": 0x20, "to": 0x7E},
+            {
+                "from": 32,
+                "to": 126
+            }
         ],
-        "x_spacing": {
-            "default": 3,
-        },
+        "dimensions": {
+            "body_size:": 12,
+            "cap_height": 9,
+            "ascender_spacing": 1,
+            "weight": 2,
+            "x_spacing": 1,
+            "y_spacing": 5
+        }
     }
     ```
 
-    `x_spacing` is optional and it specifies spacing between each characters. If `x_spacing` is not specified, it will be automatically calculated based on glyph height.
+    If `dimensions` are omitted, the script will try to extract the dimension values from the directory name of design file.
 
 - The vertical positions of the glyph markers of the glyphs side by side must be aligned.
 - There must be at least Body Size pixels of space above the glyph marker (no overlap).
-- The order of characters in the image must exactly match the order of characters listed in the `design.json5`.
+- The order of characters in the image must exactly match the order of characters listed in the `design.json`.
 
 ### Spacing Adjustment
 
-If only glyph marker (red line) is given in design image, when rendering it, the character's horizontal coordinate is advanced by the glyph width plus default spacing defined in JSON5. If you want to adjust the spacing for each character, you can add blue lines.
+If only glyph marker (red line) is given in design image, when rendering it, the character's horizontal coordinate is advanced by the glyph width plus default spacing defined in JSON. If you want to adjust the spacing for each character, you can add blue lines.
 
 ![](./img/spacing_adjustment.svg)
 
@@ -161,10 +169,10 @@ Create a directory with full font name and place a design image and meta informa
 ```
 ShapoSansP_s21c16a01w03/  ... Full Font Name
 +-- design.png  ............. Font Design File
-+-- design.json5  ........... Meta Information
++-- design.json  ............ Meta Information
 ```
 
-The generator script extracts a family name and a dimension identifier from the directory name, so they must be named correctly.
+If `dimensions` is not specified in JSON, the generator script extracts a family name and a dimension identifier from the directory name, so they must be named correctly.
 
 ## Converting to GFXfont
 
@@ -193,7 +201,9 @@ The rights to font files generated using the tools included in ShapoFont are sub
 
 # Related Project
 
-- [MameFont](https://github.com/shapoco/mamefont)
+## MameFont
+
+See [MameFont](https://github.com/shapoco/mamefont).
 
 # Memo
 

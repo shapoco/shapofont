@@ -1,5 +1,11 @@
 {
     "codes": [
-        {"from": 32, "to": 32}
-    ]
+        {
+            "from": 32,
+            "to": 32
+        }
+    ],
+    "dimensions": {
+        "body_size:": 1
+    }
 }

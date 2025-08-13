@@ -1,8 +1,15 @@
 {
     "codes": [
-        {"from": 32, "to": 126}
+        {
+            "from": 32,
+            "to": 126
+        }
     ],
-    "x_spacing": {
-        "default": 4
+    "dimensions": {
+        "body_size:": 64,
+        "cap_height": 48,
+        "ascender_spacing": 4,
+        "weight": 16,
+        "x_spacing": 4
     }
 }

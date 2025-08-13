@@ -1,5 +1,12 @@
 {
     "codes": [
-        {"from": 70, "to": 70}
-    ]
+        {
+            "from": 70,
+            "to": 70
+        }
+    ],
+    "dimensions": {
+        "body_size:": 8,
+        "weight": 2
+    }
 }
