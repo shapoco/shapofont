@@ -16,9 +16,9 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :  100 Bytes (  4.00 Bytes/glyph)
 //     Frag. Table   :   24 Bytes ( 37.50% used)
-//     Bytecodes     :  538 Bytes ( 21.52 Bytes/glyph)
-//     Total         :  670 Bytes ( 26.80 Bytes/glyph)
-//   Compression Performance:
+//     Byte Codes    :  541 Bytes ( 21.64 Bytes/glyph)
+//     Total         :  673 Bytes ( 26.92 Bytes/glyph)
+//   Instruction Performance:
 //     CPX   :  800 -->   66 (-28.23%)
 //     CPY   :  375 -->   77 (-11.46%)
 //     LUD   :   98 -->   49 (- 1.88%)
@@ -28,7 +28,11 @@
 //     SFT   :   86 -->   36 (- 1.92%)
 //     XOR   :   67 -->   67 (  0.00%)
 //     Total : 2600 -->  538 (-79.31%)
-//   Memory Efficiency: 29.075 px/Byte
+//   Byte Code References:
+//     Multiple References :   0 Bytes
+//     No Ref (ABO)        :   3 Bytes
+//     No Ref (Unexpected) :   0 Bytes
+//   Memory Efficiency: 28.945 px/Byte
 
 #include <stdint.h>
 
@@ -93,7 +97,7 @@ const uint8_t MameSeg7_s40c38w06_blob[] MAMEFONT_PROGMEM = {
   0xD6, 0xD4, 0x61, 0x2D, 0x92, 0xE1, 0x63, 0xE3, 0x67, 0x40, 0x18, 0xD4, 0x02, 0xFE, 0xE8, 0x32,
   0x96, 0x77, 0x6F, 0x40, 0x9E, 0xE8, 0xF8, 0x88, 0x61, 0xD0, 0xF1, 0xF0, 0x68, 0x80, 0xE2, 0x90,
   0xD2, 0x88, 0x64, 0x68, 0x81, 0xF3, 0x91, 0xFD, 0xE4, 0x92, 0xE1, 0x67, 0x67, 0x64, 0xEF, 0x3C,
-  0xF3, 0xE0, 0x02, 0xFE, 0xE8, 0x32, 0x64, 0x40, 0x9F, 0x34
+  0xF3, 0xE0, 0x02, 0xFE, 0xE8, 0x32, 0x64, 0x40, 0x9F, 0x34, 0xFF, 0xFF, 0xFF
 };
 
 #ifdef MAMEFONT_PROGMEM_SELF_DEFINED

@@ -16,14 +16,18 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :    2 Bytes (  2.00 Bytes/glyph)
 //     Frag. Table   :    4 Bytes (  6.25% used)
-//     Bytecodes     :    4 Bytes (  4.00 Bytes/glyph)
-//     Total         :   18 Bytes ( 18.00 Bytes/glyph)
-//   Compression Performance:
+//     Byte Codes    :    7 Bytes (  7.00 Bytes/glyph)
+//     Total         :   21 Bytes ( 21.00 Bytes/glyph)
+//   Instruction Performance:
 //     CPY   :    3 -->    1 (-25.00%)
 //     LUD   :    4 -->    2 (-25.00%)
 //     LUP   :    1 -->    1 (  0.00%)
 //     Total :    8 -->    4 (-50.00%)
-//   Memory Efficiency:  3.556 px/Byte
+//   Byte Code References:
+//     Multiple References :   0 Bytes
+//     No Ref (ABO)        :   3 Bytes
+//     No Ref (Unexpected) :   0 Bytes
+//   Memory Efficiency:  3.048 px/Byte
 
 #include <stdint.h>
 
@@ -48,7 +52,7 @@ const uint8_t TestF_s08w02_blob[] MAMEFONT_PROGMEM = {
   // Fragment Table
   0xFF, 0xC0, 0xFE, 0x00,
   // Byte Code Block
-  0xC0, 0xC1, 0x82, 0x62
+  0xC0, 0xC1, 0x82, 0x62, 0xFF, 0xFF, 0xFF
 };
 
 #ifdef MAMEFONT_PROGMEM_SELF_DEFINED

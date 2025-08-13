@@ -16,9 +16,9 @@
 //     Header        :    8 Bytes
 //     Glyph Table   :   96 Bytes (  1.01 Bytes/glyph)
 //     Frag. Table   :   64 Bytes (100.00% used)
-//     Bytecodes     :  422 Bytes (  4.44 Bytes/glyph)
-//     Total         :  590 Bytes (  6.21 Bytes/glyph)
-//   Compression Performance:
+//     Byte Codes    :  425 Bytes (  4.47 Bytes/glyph)
+//     Total         :  593 Bytes (  6.24 Bytes/glyph)
+//   Instruction Performance:
 //     CPY   :   57 -->   27 (- 6.32%)
 //     LDI   :    1 -->    2 (+ 0.21%)
 //     LUD   :   64 -->   32 (- 6.74%)
@@ -28,7 +28,11 @@
 //     SFT   :   16 -->    7 (- 1.89%)
 //     XOR   :   23 -->   23 (  0.00%)
 //     Total :  475 -->  377 (-20.63%)
-//   Memory Efficiency:  6.441 px/Byte
+//   Byte Code References:
+//     Multiple References :   0 Bytes
+//     No Ref (ABO)        :  48 Bytes
+//     No Ref (Unexpected) :   0 Bytes
+//   Memory Efficiency:  6.408 px/Byte
 
 #include <stdint.h>
 
@@ -87,7 +91,7 @@ const uint8_t ShapoSansMono_s08c07_blob[] MAMEFONT_PROGMEM = {
   0x88, 0x91, 0xE1, 0x9C, 0x82, 0x89, 0xC1, 0x9C, 0x60, 0x3C, 0x8B, 0x68, 0x20, 0xB1, 0xFA, 0xDA,
   0x69, 0xFF, 0x96, 0x97, 0x8F, 0x69, 0x81, 0x99, 0xAB, 0x69, 0x96, 0x9C, 0x9D, 0xFC, 0xB1, 0xFF,
   0x81, 0xF5, 0x91, 0xBF, 0x81, 0xFF, 0xD8, 0xB5, 0xC0, 0xFF, 0xE1, 0xBC, 0x49, 0xFF, 0xC0, 0xB5,
-  0x89, 0x88, 0x88, 0x82, 0x01, 0x88
+  0x89, 0x88, 0x88, 0x82, 0x01, 0x88, 0xFF, 0xFF, 0xFF
 };
 
 #ifdef MAMEFONT_PROGMEM_SELF_DEFINED
