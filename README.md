@@ -75,6 +75,7 @@ Proportional number fonts optimized for compression with MameFont
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
+|<img src="img/sample/MameSeg7_s22c20w03g02.png" style="width: 250px;"><br>(Simulator not available)|**s22c20w03g02**<br>(GFXfont not available)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSeg7_s22c20w03g02.hpp) (624 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSeg7_s22c20w03g02.hpp) (630 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSeg7_s22c20w03g02.hpp) (583 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSeg7_s22c20w03g02.hpp) (581 B)|
 |<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSeg7_s40c38w06.h" target="_blank"><img src="img/sample/MameSeg7_s40c38w06.png" style="width: 250px;"></a>|**s40c38w06**<br>[GFXfont](gfxfont/cpp/include/MameSeg7_s40c38w06.h) (1.70 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSeg7_s40c38w06.hpp) (669 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSeg7_s40c38w06.hpp) (673 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSeg7_s40c38w06.hpp) (746 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSeg7_s40c38w06.hpp) (746 B)|
 |<img src="img/sample/MameSeg7_s40c38w06g02.png" style="width: 250px;"><br>(Simulator not available)|**s40c38w06g02**<br>(GFXfont not available)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSeg7_s40c38w06g02.hpp) (919 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSeg7_s40c38w06g02.hpp) (919 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSeg7_s40c38w06g02.hpp) (968 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSeg7_s40c38w06g02.hpp) (968 B)|
 
