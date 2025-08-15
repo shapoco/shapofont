@@ -19,14 +19,14 @@ COMMON_DEPENDENCIES := \
 	$(SHAPOFONT_PY) \
 	$(TOOLS_DIR)/design.py
 
-all: gfx_all mame_all
+all: gfx_all mame_all sample_all catalog
 
 configure:
 	$(CMD_PYTHON) Makefile.configure.py
 
 include Makefile.batch.mk
 
-catalog:
+catalog: gfx_all mame_all sample_all
 	$(CMD_PYTHON) Makefile.catalog.py
 
 doc_test:

@@ -63,9 +63,6 @@ with open("tmp.Makefile.batch.mk", "w") as f:
     f.write(f".PHONY: distclean_mame_cpp distclean_mame_json\n")
     f.write("\n")
 
-    f.write("all: gfx_all mame_all\n")
-    f.write("\n")
-
     f.write("GFX_HEADER_LIST =")
     for font in all_fonts:
         if font.gfx_header:
