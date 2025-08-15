@@ -76,7 +76,7 @@ class GrayBitmap:
         for y in range(self.height):
             for x in range(self.width):
                 v = self.get(x, y, 0)
-                v = int(pow(v / 255, 1.5) * 255)
+                #v = int(pow(v / 255, 0.5) * 255)
                 v = 32 + (v * 192 // 256)
                 pil_img.putpixel((x, y), v)
         pil_img.save(file_path)
