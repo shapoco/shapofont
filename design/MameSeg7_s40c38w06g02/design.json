@@ -1,0 +1,26 @@
+{
+    "codes": [
+        {
+            "from": 46,
+            "to": 46
+        },
+        {
+            "from": 48,
+            "to": 57
+        },
+        {
+            "from": 65,
+            "to": 70
+        }
+    ],
+    "dimensions": {
+        "body_size:": 40,
+        "cap_height": 38,
+        "weight": 6,
+        "x_spacing": 0
+    },
+    "bits_per_pixel": 2,
+    "sample": {
+        "text": "0.1234\n5678.9\nABCDEF"
+    }
+}
