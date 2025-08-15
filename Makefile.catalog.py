@@ -60,16 +60,30 @@ def make_family_catalog(f: io.TextIOWrapper, family_name: str, description: str)
         design_name = path.basename(path.dirname(design_file))
         dim_id = re.sub(r"^" + family_name + r"_", "", design_name)
 
-        sim_url = (
-            f"https://shapoco.github.io/shapofont/sim/#u=/shapofont/{design_name}.h"
-        )
-        sample_url = path.join(SAMPLE_IMAGE_DIR, f"{design_name}.png")
-        sample_thumb = f'<img src="{sample_url}" style="width: 250px;">'
-        sample_link = f'<a href="{sim_url}" target="_blank">{sample_thumb}</a>'
+        mGray = re.search(r"g\d+", dim_id)
+        is_gray = mGray and (int(mGray.group(0)[1:]) != 1)
 
-        gfx_url = path.join(GFXFONT_HEADER_DIR, f"{design_name}.h")
-        gfx_size = get_gfx_size(gfx_url)
-        gfx_link = f"[GFXfont]({gfx_url}) ({format_size(gfx_size)})"
+        sample_url = path.join(SAMPLE_IMAGE_DIR, f"{design_name}.png")
+
+        sim_url = None
+        if not is_gray:
+            sim_url = (
+                f"https://shapoco.github.io/shapofont/sim/#u=/shapofont/{design_name}.h"
+            )
+
+        sample_thumb = f'<img src="{sample_url}" style="width: 250px;">'
+        if sim_url:
+            sample_link = f'<a href="{sim_url}" target="_blank">{sample_thumb}</a>'
+        else:
+            sample_link = f"{sample_thumb}<br>(Simulator not available)"
+
+        gfx_url = None
+        gfx_size = None
+        gfx_link = "(GFXfont not available)"
+        if not is_gray:
+            gfx_url = path.join(GFXFONT_HEADER_DIR, f"{design_name}.h")
+            gfx_size = get_gfx_size(gfx_url)
+            gfx_link = f"[GFXfont]({gfx_url}) ({format_size(gfx_size)})"
 
         mame_url: dict[str, str] = {}
         mame_size: dict[str, int] = {}
@@ -84,7 +98,13 @@ def make_family_catalog(f: io.TextIOWrapper, family_name: str, description: str)
             )
         mame_links = "<br>".join(mame_link.values())
 
-        f.write(f"|{sample_link}|**{dim_id}**<br>{gfx_link}<br>{mame_links}|\n")
+        desc = f"**{dim_id}**"
+        if gfx_link:
+            desc += f"<br>{gfx_link}"
+        if mame_link:
+            desc += f"<br>{mame_links}"
+
+        f.write(f"|{sample_link}|{desc}|\n")
     f.write(f"\n")
 
 
@@ -102,9 +122,6 @@ with open("README.md", "r") as f:
 
     before_catalog = content[:start_index]
     after_catalog = content[end_index:]
-
-print(f"before_catalog: {before_catalog}")
-print(f"after_catalog: {after_catalog}")
 
 with open("tmp.README.md", "w") as f:
     f.write(before_catalog)

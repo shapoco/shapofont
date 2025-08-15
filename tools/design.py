@@ -36,7 +36,7 @@ class GrayBitmap:
     def create(w: int, h: int):
         return GrayBitmap([0] * (w * h), w, h, 0, w)
 
-    def from_file(file_path: str):
+    def from_file(file_path: str, bpp: int):
         pil_img = Image.open(file_path)
         width, height = pil_img.size
         data: list[int] = []
@@ -44,7 +44,18 @@ class GrayBitmap:
             for x in range(width):
                 (h, s, v) = to_hsv(pil_img.getpixel((x, y)))
                 if s < 64:
-                    data.append(v)
+                    if bpp == 1:
+                        data.append(0x00 if v < 128 else 0xFF)
+                    elif bpp == 2:
+                        if v < 64:
+                            data.append(0x00)
+                        elif v < 160:
+                            data.append(0x55)
+                        elif v < 224:
+                            data.append(0xAA)
+                        else:
+                            data.append(0xFF)
+                        
                     continue
                 elif s >= 128 and v > 128:
                     if h < 30 or 330 <= h:
@@ -64,8 +75,9 @@ class GrayBitmap:
         pil_img = Image.new("L", (self.width, self.height))
         for y in range(self.height):
             for x in range(self.width):
-                value = self.get(x, y, 0)
-                pil_img.putpixel((x, y), 255 if value < 128 else 0)
+                v = 255 - self.get(x, y, 0)
+                v = int(pow(v / 255, 1.5) * 255)
+                pil_img.putpixel((x, y), v)
         pil_img.save(file_path)
         pil_img.close()
 

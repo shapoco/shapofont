@@ -28,7 +28,7 @@ class RawGlyph:
 
 
 class BitmapFont:
-    RE_OPTION = re.compile(r"(?P<k>s|c|w|h|a|p)(?P<v>\d+)")
+    RE_OPTION = re.compile(r"(?P<k>s|c|a|w|g)(?P<v>\d+)")
 
     def __init__(self, dir_path: str):
         self.body_size = DIMENSION_INVALID
@@ -37,6 +37,7 @@ class BitmapFont:
         self.ascender_spacing = DIMENSION_INVALID
         self.default_x_spacing = DIMENSION_INVALID
         self.y_spacing = DIMENSION_INVALID
+        self.bits_per_pixel = DIMENSION_INVALID
 
         self.sample_text = ""
         self.sample_size = DIMENSION_INVALID
@@ -73,8 +74,8 @@ class BitmapFont:
         if "a" in dic:
             self.ascender_spacing = dic["a"]
 
-        # Load the image
-        self.bmp = GrayBitmap.from_file(path.join(dir_path, "design.png"))
+        if "g" in dic:
+            self.bits_per_pixel = dic["g"]
 
         # Default ASCII range
         self.codes = list(range(0x20, 0x7F))
@@ -105,6 +106,11 @@ class BitmapFont:
                     return value
                 return default_val
 
+            if "bits_per_pixel" in json_data:
+                self.bits_per_pixel = get_dim(
+                    json_data, "bits_per_pixel", self.bits_per_pixel
+                )
+
             if "dimensions" in json_data:
                 dims = json_data["dimensions"]
                 self.body_size = get_dim(dims, "body_size", self.body_size)
@@ -117,7 +123,7 @@ class BitmapFont:
                     dims, "x_spacing", self.default_x_spacing
                 )
                 self.y_spacing = get_dim(dims, "y_spacing", self.y_spacing)
-            
+
             if "sample" in json_data:
                 sample = json_data["sample"]
                 if "text" in sample:
@@ -147,6 +153,12 @@ class BitmapFont:
             self.y_spacing = math.ceil(
                 (self.body_size - self.ascender_spacing) * 1.2 - self.body_size
             )
+
+        if self.bits_per_pixel == DIMENSION_INVALID:
+            self.bits_per_pixel = 1
+
+        # Load the image
+        self.bmp = GrayBitmap.from_file(path.join(dir_path, "design.png"), self.bits_per_pixel)
 
         # Find Glyphs
         self.glyphs: dict[int, RawGlyph] = {}
@@ -208,6 +220,9 @@ class BitmapFont:
         return RawGlyph(code, bmp, left_anti_space, right_anti_space)
 
     def to_gfx_font(self, outdir: str):
+        if self.bits_per_pixel != 1:
+            raise "GFXfont format supports only bits_per_pixel=1"
+        
         out_file = path.join(outdir, f"{self.full_name}.h")
         # print(f"Generating GFXfont: {out_file}")
 

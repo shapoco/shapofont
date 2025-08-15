@@ -8,7 +8,8 @@
 //   Max Glyph Width : 5 px
 //   Total Pixels    : 3800 px
 //   Fragment Shape  : Vertical
-//   Bit Order       : MSB First
+//   Pixel Order     : Far Pixel First
+//   Pixel Format    : 1 bpp
 //   Large Font      : No
 //   Proportional    : No
 //   Ext. Header     : No
