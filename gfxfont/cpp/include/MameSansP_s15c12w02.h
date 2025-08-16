@@ -172,7 +172,7 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph MameSansP_s15c12w02Glyphs[] SHAPOFONT
   { 0x02E4,  3, 12,  4,  0, -12 },
   { 0x02E9,  4, 15,  4, -1, -12 },
   { 0x02F1,  7, 12,  8,  0, -12 },
-  { 0x02FC,  3, 12,  3, -1, -12 },
+  { 0x02FC,  3, 12,  4,  0, -12 },
   { 0x0301, 10,  8, 11,  0,  -8 },
   { 0x02DC,  8,  8,  9,  0,  -8 },
   { 0x030B,  8,  8,  9,  0,  -8 },
