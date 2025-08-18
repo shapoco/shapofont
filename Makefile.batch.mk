@@ -12,6 +12,7 @@ GFX_HEADER_LIST = \
 	gfxfont/cpp/include/ShapoSansP_s21c16a01w03.h \
 	gfxfont/cpp/include/MameSansDigitP_s64w08.h \
 	gfxfont/cpp/include/MameSansP_s15c12w02.h \
+	gfxfont/cpp/include/MameSansP_s15c12.h \
 	gfxfont/cpp/include/MameSeg7_s40c38w06.h \
 	gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h \
 	gfxfont/cpp/include/ShapoSansP_s08c07.h \
@@ -30,9 +31,11 @@ MAME_HL_HPP_LIST = \
 	mamefont/cpp/HL/include/MameSquareWide_s64c48a04w16.hpp \
 	mamefont/cpp/HL/include/ShapoSansP_s27c22a01w04.hpp \
 	mamefont/cpp/HL/include/MameSansP_s15c12w02g02.hpp \
+	mamefont/cpp/HL/include/MameSansP_s15c12g02.hpp \
 	mamefont/cpp/HL/include/ShapoSansP_s21c16a01w03.hpp \
 	mamefont/cpp/HL/include/MameSansDigitP_s64w08.hpp \
 	mamefont/cpp/HL/include/MameSansP_s15c12w02.hpp \
+	mamefont/cpp/HL/include/MameSansP_s15c12.hpp \
 	mamefont/cpp/HL/include/MameSeg7_s40c38w06.hpp \
 	mamefont/cpp/HL/include/MameSeg7_s40c38w06g02.hpp \
 	mamefont/cpp/HL/include/ShapoSansP_s12c09a01w02.hpp \
@@ -53,9 +56,11 @@ MAME_HL_JSON_LIST = \
 	mamefont/json/HL/MameSquareWide_s64c48a04w16.json \
 	mamefont/json/HL/ShapoSansP_s27c22a01w04.json \
 	mamefont/json/HL/MameSansP_s15c12w02g02.json \
+	mamefont/json/HL/MameSansP_s15c12g02.json \
 	mamefont/json/HL/ShapoSansP_s21c16a01w03.json \
 	mamefont/json/HL/MameSansDigitP_s64w08.json \
 	mamefont/json/HL/MameSansP_s15c12w02.json \
+	mamefont/json/HL/MameSansP_s15c12.json \
 	mamefont/json/HL/MameSeg7_s40c38w06.json \
 	mamefont/json/HL/MameSeg7_s40c38w06g02.json \
 	mamefont/json/HL/ShapoSansP_s12c09a01w02.json \
@@ -76,9 +81,11 @@ MAME_HM_HPP_LIST = \
 	mamefont/cpp/HM/include/MameSquareWide_s64c48a04w16.hpp \
 	mamefont/cpp/HM/include/ShapoSansP_s27c22a01w04.hpp \
 	mamefont/cpp/HM/include/MameSansP_s15c12w02g02.hpp \
+	mamefont/cpp/HM/include/MameSansP_s15c12g02.hpp \
 	mamefont/cpp/HM/include/ShapoSansP_s21c16a01w03.hpp \
 	mamefont/cpp/HM/include/MameSansDigitP_s64w08.hpp \
 	mamefont/cpp/HM/include/MameSansP_s15c12w02.hpp \
+	mamefont/cpp/HM/include/MameSansP_s15c12.hpp \
 	mamefont/cpp/HM/include/MameSeg7_s40c38w06.hpp \
 	mamefont/cpp/HM/include/MameSeg7_s40c38w06g02.hpp \
 	mamefont/cpp/HM/include/ShapoSansP_s12c09a01w02.hpp \
@@ -99,9 +106,11 @@ MAME_HM_JSON_LIST = \
 	mamefont/json/HM/MameSquareWide_s64c48a04w16.json \
 	mamefont/json/HM/ShapoSansP_s27c22a01w04.json \
 	mamefont/json/HM/MameSansP_s15c12w02g02.json \
+	mamefont/json/HM/MameSansP_s15c12g02.json \
 	mamefont/json/HM/ShapoSansP_s21c16a01w03.json \
 	mamefont/json/HM/MameSansDigitP_s64w08.json \
 	mamefont/json/HM/MameSansP_s15c12w02.json \
+	mamefont/json/HM/MameSansP_s15c12.json \
 	mamefont/json/HM/MameSeg7_s40c38w06.json \
 	mamefont/json/HM/MameSeg7_s40c38w06g02.json \
 	mamefont/json/HM/ShapoSansP_s12c09a01w02.json \
@@ -122,9 +131,11 @@ MAME_VL_HPP_LIST = \
 	mamefont/cpp/VL/include/MameSquareWide_s64c48a04w16.hpp \
 	mamefont/cpp/VL/include/ShapoSansP_s27c22a01w04.hpp \
 	mamefont/cpp/VL/include/MameSansP_s15c12w02g02.hpp \
+	mamefont/cpp/VL/include/MameSansP_s15c12g02.hpp \
 	mamefont/cpp/VL/include/ShapoSansP_s21c16a01w03.hpp \
 	mamefont/cpp/VL/include/MameSansDigitP_s64w08.hpp \
 	mamefont/cpp/VL/include/MameSansP_s15c12w02.hpp \
+	mamefont/cpp/VL/include/MameSansP_s15c12.hpp \
 	mamefont/cpp/VL/include/MameSeg7_s40c38w06.hpp \
 	mamefont/cpp/VL/include/MameSeg7_s40c38w06g02.hpp \
 	mamefont/cpp/VL/include/ShapoSansP_s12c09a01w02.hpp \
@@ -145,9 +156,11 @@ MAME_VL_JSON_LIST = \
 	mamefont/json/VL/MameSquareWide_s64c48a04w16.json \
 	mamefont/json/VL/ShapoSansP_s27c22a01w04.json \
 	mamefont/json/VL/MameSansP_s15c12w02g02.json \
+	mamefont/json/VL/MameSansP_s15c12g02.json \
 	mamefont/json/VL/ShapoSansP_s21c16a01w03.json \
 	mamefont/json/VL/MameSansDigitP_s64w08.json \
 	mamefont/json/VL/MameSansP_s15c12w02.json \
+	mamefont/json/VL/MameSansP_s15c12.json \
 	mamefont/json/VL/MameSeg7_s40c38w06.json \
 	mamefont/json/VL/MameSeg7_s40c38w06g02.json \
 	mamefont/json/VL/ShapoSansP_s12c09a01w02.json \
@@ -168,9 +181,11 @@ MAME_VM_HPP_LIST = \
 	mamefont/cpp/VM/include/MameSquareWide_s64c48a04w16.hpp \
 	mamefont/cpp/VM/include/ShapoSansP_s27c22a01w04.hpp \
 	mamefont/cpp/VM/include/MameSansP_s15c12w02g02.hpp \
+	mamefont/cpp/VM/include/MameSansP_s15c12g02.hpp \
 	mamefont/cpp/VM/include/ShapoSansP_s21c16a01w03.hpp \
 	mamefont/cpp/VM/include/MameSansDigitP_s64w08.hpp \
 	mamefont/cpp/VM/include/MameSansP_s15c12w02.hpp \
+	mamefont/cpp/VM/include/MameSansP_s15c12.hpp \
 	mamefont/cpp/VM/include/MameSeg7_s40c38w06.hpp \
 	mamefont/cpp/VM/include/MameSeg7_s40c38w06g02.hpp \
 	mamefont/cpp/VM/include/ShapoSansP_s12c09a01w02.hpp \
@@ -191,9 +206,11 @@ MAME_VM_JSON_LIST = \
 	mamefont/json/VM/MameSquareWide_s64c48a04w16.json \
 	mamefont/json/VM/ShapoSansP_s27c22a01w04.json \
 	mamefont/json/VM/MameSansP_s15c12w02g02.json \
+	mamefont/json/VM/MameSansP_s15c12g02.json \
 	mamefont/json/VM/ShapoSansP_s21c16a01w03.json \
 	mamefont/json/VM/MameSansDigitP_s64w08.json \
 	mamefont/json/VM/MameSansP_s15c12w02.json \
+	mamefont/json/VM/MameSansP_s15c12.json \
 	mamefont/json/VM/MameSeg7_s40c38w06.json \
 	mamefont/json/VM/MameSeg7_s40c38w06g02.json \
 	mamefont/json/VM/ShapoSansP_s12c09a01w02.json \
@@ -215,9 +232,11 @@ SAMPLE_IMAGE_LIST = \
 	img/sample/MameSquareWide_s64c48a04w16.png \
 	img/sample/ShapoSansP_s27c22a01w04.png \
 	img/sample/MameSansP_s15c12w02g02.png \
+	img/sample/MameSansP_s15c12g02.png \
 	img/sample/ShapoSansP_s21c16a01w03.png \
 	img/sample/MameSansDigitP_s64w08.png \
 	img/sample/MameSansP_s15c12w02.png \
+	img/sample/MameSansP_s15c12.png \
 	img/sample/MameSeg7_s40c38w06.png \
 	img/sample/MameSeg7_s40c38w06g02.png \
 	img/sample/ShapoSansP_s12c09a01w02.png \
@@ -401,6 +420,42 @@ img/sample/MameSansP_s15c12w02g02.png: design/MameSansP_s15c12w02g02/design.png 
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSansP_s15c12w02g02
 
+mamefont/cpp/HL/include/MameSansP_s15c12g02.hpp: mamefont/json/HL/MameSansP_s15c12g02.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/HL/MameSansP_s15c12g02.json -o mamefont/cpp/HL/include/MameSansP_s15c12g02.hpp
+
+mamefont/cpp/HM/include/MameSansP_s15c12g02.hpp: mamefont/json/HM/MameSansP_s15c12g02.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/HM/MameSansP_s15c12g02.json -o mamefont/cpp/HM/include/MameSansP_s15c12g02.hpp
+
+mamefont/cpp/VL/include/MameSansP_s15c12g02.hpp: mamefont/json/VL/MameSansP_s15c12g02.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/VL/MameSansP_s15c12g02.json -o mamefont/cpp/VL/include/MameSansP_s15c12g02.hpp
+
+mamefont/cpp/VM/include/MameSansP_s15c12g02.hpp: mamefont/json/VM/MameSansP_s15c12g02.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/VM/MameSansP_s15c12g02.json -o mamefont/cpp/VM/include/MameSansP_s15c12g02.hpp
+
+mamefont/json/HL/MameSansP_s15c12g02.json: design/MameSansP_s15c12g02/design.png design/MameSansP_s15c12g02/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e HL -i design/MameSansP_s15c12g02/design.png -o $@
+
+mamefont/json/HM/MameSansP_s15c12g02.json: design/MameSansP_s15c12g02/design.png design/MameSansP_s15c12g02/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e HM -i design/MameSansP_s15c12g02/design.png -o $@
+
+mamefont/json/VL/MameSansP_s15c12g02.json: design/MameSansP_s15c12g02/design.png design/MameSansP_s15c12g02/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e VL -i design/MameSansP_s15c12g02/design.png -o $@
+
+mamefont/json/VM/MameSansP_s15c12g02.json: design/MameSansP_s15c12g02/design.png design/MameSansP_s15c12g02/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e VM -i design/MameSansP_s15c12g02/design.png -o $@
+
+img/sample/MameSansP_s15c12g02.png: design/MameSansP_s15c12g02/design.png design/MameSansP_s15c12g02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSansP_s15c12g02
+
 gfxfont/cpp/include/ShapoSansP_s21c16a01w03.h: design/ShapoSansP_s21c16a01w03/design.png design/ShapoSansP_s21c16a01w03/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/ShapoSansP_s21c16a01w03
@@ -520,6 +575,46 @@ mamefont/json/VM/MameSansP_s15c12w02.json: design/MameSansP_s15c12w02/design.png
 img/sample/MameSansP_s15c12w02.png: design/MameSansP_s15c12w02/design.png design/MameSansP_s15c12w02/design.json $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSansP_s15c12w02
+
+gfxfont/cpp/include/MameSansP_s15c12.h: design/MameSansP_s15c12/design.png design/MameSansP_s15c12/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --outdir_gfx_c $(dir $@) -i design/MameSansP_s15c12
+
+mamefont/cpp/HL/include/MameSansP_s15c12.hpp: mamefont/json/HL/MameSansP_s15c12.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/HL/MameSansP_s15c12.json -o mamefont/cpp/HL/include/MameSansP_s15c12.hpp
+
+mamefont/cpp/HM/include/MameSansP_s15c12.hpp: mamefont/json/HM/MameSansP_s15c12.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/HM/MameSansP_s15c12.json -o mamefont/cpp/HM/include/MameSansP_s15c12.hpp
+
+mamefont/cpp/VL/include/MameSansP_s15c12.hpp: mamefont/json/VL/MameSansP_s15c12.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/VL/MameSansP_s15c12.json -o mamefont/cpp/VL/include/MameSansP_s15c12.hpp
+
+mamefont/cpp/VM/include/MameSansP_s15c12.hpp: mamefont/json/VM/MameSansP_s15c12.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -i mamefont/json/VM/MameSansP_s15c12.json -o mamefont/cpp/VM/include/MameSansP_s15c12.hpp
+
+mamefont/json/HL/MameSansP_s15c12.json: design/MameSansP_s15c12/design.png design/MameSansP_s15c12/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e HL -i design/MameSansP_s15c12/design.png -o $@
+
+mamefont/json/HM/MameSansP_s15c12.json: design/MameSansP_s15c12/design.png design/MameSansP_s15c12/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e HM -i design/MameSansP_s15c12/design.png -o $@
+
+mamefont/json/VL/MameSansP_s15c12.json: design/MameSansP_s15c12/design.png design/MameSansP_s15c12/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e VL -i design/MameSansP_s15c12/design.png -o $@
+
+mamefont/json/VM/MameSansP_s15c12.json: design/MameSansP_s15c12/design.png design/MameSansP_s15c12/design.json $(CMD_MAMEC) $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_MAMEC) -e VM -i design/MameSansP_s15c12/design.png -o $@
+
+img/sample/MameSansP_s15c12.png: design/MameSansP_s15c12/design.png design/MameSansP_s15c12/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_PYTHON) $(SHAPOFONT_PY) --sample_img $@ -i design/MameSansP_s15c12
 
 gfxfont/cpp/include/MameSeg7_s40c38w06.h: design/MameSeg7_s40c38w06/design.png design/MameSeg7_s40c38w06/design.json $(GFXFONT_PY) $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
