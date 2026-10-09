@@ -8,7 +8,7 @@ APP_SRC_DIR := $(APP_TS_DIR)/src
 APP_BUILD_DIR := $(APP_TS_DIR)/.build
 APP_TS_LIST := $(wildcard $(APP_SRC_DIR)/*.ts)
 APP_DIST_DIR := $(REPO_DIR)/docs/$(APP_NAME)
-APP_JS := $(APP_DIST_DIR)/sim.js
+APP_JS := $(APP_DIST_DIR)/$(APP_NAME).js
 
 EXTRA_DEPENDENCIES := \
 	$(APP_TS_DIR)/tsconfig.json \

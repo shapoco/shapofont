@@ -2,14 +2,14 @@
 
 // Generated from ShapoFont
 //   Pixel Count:
-//     Effective: 19593 px
+//     Effective: 19488 px
 //     Shrinked : 13197 px
 //   Estimated Foot Print:
 //     Bitmap Data    :  1654 Bytes ( 17.41 Bytes/glyph)
 //     Glyph Table    :   760 Bytes (  8.00 Bytes/glyph)
 //     GFXfont Struct :    10 Bytes
 //     Total          :  2424 Bytes ( 25.52 Bytes/glyph)
-//   Memory Efficiency:  8.083 px/Byte
+//   Memory Efficiency:  8.040 px/Byte
 
 #include <stdint.h>
 
@@ -206,7 +206,7 @@ const SHAPOFONT_GFXFONT_NAMESPACE GFXglyph ShapoSansP_s21c16a01w03Glyphs[] SHAPO
   { 0x0487,  9, 18, 11,  0, -17 },
   { 0x049C,  5, 18,  7,  0, -17 },
   { 0x04A8,  8,  7, 10,  0, -17 },
-  { 0x01BA,  9,  3, 16,  0,  -3 },
+  { 0x01BA,  9,  3, 11,  0,  -3 },
   { 0x04AF,  5,  6,  7,  0, -17 },
   { 0x04B3, 10, 11, 12,  0, -11 },
   { 0x04C1, 10, 16, 12,  0, -16 },

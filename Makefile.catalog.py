@@ -142,6 +142,11 @@ with open("tmp.README.md", "w") as f:
     )
     make_family_catalog(
         f,
+        "ShapoSquareRoundP",
+        "Proportional fonts for embedded projects",
+    )
+    make_family_catalog(
+        f,
         "MameSansP",
         "Proportional fonts optimized for compression with MameFont",
     )
