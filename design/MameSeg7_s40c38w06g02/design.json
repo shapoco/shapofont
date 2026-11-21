@@ -14,7 +14,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 40,
+        "body_size": 40,
         "cap_height": 38,
         "weight": 6,
         "x_spacing": 0

@@ -7,7 +7,7 @@
     ],
     "bits_per_pixel": 2,
     "dimensions": {
-        "body_size:": 15,
+        "body_size": 15,
         "cap_height": 12,
         "weight": 2,
         "x_spacing": 2

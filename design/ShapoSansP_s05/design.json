@@ -6,7 +6,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 5,
+        "body_size": 5,
         "x_spacing": 1
     }
 }

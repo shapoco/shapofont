@@ -10,7 +10,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 64,
+        "body_size": 64,
         "x_spacing": 4
     }
 }

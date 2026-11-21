@@ -61,6 +61,15 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var _this = this;
 function parseCInt(name, s) {
     s = s.trim();
@@ -140,24 +149,55 @@ function reverseByte(byte) {
     byte = ((byte & 0xAA) >> 1) | ((byte & 0x55) << 1);
     return byte;
 }
+function stripComments(src) {
+    return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+function stripPreprocessorLines(src) {
+    return src.replace(/^[ \t]*#.*$/gm, '');
+}
+/** Parses `{ .a = 1, .b = &x, ... }` style designated initializers into a map. */
+function parseDesignatedInitializer(body) {
+    var fields = new Map();
+    var re = /\.(\w+)\s*=\s*([^,}]+)/g;
+    var m;
+    while ((m = re.exec(body)) !== null) {
+        fields.set(m[1], m[2].trim());
+    }
+    return fields;
+}
+function requireField(fields, owner, name) {
+    var value = fields.get(name);
+    if (value === undefined) {
+        throw new Error("Missing field in ".concat(owner, ": .").concat(name));
+    }
+    return value;
+}
+/** Finds `TYPE name[] = { ... }` and returns its integer elements. */
+function findCIntArray(src, name, what) {
+    var re = new RegExp("\\b(uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|unsigned\\s+char|char)\\s+(const\\s+)?".concat(name) +
+        "\\s*\\[\\s*\\]\\s*=\\s*\\{([^\\}]*)\\}", 'm');
+    var m = re.exec(src);
+    if (!m)
+        throw new Error("Failed to find array: ".concat(name, " (").concat(what, ")"));
+    return m[3].split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s !== ''; }).map(function (s) { return parseCInt(what, s); });
+}
 var ScanType;
 (function (ScanType) {
+    /** 1 bpp, rows packed back to back, MSB first (GFXfont) */
     ScanType[ScanType["HORIZONTAL_PACKED"] = 0] = "HORIZONTAL_PACKED";
-    ScanType[ScanType["HORIZONTAL_FRAGMENT"] = 1] = "HORIZONTAL_FRAGMENT";
-    ScanType[ScanType["VERTICAL_FRAGMENT"] = 2] = "VERTICAL_FRAGMENT";
+    /** 1/2/4/8 bpp, rows packed back to back, MSB first (LVGL plain format) */
+    ScanType[ScanType["LVGL_PACKED"] = 1] = "LVGL_PACKED";
 })(ScanType || (ScanType = {}));
 var GrayBitmap = /** @class */ (function () {
-    function GrayBitmap(width, height, rawData, scanType, msb1st) {
+    function GrayBitmap(width, height, rawData, scanType, msb1st, bitsPerPixel) {
         if (msb1st === void 0) { msb1st = false; }
+        if (bitsPerPixel === void 0) { bitsPerPixel = 1; }
         this.width = width;
         this.height = height;
         this.rawData = rawData;
         this.scanType = scanType;
         this.msb1st = msb1st;
-        this.scanType = scanType;
-        this.msb1st = msb1st;
-        this.width = width;
-        this.height = height;
+        this.bitsPerPixel = bitsPerPixel;
         var grayData = new Uint8Array(width * height);
         switch (scanType) {
             case ScanType.HORIZONTAL_PACKED:
@@ -177,6 +217,20 @@ var GrayBitmap = /** @class */ (function () {
                             sreg >>= 1;
                             ibit--;
                         }
+                    }
+                }
+                break;
+            case ScanType.LVGL_PACKED:
+                {
+                    var bpp = bitsPerPixel;
+                    var maxLevel = (1 << bpp) - 1;
+                    var bitPos = 0;
+                    for (var i = 0; i < width * height; i++) {
+                        var byte = rawData[bitPos >> 3];
+                        var shift = 8 - bpp - (bitPos & 7);
+                        var level = (byte >> shift) & maxLevel;
+                        grayData[i] = Math.round(level * 255 / maxLevel);
+                        bitPos += bpp;
                     }
                 }
                 break;
@@ -233,21 +287,26 @@ var Glyph = /** @class */ (function () {
 }());
 var Font = /** @class */ (function () {
     function Font(src) {
-        this.src = src;
+        this.format = '';
+        this.firstCode = 0;
+        this.lastCode = 0;
+        this.yAdvance = 0;
         this.glyphs = new Map();
-        this.src = src;
+        src = stripComments(src);
         var success = false;
         if (!success)
             success = this.tryParseGfxFont(src);
         if (!success)
-            throw new Error('Unknown Font Format');
+            success = this.tryParseLvglFont(src);
+        if (!success)
+            throw new Error('Unknown Font Format (GFXfont and LVGL fonts are supported)');
     }
     Font.prototype.tryParseGfxFont = function (src) {
         var e_2, _a;
-        src = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
         var mGfxFont = /GFXfont\s+(\w+)(\s*\w+)?\s*=\s*\{([^\}]+)\}/gm.exec(src);
         if (!mGfxFont)
             return false;
+        this.format = 'GFXfont';
         var fontParams = mGfxFont[3].split(',');
         if (fontParams.length < 5) {
             throw new Error('Too few parameters for struct GFXfont');
@@ -334,8 +393,142 @@ var Font = /** @class */ (function () {
         }
         return true;
     };
+    Font.prototype.tryParseLvglFont = function (src) {
+        var e_3, _a, e_4, _b, e_5, _c;
+        var _d, _e, _f, _g;
+        src = stripPreprocessorLines(src);
+        var mFont = /\blv_font_t\s+(\w+)\s*=\s*\{([^\}]*)\}/m.exec(src);
+        if (!mFont)
+            return false;
+        this.format = 'LVGL';
+        var fontFields = parseDesignatedInitializer(mFont[2]);
+        this.yAdvance = parseCInt('lv_font_t.line_height', requireField(fontFields, 'lv_font_t', 'line_height'));
+        var dscName = requireField(fontFields, 'lv_font_t', 'dsc').replace(/^&\s*/, '');
+        var mDsc = new RegExp("\\blv_font_fmt_txt_dsc_t\\s+".concat(dscName, "\\s*=\\s*\\{([^\\}]*)\\}"), 'm').exec(src);
+        if (!mDsc)
+            throw new Error("Failed to find font descriptor: ".concat(dscName));
+        var dscFields = parseDesignatedInitializer(mDsc[1]);
+        var bitmapFormat = parseCInt('bitmap_format', (_d = dscFields.get('bitmap_format')) !== null && _d !== void 0 ? _d : '0');
+        if (bitmapFormat !== 0) {
+            throw new Error('Compressed LVGL fonts are not supported. Convert with --no-compress.');
+        }
+        var bpp = parseCInt('bpp', requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'bpp'));
+        if (![1, 2, 4, 8].includes(bpp))
+            throw new Error("Unsupported bpp: ".concat(bpp));
+        var bitmapData = new Uint8Array(findCIntArray(src, requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_bitmap'), 'glyph bitmap'));
+        // Glyph descriptors
+        var glyphDscName = requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_dsc');
+        var mGlyphDsc = new RegExp("\\blv_font_fmt_txt_glyph_dsc_t\\s+".concat(glyphDscName, "\\s*\\[\\s*\\]\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*;"), 'm').exec(src);
+        if (!mGlyphDsc)
+            throw new Error("Failed to find glyph descriptors: ".concat(glyphDscName));
+        var GLYPH_DSC_FIELDS = ['bitmap_index', 'adv_w', 'box_w', 'box_h', 'ofs_x', 'ofs_y'];
+        var glyphDscs = [];
+        var _loop_1 = function (m) {
+            var fields = parseDesignatedInitializer(m[1]);
+            if (fields.size > 0) {
+                glyphDscs.push(GLYPH_DSC_FIELDS.map(function (f) { var _a; return parseCInt("glyph_dsc.".concat(f), (_a = fields.get(f)) !== null && _a !== void 0 ? _a : '0'); }));
+            }
+            else {
+                var values = m[1].split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s !== ''; });
+                if (values.length < GLYPH_DSC_FIELDS.length) {
+                    throw new Error("Too few parameters for lv_font_fmt_txt_glyph_dsc_t: ".concat(m[0]));
+                }
+                glyphDscs.push(values.slice(0, GLYPH_DSC_FIELDS.length).map(function (v) { return parseCInt('glyph_dsc', v); }));
+            }
+        };
+        try {
+            for (var _h = __values(mGlyphDsc[1].matchAll(/\{([^\}]*)\}/g)), _j = _h.next(); !_j.done; _j = _h.next()) {
+                var m = _j.value;
+                _loop_1(m);
+            }
+        }
+        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        finally {
+            try {
+                if (_j && !_j.done && (_a = _h.return)) _a.call(_h);
+            }
+            finally { if (e_3) throw e_3.error; }
+        }
+        // Character maps: code point --> glyph id
+        var cmapsName = requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'cmaps');
+        var mCmaps = new RegExp("\\blv_font_fmt_txt_cmap_t\\s+".concat(cmapsName, "\\s*\\[\\s*\\]\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*;"), 'm').exec(src);
+        if (!mCmaps)
+            throw new Error("Failed to find character maps: ".concat(cmapsName));
+        var codeToGid = new Map();
+        var _loop_2 = function (m) {
+            var fields = parseDesignatedInitializer(m[1]);
+            if (fields.size === 0)
+                return "continue";
+            var rangeStart = parseCInt('cmap.range_start', requireField(fields, 'cmap', 'range_start'));
+            var rangeLength = parseCInt('cmap.range_length', requireField(fields, 'cmap', 'range_length'));
+            var gidStart = parseCInt('cmap.glyph_id_start', requireField(fields, 'cmap', 'glyph_id_start'));
+            var unicodeListName = (_e = fields.get('unicode_list')) !== null && _e !== void 0 ? _e : 'NULL';
+            var gidOfsListName = (_f = fields.get('glyph_id_ofs_list')) !== null && _f !== void 0 ? _f : 'NULL';
+            var unicodeList = unicodeListName === 'NULL' ? null : findCIntArray(src, unicodeListName, 'unicode list');
+            var gidOfsList = gidOfsListName === 'NULL' ? null : findCIntArray(src, gidOfsListName, 'glyph id offset list');
+            // Same rules as LVGL's lv_font_fmt_txt.c: the list pointers decide the format
+            if (!unicodeList) {
+                for (var rcp = 0; rcp < rangeLength; rcp++) {
+                    var gid = gidOfsList ? gidStart + ((_g = gidOfsList[rcp]) !== null && _g !== void 0 ? _g : 0) : gidStart + rcp;
+                    codeToGid.set(rangeStart + rcp, gid);
+                }
+            }
+            else {
+                unicodeList.forEach(function (rcp, i) {
+                    var _a;
+                    var gid = gidOfsList ? gidStart + ((_a = gidOfsList[i]) !== null && _a !== void 0 ? _a : 0) : gidStart + i;
+                    codeToGid.set(rangeStart + rcp, gid);
+                });
+            }
+        };
+        try {
+            for (var _k = __values(mCmaps[1].matchAll(/\{([^\}]*)\}/g)), _l = _k.next(); !_l.done; _l = _k.next()) {
+                var m = _l.value;
+                _loop_2(m);
+            }
+        }
+        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        finally {
+            try {
+                if (_l && !_l.done && (_b = _k.return)) _b.call(_k);
+            }
+            finally { if (e_4) throw e_4.error; }
+        }
+        try {
+            for (var codeToGid_1 = __values(codeToGid), codeToGid_1_1 = codeToGid_1.next(); !codeToGid_1_1.done; codeToGid_1_1 = codeToGid_1.next()) {
+                var _m = __read(codeToGid_1_1.value, 2), code = _m[0], gid = _m[1];
+                if (gid <= 0 || gid >= glyphDscs.length)
+                    continue;
+                var _o = __read(glyphDscs[gid], 6), bitmapIndex = _o[0], advW = _o[1], boxW = _o[2], boxH = _o[3], ofsX = _o[4], ofsY = _o[5];
+                var bmp = null;
+                if (boxW > 0 && boxH > 0) {
+                    var numBytes = Math.ceil(boxW * boxH * bpp / 8);
+                    if (bitmapIndex < 0 || bitmapData.length < bitmapIndex + numBytes) {
+                        throw new Error("Glyph bitmap out of range: U+".concat(code.toString(16).toUpperCase()));
+                    }
+                    bmp = new GrayBitmap(boxW, boxH, bitmapData.subarray(bitmapIndex, bitmapIndex + numBytes), ScanType.LVGL_PACKED, true, bpp);
+                }
+                // LVGL: adv_w is in 1/16 px and rounded; ofs_y is the box bottom measured up from the baseline
+                var xAdvance = (advW + 8) >> 4;
+                this.glyphs.set(code, new Glyph(bitmapIndex, bmp, boxW, boxH, xAdvance, ofsX, -(ofsY + boxH)));
+            }
+        }
+        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        finally {
+            try {
+                if (codeToGid_1_1 && !codeToGid_1_1.done && (_c = codeToGid_1.return)) _c.call(codeToGid_1);
+            }
+            finally { if (e_5) throw e_5.error; }
+        }
+        if (this.glyphs.size === 0)
+            throw new Error('No glyphs found in LVGL font');
+        var codes = Array.from(this.glyphs.keys());
+        this.firstCode = Math.min.apply(Math, __spreadArray([], __read(codes), false));
+        this.lastCode = Math.max.apply(Math, __spreadArray([], __read(codes), false));
+        return true;
+    };
     Font.prototype.getPreferredOriginY = function () {
-        var e_3, _a;
+        var e_6, _a;
         var y = 0;
         try {
             for (var _b = __values(this.glyphs.values()), _c = _b.next(); !_c.done; _c = _b.next()) {
@@ -345,12 +538,12 @@ var Font = /** @class */ (function () {
                 }
             }
         }
-        catch (e_3_1) { e_3 = { error: e_3_1 }; }
+        catch (e_6_1) { e_6 = { error: e_6_1 }; }
         finally {
             try {
                 if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
             }
-            finally { if (e_3) throw e_3.error; }
+            finally { if (e_6) throw e_6.error; }
         }
         return y;
     };
@@ -374,7 +567,7 @@ var Character = /** @class */ (function () {
 }());
 var App = /** @class */ (function () {
     function App() {
-        var e_4, _a, e_5, _b;
+        var e_7, _a, e_8, _b;
         var _this = this;
         this.parseRequestId = -1;
         this.updatePreviewRequestId = -1;
@@ -413,12 +606,12 @@ var App = /** @class */ (function () {
                 box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
-        catch (e_4_1) { e_4 = { error: e_4_1 }; }
+        catch (e_7_1) { e_7 = { error: e_7_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_4) throw e_4.error; }
+            finally { if (e_7) throw e_7.error; }
         }
         var previewOptions = document.querySelector('#preview-options');
         try {
@@ -428,12 +621,12 @@ var App = /** @class */ (function () {
                 box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
-        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+        catch (e_8_1) { e_8 = { error: e_8_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_5) throw e_5.error; }
+            finally { if (e_8) throw e_8.error; }
         }
         document.querySelector('#color-swap').addEventListener('click', function () {
             var fg = _this.fgColorBox.value;
@@ -443,7 +636,7 @@ var App = /** @class */ (function () {
             _this.requestUpdatePreview();
         });
         document.querySelector('#color-rotate').addEventListener('click', function () {
-            var e_6, _a;
+            var e_9, _a;
             try {
                 for (var _b = __values([_this.fgColorBox, _this.bgColorBox]), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var box = _c.value;
@@ -455,32 +648,34 @@ var App = /** @class */ (function () {
                     box.value = encodeColor(rgb);
                 }
             }
-            catch (e_6_1) { e_6 = { error: e_6_1 }; }
+            catch (e_9_1) { e_9 = { error: e_9_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_6) throw e_6.error; }
+                finally { if (e_9) throw e_9.error; }
             }
             _this.requestUpdatePreview();
         });
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var hash, srcUrl, sampleText, allowedUrls, params, params_1, params_1_1, param, _a, key, value, url, accepted, _b, _c, _d, key_1, prefix, fontSrc, fontText, error_1;
-            var e_7, _e, e_8, _f;
-            return __generator(this, function (_g) {
-                switch (_g.label) {
+            var hash, srcUrl, sampleText, REPO_RAW, allowedUrls, params, params_1, params_1_1, param, _a, key, value, url, accepted, allowedUrls_1, allowedUrls_1_1, _b, key_1, prefix, fontSrc, fontText, error_1;
+            var e_10, _c, e_11, _d;
+            return __generator(this, function (_e) {
+                switch (_e.label) {
                     case 0:
-                        _g.trys.push([0, 4, , 5]);
+                        _e.trys.push([0, 4, , 5]);
                         hash = window.location.hash;
                         srcUrl = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
                         sampleText = ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
-                        allowedUrls = {
-                            '/shapofont/': 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/',
-                            '/ghuc/': 'https://raw.githubusercontent.com/',
-                            '/gist/': 'https://gist.githubusercontent.com/',
-                        };
+                        REPO_RAW = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/';
+                        allowedUrls = [
+                            ['/shapofont/lvgl/', REPO_RAW + 'lvgl/'],
+                            ['/shapofont/', REPO_RAW + 'gfxfont/cpp/include/'],
+                            ['/ghuc/', 'https://raw.githubusercontent.com/'],
+                            ['/gist/', 'https://gist.githubusercontent.com/'],
+                        ];
                         if (hash.startsWith('#')) {
                             hash = hash.slice(1);
                             params = hash.split('&');
@@ -494,11 +689,12 @@ var App = /** @class */ (function () {
                                                 url = decodeURIComponent(value);
                                                 accepted = false;
                                                 try {
-                                                    for (_b = (e_8 = void 0, __values(Object.entries(allowedUrls))), _c = _b.next(); !_c.done; _c = _b.next()) {
-                                                        _d = __read(_c.value, 2), key_1 = _d[0], prefix = _d[1];
+                                                    for (allowedUrls_1 = (e_11 = void 0, __values(allowedUrls)), allowedUrls_1_1 = allowedUrls_1.next(); !allowedUrls_1_1.done; allowedUrls_1_1 = allowedUrls_1.next()) {
+                                                        _b = __read(allowedUrls_1_1.value, 2), key_1 = _b[0], prefix = _b[1];
                                                         if (url.startsWith(prefix)) {
                                                             srcUrl = url;
                                                             accepted = true;
+                                                            break;
                                                         }
                                                         else if (url.startsWith(key_1)) {
                                                             srcUrl = prefix + url.slice(key_1.length);
@@ -507,12 +703,12 @@ var App = /** @class */ (function () {
                                                         }
                                                     }
                                                 }
-                                                catch (e_8_1) { e_8 = { error: e_8_1 }; }
+                                                catch (e_11_1) { e_11 = { error: e_11_1 }; }
                                                 finally {
                                                     try {
-                                                        if (_c && !_c.done && (_f = _b.return)) _f.call(_b);
+                                                        if (allowedUrls_1_1 && !allowedUrls_1_1.done && (_d = allowedUrls_1.return)) _d.call(allowedUrls_1);
                                                     }
-                                                    finally { if (e_8) throw e_8.error; }
+                                                    finally { if (e_11) throw e_11.error; }
                                                 }
                                                 if (!accepted) {
                                                     throw new Error('Disallowed URL.');
@@ -534,29 +730,29 @@ var App = /** @class */ (function () {
                                     }
                                 }
                             }
-                            catch (e_7_1) { e_7 = { error: e_7_1 }; }
+                            catch (e_10_1) { e_10 = { error: e_10_1 }; }
                             finally {
                                 try {
-                                    if (params_1_1 && !params_1_1.done && (_e = params_1.return)) _e.call(params_1);
+                                    if (params_1_1 && !params_1_1.done && (_c = params_1.return)) _c.call(params_1);
                                 }
-                                finally { if (e_7) throw e_7.error; }
+                                finally { if (e_10) throw e_10.error; }
                             }
                         }
                         this.sampleTextBox.value = sampleText;
                         if (!srcUrl) return [3 /*break*/, 3];
                         return [4 /*yield*/, fetch(srcUrl)];
                     case 1:
-                        fontSrc = _g.sent();
+                        fontSrc = _e.sent();
                         return [4 /*yield*/, fontSrc.text()];
                     case 2:
-                        fontText = _g.sent();
+                        fontText = _e.sent();
                         document.querySelector('#font-src').value =
                             fontText;
                         this.runParse();
-                        _g.label = 3;
+                        _e.label = 3;
                     case 3: return [3 /*break*/, 5];
                     case 4:
-                        error_1 = _g.sent();
+                        error_1 = _e.sent();
                         this.logError(error_1.message);
                         return [3 /*break*/, 5];
                     case 5: return [2 /*return*/];
@@ -566,6 +762,8 @@ var App = /** @class */ (function () {
     };
     App.prototype.requestParse = function () {
         var _this = this;
+        if (this.parseRequestId >= 0)
+            clearTimeout(this.parseRequestId);
         this.parseRequestId = setTimeout(function () { return _this.runParse(); }, 300);
     };
     App.prototype.runParse = function () {
@@ -577,7 +775,9 @@ var App = /** @class */ (function () {
         try {
             var font = new Font(fontSrc);
             this.font = font;
-            this.logInfo("firstCode: ".concat(codeToStr(font.firstCode), ", ") +
+            this.logInfo("format: ".concat(font.format, ", ") +
+                "glyphs: ".concat(font.glyphs.size, ", ") +
+                "firstCode: ".concat(codeToStr(font.firstCode), ", ") +
                 "lastCode: ".concat(codeToStr(font.lastCode), ", ") +
                 "yAdvance: ".concat(font.yAdvance));
         }
@@ -593,10 +793,12 @@ var App = /** @class */ (function () {
     };
     App.prototype.requestUpdatePreview = function () {
         var _this = this;
+        if (this.updatePreviewRequestId >= 0)
+            clearTimeout(this.updatePreviewRequestId);
         this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
     };
     App.prototype.updatePreview = function () {
-        var e_9, _a, e_10, _b;
+        var e_12, _a, e_13, _b;
         if (this.updatePreviewRequestId >= 0) {
             clearTimeout(this.updatePreviewRequestId);
             this.updatePreviewRequestId = -1;
@@ -632,12 +834,12 @@ var App = /** @class */ (function () {
                 textBottom = Math.max(textBottom, c.getBottom());
             }
         }
-        catch (e_9_1) { e_9 = { error: e_9_1 }; }
+        catch (e_12_1) { e_12 = { error: e_12_1 }; }
         finally {
             try {
                 if (chars_1_1 && !chars_1_1.done && (_a = chars_1.return)) _a.call(chars_1);
             }
-            finally { if (e_9) throw e_9.error; }
+            finally { if (e_12) throw e_12.error; }
         }
         var textWidth = textRight - originX;
         var textHeight = textBottom - originY;
@@ -694,16 +896,16 @@ var App = /** @class */ (function () {
                 c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, fgColorStr);
             }
         }
-        catch (e_10_1) { e_10 = { error: e_10_1 }; }
+        catch (e_13_1) { e_13 = { error: e_13_1 }; }
         finally {
             try {
                 if (chars_2_1 && !chars_2_1.done && (_b = chars_2.return)) _b.call(chars_2);
             }
-            finally { if (e_10) throw e_10.error; }
+            finally { if (e_13) throw e_13.error; }
         }
     };
     App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
-        var e_11, _a;
+        var e_14, _a;
         var cursorX = x;
         var cursorY = y;
         var characters = [];
@@ -724,12 +926,12 @@ var App = /** @class */ (function () {
                 }
             }
         }
-        catch (e_11_1) { e_11 = { error: e_11_1 }; }
+        catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
                 if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
             }
-            finally { if (e_11) throw e_11.error; }
+            finally { if (e_14) throw e_14.error; }
         }
         return characters;
     };

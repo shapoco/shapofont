@@ -3,17 +3,14 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/submodules/Adafruit-GFX-Library",
-                "${workspaceFolder}/../mamefont/cpp/include"
+                "${workspaceFolder}/submodules/Adafruit-GFX-Library"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu11",
             "cppStandard": "gnu++14",
             "intelliSenseMode": "linux-gcc-x64",
             "defines": [
-                "SHAPOFONT_INCLUDE_GFXFONT",
-                "MAMEFONT_STM_VERBOSE",
-                "TEST_FONT_NAME=ShapoSansP_s11c09w2a1"
+                "SHAPOFONT_INCLUDE_GFXFONT"
             ]
         }
     ],

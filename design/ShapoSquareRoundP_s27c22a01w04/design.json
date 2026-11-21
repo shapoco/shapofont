@@ -6,7 +6,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 27,
+        "body_size": 27,
         "cap_height": 22,
         "ascender_spacing": 1,
         "weight": 4,

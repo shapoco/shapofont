@@ -2,11 +2,15 @@ venv/
 bin/
 build/
 .build/
+dist/
 __pycache__/
+*.egg-info/
+.pytest_cache/
 tmp.*/
 tmp.*
 bak.*/
 bak.*
+*.tmp
 a.out
 *.o
 *.log

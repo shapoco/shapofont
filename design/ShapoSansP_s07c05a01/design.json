@@ -6,7 +6,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 7,
+        "body_size": 7,
         "cap_height": 5,
         "ascender_spacing": 1,
         "x_spacing": 1

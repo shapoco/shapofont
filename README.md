@@ -5,13 +5,16 @@
 
 - Bitmap fonts for embedded projects<br>
     組み込み向けビットマップフォント
-- Tools for generating GFXfont from PNG images<br>
-    「ペイント」などでデザインしたフォントから GFXfont を生成するツール
+- Tools for generating [GFXfont](https://github.com/adafruit/Adafruit-GFX-Library) and [LVGL](https://lvgl.io/) fonts from PNG images<br>
+    「ペイント」などでデザインしたフォントから GFXfont / LVGL フォントを生成するツール
 
 # Font Catalog
 
-Click thumbnail to open the font with [GFXfont Web Simulator](https://shapoco.github.io/shapofont/sim/).<br>
+Click thumbnail to open the font with the [Web Simulator](https://shapoco.github.io/shapofont/sim/).<br>
 サムネイルをクリックすると[ブラウザ上のシミュレータ](https://shapoco.github.io/shapofont/sim/)でお試しできます。
+
+- **GFXfont**: 1 bpp (monochrome) fonts for Adafruit GFX, LovyanGFX, etc.
+- **LVGL**: 1 bpp (monochrome) and 2 bpp (grayscale) fonts for LVGL v8 / v9.
 
 <!-- SHAPOFONT_START_OF_FONT_CATALOG -->
 
@@ -21,12 +24,12 @@ Proportional fonts for embedded projects
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s05.h" target="_blank"><img src="img/sample/ShapoSansP_s05.png" style="width: 250px;"></a>|**s05**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s05.h) (985 B)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansP_s05.hpp) (583 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansP_s05.hpp) (581 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansP_s05.hpp) (523 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansP_s05.hpp) (519 B)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s07c05a01.h" target="_blank"><img src="img/sample/ShapoSansP_s07c05a01.png" style="width: 250px;"></a>|**s07c05a01**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s07c05a01.h) (1021 B)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansP_s07c05a01.hpp) (679 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansP_s07c05a01.hpp) (683 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansP_s07c05a01.hpp) (541 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansP_s07c05a01.hpp) (541 B)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s08c07.h" target="_blank"><img src="img/sample/ShapoSansP_s08c07.png" style="width: 250px;"></a>|**s08c07**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s08c07.h) (1.15 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansP_s08c07.hpp) (755 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansP_s08c07.hpp) (761 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansP_s08c07.hpp) (652 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansP_s08c07.hpp) (652 B)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s12c09a01w02.h" target="_blank"><img src="img/sample/ShapoSansP_s12c09a01w02.png" style="width: 250px;"></a>|**s12c09a01w02**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h) (1.32 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansP_s12c09a01w02.hpp) (981 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansP_s12c09a01w02.hpp) (982 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansP_s12c09a01w02.hpp) (1.09 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansP_s12c09a01w02.hpp) (1.09 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s21c16a01w03.h" target="_blank"><img src="img/sample/ShapoSansP_s21c16a01w03.png" style="width: 250px;"></a>|**s21c16a01w03**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s21c16a01w03.h) (2.37 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansP_s21c16a01w03.hpp) (1.50 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansP_s21c16a01w03.hpp) (1.49 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansP_s21c16a01w03.hpp) (1.71 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansP_s21c16a01w03.hpp) (1.72 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s27c22a01w04.h" target="_blank"><img src="img/sample/ShapoSansP_s27c22a01w04.png" style="width: 250px;"></a>|**s27c22a01w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h) (3.67 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansP_s27c22a01w04.hpp) (1.83 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansP_s27c22a01w04.hpp) (1.83 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansP_s27c22a01w04.hpp) (1.83 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansP_s27c22a01w04.hpp) (1.83 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s05.h" target="_blank"><img src="img/sample/ShapoSansP_s05.png" style="width: 250px;"></a>|**s05**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s05.h) (985 B)<br>[LVGL](lvgl/ShapoSansP_s05.c) (1.06 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s07c05a01.h" target="_blank"><img src="img/sample/ShapoSansP_s07c05a01.png" style="width: 250px;"></a>|**s07c05a01**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s07c05a01.h) (1021 B)<br>[LVGL](lvgl/ShapoSansP_s07c05a01.c) (1.09 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s08c07.h" target="_blank"><img src="img/sample/ShapoSansP_s08c07.png" style="width: 250px;"></a>|**s08c07**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s08c07.h) (1.15 kB)<br>[LVGL](lvgl/ShapoSansP_s08c07.c) (1.23 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s12c09a01w02.h" target="_blank"><img src="img/sample/ShapoSansP_s12c09a01w02.png" style="width: 250px;"></a>|**s12c09a01w02**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h) (1.32 kB)<br>[LVGL](lvgl/ShapoSansP_s12c09a01w02.c) (1.41 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s21c16a01w03.h" target="_blank"><img src="img/sample/ShapoSansP_s21c16a01w03.png" style="width: 250px;"></a>|**s21c16a01w03**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s21c16a01w03.h) (2.37 kB)<br>[LVGL](lvgl/ShapoSansP_s21c16a01w03.c) (2.46 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansP_s27c22a01w04.h" target="_blank"><img src="img/sample/ShapoSansP_s27c22a01w04.png" style="width: 250px;"></a>|**s27c22a01w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h) (3.67 kB)<br>[LVGL](lvgl/ShapoSansP_s27c22a01w04.c) (3.77 kB)|
 
 
 ## ShapoSansDigitP
@@ -35,9 +38,9 @@ Proportional number fonts for embedded projects
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s16c14w02.h" target="_blank"><img src="img/sample/ShapoSansDigitP_s16c14w02.png" style="width: 250px;"></a>|**s16c14w02**<br>[GFXfont](gfxfont/cpp/include/ShapoSansDigitP_s16c14w02.h) (261 B)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansDigitP_s16c14w02.hpp) (182 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansDigitP_s16c14w02.hpp) (182 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansDigitP_s16c14w02.hpp) (197 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansDigitP_s16c14w02.hpp) (197 B)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s24c23w04.h" target="_blank"><img src="img/sample/ShapoSansDigitP_s24c23w04.png" style="width: 250px;"></a>|**s24c23w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSansDigitP_s24c23w04.h) (547 B)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansDigitP_s24c23w04.hpp) (287 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansDigitP_s24c23w04.hpp) (286 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansDigitP_s24c23w04.hpp) (295 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansDigitP_s24c23w04.hpp) (295 B)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s32c30w04.h" target="_blank"><img src="img/sample/ShapoSansDigitP_s32c30w04.png" style="width: 250px;"></a>|**s32c30w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSansDigitP_s32c30w04.h) (818 B)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansDigitP_s32c30w04.hpp) (366 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansDigitP_s32c30w04.hpp) (366 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansDigitP_s32c30w04.hpp) (371 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansDigitP_s32c30w04.hpp) (371 B)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s16c14w02.h" target="_blank"><img src="img/sample/ShapoSansDigitP_s16c14w02.png" style="width: 250px;"></a>|**s16c14w02**<br>[GFXfont](gfxfont/cpp/include/ShapoSansDigitP_s16c14w02.h) (261 B)<br>[LVGL](lvgl/ShapoSansDigitP_s16c14w02.c) (371 B)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s24c23w04.h" target="_blank"><img src="img/sample/ShapoSansDigitP_s24c23w04.png" style="width: 250px;"></a>|**s24c23w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSansDigitP_s24c23w04.h) (547 B)<br>[LVGL](lvgl/ShapoSansDigitP_s24c23w04.c) (657 B)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansDigitP_s32c30w04.h" target="_blank"><img src="img/sample/ShapoSansDigitP_s32c30w04.png" style="width: 250px;"></a>|**s32c30w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSansDigitP_s32c30w04.h) (818 B)<br>[LVGL](lvgl/ShapoSansDigitP_s32c30w04.c) (928 B)|
 
 
 ## ShapoSansMono
@@ -46,7 +49,7 @@ Monospaced fonts for embedded projects
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansMono_s08c07.h" target="_blank"><img src="img/sample/ShapoSansMono_s08c07.png" style="width: 250px;"></a>|**s08c07**<br>[GFXfont](gfxfont/cpp/include/ShapoSansMono_s08c07.h) (1.12 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSansMono_s08c07.hpp) (643 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSansMono_s08c07.hpp) (647 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSansMono_s08c07.hpp) (597 B)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSansMono_s08c07.hpp) (597 B)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSansMono_s08c07.h" target="_blank"><img src="img/sample/ShapoSansMono_s08c07.png" style="width: 250px;"></a>|**s08c07**<br>[GFXfont](gfxfont/cpp/include/ShapoSansMono_s08c07.h) (1.12 kB)<br>[LVGL](lvgl/ShapoSansMono_s08c07.c) (1.21 kB)|
 
 
 ## ShapoSquareRoundP
@@ -55,51 +58,51 @@ Proportional fonts for embedded projects
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s12c09a01w02.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s12c09a01w02.png" style="width: 250px;"></a>|**s12c09a01w02**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s12c09a01w02.h) (1.33 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSquareRoundP_s12c09a01w02.hpp) (972 B)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSquareRoundP_s12c09a01w02.hpp) (972 B)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSquareRoundP_s12c09a01w02.hpp) (1.05 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSquareRoundP_s12c09a01w02.hpp) (1.05 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s21c16a01w03.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s21c16a01w03.png" style="width: 250px;"></a>|**s21c16a01w03**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s21c16a01w03.h) (2.35 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSquareRoundP_s21c16a01w03.hpp) (1.32 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSquareRoundP_s21c16a01w03.hpp) (1.32 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSquareRoundP_s21c16a01w03.hpp) (1.56 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSquareRoundP_s21c16a01w03.hpp) (1.57 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s27c22a01w04.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s27c22a01w04.png" style="width: 250px;"></a>|**s27c22a01w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s27c22a01w04.h) (3.59 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/ShapoSquareRoundP_s27c22a01w04.hpp) (1.62 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/ShapoSquareRoundP_s27c22a01w04.hpp) (1.62 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/ShapoSquareRoundP_s27c22a01w04.hpp) (1.70 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/ShapoSquareRoundP_s27c22a01w04.hpp) (1.70 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s12c09a01w02.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s12c09a01w02.png" style="width: 250px;"></a>|**s12c09a01w02**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s12c09a01w02.h) (1.33 kB)<br>[LVGL](lvgl/ShapoSquareRoundP_s12c09a01w02.c) (1.42 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s21c16a01w03.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s21c16a01w03.png" style="width: 250px;"></a>|**s21c16a01w03**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s21c16a01w03.h) (2.35 kB)<br>[LVGL](lvgl/ShapoSquareRoundP_s21c16a01w03.c) (2.44 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s27c22a01w04.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s27c22a01w04.png" style="width: 250px;"></a>|**s27c22a01w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s27c22a01w04.h) (3.59 kB)<br>[LVGL](lvgl/ShapoSquareRoundP_s27c22a01w04.c) (3.76 kB)|
 
 
 ## MameSansP
 
-Proportional fonts optimized for compression with MameFont
+Proportional fonts
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s15c12.h" target="_blank"><img src="img/sample/MameSansP_s15c12.png" style="width: 250px;"></a>|**s15c12**<br>[GFXfont](gfxfont/cpp/include/MameSansP_s15c12.h) (1.54 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSansP_s15c12.hpp) (1.00 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSansP_s15c12.hpp) (1.00 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSansP_s15c12.hpp) (1.14 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSansP_s15c12.hpp) (1.14 kB)|
-|<img src="img/sample/MameSansP_s15c12g02.png" style="width: 250px;"><br>(Simulator not available)|**s15c12g02**<br>(GFXfont not available)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSansP_s15c12g02.hpp) (1.55 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSansP_s15c12g02.hpp) (1.55 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSansP_s15c12g02.hpp) (1.50 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSansP_s15c12g02.hpp) (1.50 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s15c12w02.h" target="_blank"><img src="img/sample/MameSansP_s15c12w02.png" style="width: 250px;"></a>|**s15c12w02**<br>[GFXfont](gfxfont/cpp/include/MameSansP_s15c12w02.h) (1.64 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSansP_s15c12w02.hpp) (1.07 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSansP_s15c12w02.hpp) (1.07 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSansP_s15c12w02.hpp) (1.22 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSansP_s15c12w02.hpp) (1.23 kB)|
-|<img src="img/sample/MameSansP_s15c12w02g02.png" style="width: 250px;"><br>(Simulator not available)|**s15c12w02g02**<br>(GFXfont not available)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSansP_s15c12w02g02.hpp) (1.46 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSansP_s15c12w02g02.hpp) (1.46 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSansP_s15c12w02g02.hpp) (1.52 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSansP_s15c12w02g02.hpp) (1.52 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s48c40w08.h" target="_blank"><img src="img/sample/MameSansP_s48c40w08.png" style="width: 250px;"></a>|**s48c40w08**<br>[GFXfont](gfxfont/cpp/include/MameSansP_s48c40w08.h) (9.89 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSansP_s48c40w08.hpp) (2.33 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSansP_s48c40w08.hpp) (2.33 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSansP_s48c40w08.hpp) (2.40 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSansP_s48c40w08.hpp) (2.40 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s15c12.h" target="_blank"><img src="img/sample/MameSansP_s15c12.png" style="width: 250px;"></a>|**s15c12**<br>[GFXfont](gfxfont/cpp/include/MameSansP_s15c12.h) (1.54 kB)<br>[LVGL](lvgl/MameSansP_s15c12.c) (1.64 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/MameSansP_s15c12g02.c" target="_blank"><img src="img/sample/MameSansP_s15c12g02.png" style="width: 250px;"></a>|**s15c12g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/MameSansP_s15c12g02.c) (2.45 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s15c12w02.h" target="_blank"><img src="img/sample/MameSansP_s15c12w02.png" style="width: 250px;"></a>|**s15c12w02**<br>[GFXfont](gfxfont/cpp/include/MameSansP_s15c12w02.h) (1.64 kB)<br>[LVGL](lvgl/MameSansP_s15c12w02.c) (1.73 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/MameSansP_s15c12w02g02.c" target="_blank"><img src="img/sample/MameSansP_s15c12w02g02.png" style="width: 250px;"></a>|**s15c12w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/MameSansP_s15c12w02g02.c) (2.64 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansP_s48c40w08.h" target="_blank"><img src="img/sample/MameSansP_s48c40w08.png" style="width: 250px;"></a>|**s48c40w08**<br>[GFXfont](gfxfont/cpp/include/MameSansP_s48c40w08.h) (9.89 kB)<br>[LVGL](lvgl/MameSansP_s48c40w08.c) (10.24 kB)|
 
 
 ## MameSansDigitP
 
-Proportional number fonts optimized for compression with MameFont
+Proportional number fonts
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansDigitP_s64w08.h" target="_blank"><img src="img/sample/MameSansDigitP_s64w08.png" style="width: 250px;"></a>|**s64w08**<br>[GFXfont](gfxfont/cpp/include/MameSansDigitP_s64w08.h) (3.05 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSansDigitP_s64w08.hpp) (535 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSansDigitP_s64w08.hpp) (535 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSansDigitP_s64w08.hpp) (511 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSansDigitP_s64w08.hpp) (511 B)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSansDigitP_s64w08.h" target="_blank"><img src="img/sample/MameSansDigitP_s64w08.png" style="width: 250px;"></a>|**s64w08**<br>[GFXfont](gfxfont/cpp/include/MameSansDigitP_s64w08.h) (3.05 kB)<br>[LVGL](lvgl/MameSansDigitP_s64w08.c) (3.16 kB)|
 
 
 ## MameSeg7
 
-7-segment display fonts optimized for compression with MameFont
+7-segment display fonts
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<img src="img/sample/MameSeg7_s22c20w03g02.png" style="width: 250px;"><br>(Simulator not available)|**s22c20w03g02**<br>(GFXfont not available)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSeg7_s22c20w03g02.hpp) (603 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSeg7_s22c20w03g02.hpp) (609 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSeg7_s22c20w03g02.hpp) (575 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSeg7_s22c20w03g02.hpp) (583 B)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSeg7_s40c38w06.h" target="_blank"><img src="img/sample/MameSeg7_s40c38w06.png" style="width: 250px;"></a>|**s40c38w06**<br>[GFXfont](gfxfont/cpp/include/MameSeg7_s40c38w06.h) (1.70 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSeg7_s40c38w06.hpp) (666 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSeg7_s40c38w06.hpp) (666 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSeg7_s40c38w06.hpp) (748 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSeg7_s40c38w06.hpp) (748 B)|
-|<img src="img/sample/MameSeg7_s40c38w06g02.png" style="width: 250px;"><br>(Simulator not available)|**s40c38w06g02**<br>(GFXfont not available)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSeg7_s40c38w06g02.hpp) (873 B)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSeg7_s40c38w06g02.hpp) (873 B)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSeg7_s40c38w06g02.hpp) (963 B)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSeg7_s40c38w06g02.hpp) (963 B)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/MameSeg7_s22c20w03g02.c" target="_blank"><img src="img/sample/MameSeg7_s22c20w03g02.png" style="width: 250px;"></a>|**s22c20w03g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/MameSeg7_s22c20w03g02.c) (1.07 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSeg7_s40c38w06.h" target="_blank"><img src="img/sample/MameSeg7_s40c38w06.png" style="width: 250px;"></a>|**s40c38w06**<br>[GFXfont](gfxfont/cpp/include/MameSeg7_s40c38w06.h) (1.70 kB)<br>[LVGL](lvgl/MameSeg7_s40c38w06.c) (1.79 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/MameSeg7_s40c38w06g02.c" target="_blank"><img src="img/sample/MameSeg7_s40c38w06g02.png" style="width: 250px;"></a>|**s40c38w06g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/MameSeg7_s40c38w06g02.c) (3.27 kB)|
 
 
 ## MameSquareWide
 
-Square wide fonts optimized for compression with MameFont
+Square wide fonts
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSquareWide_s64c48a04w16.h" target="_blank"><img src="img/sample/MameSquareWide_s64c48a04w16.png" style="width: 250px;"></a>|**s64c48a04w16**<br>[GFXfont](gfxfont/cpp/include/MameSquareWide_s64c48a04w16.h) (21.88 kB)<br>[MameFont-HL](mamefont/cpp/HL/include/MameSquareWide_s64c48a04w16.hpp) (2.56 kB)<br>[MameFont-HM](mamefont/cpp/HM/include/MameSquareWide_s64c48a04w16.hpp) (2.56 kB)<br>[MameFont-VL](mamefont/cpp/VL/include/MameSquareWide_s64c48a04w16.hpp) (2.82 kB)<br>[MameFont-VM](mamefont/cpp/VM/include/MameSquareWide_s64c48a04w16.hpp) (2.82 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/MameSquareWide_s64c48a04w16.h" target="_blank"><img src="img/sample/MameSquareWide_s64c48a04w16.png" style="width: 250px;"></a>|**s64c48a04w16**<br>[GFXfont](gfxfont/cpp/include/MameSquareWide_s64c48a04w16.h) (21.88 kB)<br>[LVGL](lvgl/MameSquareWide_s64c48a04w16.c) (23.07 kB)|
 
 <!-- SHAPOFONT_END_OF_FONT_CATALOG -->
 
@@ -109,13 +112,25 @@ Before including the generated GFXfont, define the `SHAPOFONT_GFXFONT_NAMESPACE=
 
 ```c++
 #define SHAPOFONT_GFXFONT_NAMESPACE ::lgfx::
-#include "shapofont/ShapoSansP_s11c09w2a1.h"
+#include "shapofont/ShapoSansP_s12c09a01w02.h"
 ```
+
+# Using LVGL Fonts
+
+The files in [lvgl/](lvgl/) are standard LVGL font sources in the same format as the output of [lv_font_conv](https://github.com/lvgl/lv_font_conv) (uncompressed, LVGL v8 and v9). Add the `.c` file to your build and declare the font:
+
+```c++
+LV_FONT_DECLARE(ShapoSansP_s12c09a01w02);
+
+lv_obj_set_style_text_font(label, &ShapoSansP_s12c09a01w02, 0);
+```
+
+Fonts whose name contains `g02` are 2 bpp grayscale fonts. They are available only in LVGL format.
 
 # Designing Font with Painting Tool
 
-ShapoFonts are designed using painting tools such as Microsoft Paint and converted to GFXfont by Python scripts.<br>
-ShapoFont は「ペイント」などのペイントソフトでデザインされ、Python スクリプトを使って GFXfont に変換されています。
+ShapoFonts are designed using painting tools such as Microsoft Paint and converted to GFXfont / LVGL fonts by a Python tool.<br>
+ShapoFont は「ペイント」などのペイントソフトでデザインされ、Python 製のツールを使って GFXfont / LVGL フォントに変換されています。
 
 ![](./img/designing_with_mspaint.png)
 
@@ -134,12 +149,15 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
 |c|Cap Height|s|
 |a|Ascender Spacing|0|
 ||Descent|s - c - a|
-|w|weight|1|
+|w|Weight|1|
+|g|Bits per Pixel (1: monochrome, 2: 4-level grayscale)|1|
+
+Example: `ShapoSansP_s12c09a01w02` is a 12 px font with a cap height of 9 px, 1 px ascender spacing and a weight of 2 px.
 
 ## How to Design Your Own Font
 
 1. Create a canvas of appropriate size with a black background.
-2. Design your glyphs in white.
+2. Design your glyphs in white (for grayscale fonts, use black, 33%, 67% and 100% gray).
 3. Add a red line (**Glyph Marker**) of the same width at the bottom of each glyph.
 
     ![](./img/how_to_design.svg)
@@ -156,7 +174,7 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
             }
         ],
         "dimensions": {
-            "body_size:": 12,
+            "body_size": 12,
             "cap_height": 9,
             "ascender_spacing": 1,
             "weight": 2,
@@ -166,7 +184,16 @@ ShapoFont は「ペイント」などのペイントソフトでデザインさ�
     }
     ```
 
-    If `dimensions` are omitted, the script will try to extract the dimension values from the directory name of design file.
+    |Key|Description|Default Value|
+    |:--|:--|:--:|
+    |codes|Character code ranges, in the order the glyphs appear in the image|0x20 - 0x7E|
+    |dimensions.body_size, cap_height, ascender_spacing, weight|Same as the naming rule above|(from directory name)|
+    |dimensions.x_spacing|Default horizontal spacing between glyphs|ceil(body_size / 16)|
+    |dimensions.y_spacing|Extra vertical spacing between lines|ceil((body_size - ascender_spacing) * 1.2 - body_size)|
+    |bits_per_pixel|1 or 2|(from directory name)|
+    |sample.text, sample.size|Text and scale of the sample image|(auto)|
+
+    If `dimensions` are omitted, the tool extracts the dimension values from the directory name of the design file.
 
 - The vertical positions of the glyph markers of the glyphs side by side must be aligned.
 - There must be at least Body Size pixels of space above the glyph marker (no overlap).
@@ -194,36 +221,34 @@ ShapoSansP_s21c16a01w03/  ... Full Font Name
 
 If `dimensions` is not specified in JSON, the generator script extracts a family name and a dimension identifier from the directory name, so they must be named correctly.
 
-## Converting to GFXfont
+## Converting to GFXfont / LVGL Font
 
-1. Create a Python virtual environment using `venv-setup.shrc`.
-    - `Pillow` and `json5` will be installed.
-2. Specify the above design directory in `tools/shapofont.py` to convert to each font format.
-    - `-i`: path to input directory (dimension identifier)
-    - `--outdir_gfx_c`: output directory for GFXfont format
+1. Create a Python virtual environment and install the `shapofont` package into it using `venv-setup.shrc`.
+2. Run `shapofont convert` with the design directory to generate each font format.
+    - `-i`: path to the design directory
+    - `--gfx-outdir`: output directory for the GFXfont header (`<name>.h`, 1 bpp fonts only)
+    - `--lvgl-outdir`: output directory for the LVGL font source (`<name>.c`)
+    - `--sample-img`: path of a sample PNG image to render
 
 ### Example:
 
 ```bash
 source venv-setup.shrc
-./venv/bin/python3 ./tools/shapofont.py \
+./venv/bin/shapofont convert \
       -i design/ShapoSansP_s21c16a01w03 \
-      --outdir_gfx_c path/to/output/dir/
+      --gfx-outdir path/to/output/dir/ \
+      --lvgl-outdir path/to/output/dir/
 ```
 
-In this repository, after creating the venv, simply run `make -j gfx_all` and all fonts will be converted automatically.
+In this repository, after creating the venv, run `make configure` once when fonts are added or removed, then `make -j all` to convert all fonts and `make catalog` to update the catalog in this README.
+
+The tool lives in [src/shapofont/](src/shapofont/) and can also be run as `python3 -m shapofont`. Run the tests with `make test`.
 
 # License
 
 see [LICENSE](LICENSE).
 
 The rights to font files generated using the tools included in ShapoFont are subject to the rights of the original bitmap images and any fonts contained therein.
-
-# Related Project
-
-## MameFont
-
-See [MameFont](https://github.com/shapoco/mamefont).
 
 # Memo
 

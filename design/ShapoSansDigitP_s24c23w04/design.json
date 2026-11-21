@@ -10,7 +10,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 24,
+        "body_size": 24,
         "cap_height": 23,
         "weight": 4,
         "x_spacing": 2

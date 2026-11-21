@@ -21,5 +21,5 @@ build: $(APP_JS)
 $(APP_JS): $(APP_TS_LIST) $(EXTRA_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	cd $(APP_TS_DIR) && tsc
-	cp $(APP_BUILD_DIR)/*.js $(APP_DIST_DIR)/.
+	cp $(APP_BUILD_DIR)/$(APP_NAME).js $(APP_JS)
 

@@ -6,7 +6,7 @@
         }
     ],
     "dimensions": {
-        "body_size:": 16,
+        "body_size": 16,
         "weight": 4
     }
 }

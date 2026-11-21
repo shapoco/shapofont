@@ -67,10 +67,49 @@ function reverseByte(byte: number): number {
   return byte;
 }
 
+function stripComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+
+function stripPreprocessorLines(src: string): string {
+  return src.replace(/^[ \t]*#.*$/gm, '');
+}
+
+/** Parses `{ .a = 1, .b = &x, ... }` style designated initializers into a map. */
+function parseDesignatedInitializer(body: string): Map<string, string> {
+  const fields = new Map<string, string>();
+  const re = /\.(\w+)\s*=\s*([^,}]+)/g;
+  let m: RegExpExecArray|null;
+  while ((m = re.exec(body)) !== null) {
+    fields.set(m[1], m[2].trim());
+  }
+  return fields;
+}
+
+function requireField(fields: Map<string, string>, owner: string, name: string): string {
+  const value = fields.get(name);
+  if (value === undefined) {
+    throw new Error(`Missing field in ${owner}: .${name}`);
+  }
+  return value;
+}
+
+/** Finds `TYPE name[] = { ... }` and returns its integer elements. */
+function findCIntArray(src: string, name: string, what: string): number[] {
+  const re = new RegExp(
+      `\\b(uint8_t|uint16_t|uint32_t|int8_t|int16_t|int32_t|unsigned\\s+char|char)\\s+(const\\s+)?${name}` +
+          `\\s*\\[\\s*\\]\\s*=\\s*\\{([^\\}]*)\\}`,
+      'm');
+  const m = re.exec(src);
+  if (!m) throw new Error(`Failed to find array: ${name} (${what})`);
+  return m[3].split(',').map(s => s.trim()).filter(s => s !== '').map(s => parseCInt(what, s));
+}
+
 enum ScanType {
+  /** 1 bpp, rows packed back to back, MSB first (GFXfont) */
   HORIZONTAL_PACKED,
-  HORIZONTAL_FRAGMENT,
-  VERTICAL_FRAGMENT,
+  /** 1/2/4/8 bpp, rows packed back to back, MSB first (LVGL plain format) */
+  LVGL_PACKED,
 }
 
 class GrayBitmap {
@@ -78,12 +117,8 @@ class GrayBitmap {
 
   constructor(
       public width: number, public height: number, public rawData: Uint8Array,
-      public scanType: ScanType, public msb1st: boolean = false) {
-    this.scanType = scanType;
-    this.msb1st = msb1st;
-    this.width = width;
-    this.height = height;
-
+      public scanType: ScanType, public msb1st: boolean = false,
+      public bitsPerPixel: number = 1) {
     const grayData = new Uint8Array(width * height);
 
     switch (scanType) {
@@ -102,6 +137,19 @@ class GrayBitmap {
             sreg >>= 1;
             ibit--;
           }
+        }
+      } break;
+
+      case ScanType.LVGL_PACKED: {
+        const bpp = bitsPerPixel;
+        const maxLevel = (1 << bpp) - 1;
+        let bitPos = 0;
+        for (let i = 0; i < width * height; i++) {
+          const byte = rawData[bitPos >> 3];
+          const shift = 8 - bpp - (bitPos & 7);
+          const level = (byte >> shift) & maxLevel;
+          grayData[i] = Math.round(level * 255 / maxLevel);
+          bitPos += bpp;
         }
       } break;
 
@@ -161,24 +209,25 @@ class Glyph {
 }
 
 class Font {
-  public firstCode: number;
-  public lastCode: number;
-  public yAdvance: number;
+  public format: string = '';
+  public firstCode: number = 0;
+  public lastCode: number = 0;
+  public yAdvance: number = 0;
   public glyphs: Map<number, Glyph> = new Map();
 
-  constructor(public src: string) {
-    this.src = src;
-
+  constructor(src: string) {
+    src = stripComments(src);
     let success = false;
     if (!success) success = this.tryParseGfxFont(src);
-    if (!success) throw new Error('Unknown Font Format');
+    if (!success) success = this.tryParseLvglFont(src);
+    if (!success) throw new Error('Unknown Font Format (GFXfont and LVGL fonts are supported)');
   }
 
   tryParseGfxFont(src: string): boolean {
-    src = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 
     const mGfxFont = /GFXfont\s+(\w+)(\s*\w+)?\s*=\s*\{([^\}]+)\}/gm.exec(src);
     if (!mGfxFont) return false;
+    this.format = 'GFXfont';
 
     const fontParams = mGfxFont[3].split(',');
     if (fontParams.length < 5) {
@@ -273,6 +322,108 @@ class Font {
       code++;
     }
 
+    return true;
+  }
+
+
+  tryParseLvglFont(src: string): boolean {
+    src = stripPreprocessorLines(src);
+
+    const mFont = /\blv_font_t\s+(\w+)\s*=\s*\{([^\}]*)\}/m.exec(src);
+    if (!mFont) return false;
+    this.format = 'LVGL';
+
+    const fontFields = parseDesignatedInitializer(mFont[2]);
+    this.yAdvance = parseCInt('lv_font_t.line_height', requireField(fontFields, 'lv_font_t', 'line_height'));
+    const dscName = requireField(fontFields, 'lv_font_t', 'dsc').replace(/^&\s*/, '');
+
+    const mDsc = new RegExp(`\\blv_font_fmt_txt_dsc_t\\s+${dscName}\\s*=\\s*\\{([^\\}]*)\\}`, 'm').exec(src);
+    if (!mDsc) throw new Error(`Failed to find font descriptor: ${dscName}`);
+    const dscFields = parseDesignatedInitializer(mDsc[1]);
+
+    const bitmapFormat = parseCInt('bitmap_format', dscFields.get('bitmap_format') ?? '0');
+    if (bitmapFormat !== 0) {
+      throw new Error('Compressed LVGL fonts are not supported. Convert with --no-compress.');
+    }
+    const bpp = parseCInt('bpp', requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'bpp'));
+    if (![1, 2, 4, 8].includes(bpp)) throw new Error(`Unsupported bpp: ${bpp}`);
+
+    const bitmapData = new Uint8Array(
+        findCIntArray(src, requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_bitmap'), 'glyph bitmap'));
+
+    // Glyph descriptors
+    const glyphDscName = requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_dsc');
+    const mGlyphDsc = new RegExp(
+        `\\blv_font_fmt_txt_glyph_dsc_t\\s+${glyphDscName}\\s*\\[\\s*\\]\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*;`, 'm').exec(src);
+    if (!mGlyphDsc) throw new Error(`Failed to find glyph descriptors: ${glyphDscName}`);
+    const GLYPH_DSC_FIELDS = ['bitmap_index', 'adv_w', 'box_w', 'box_h', 'ofs_x', 'ofs_y'];
+    const glyphDscs: number[][] = [];
+    for (const m of mGlyphDsc[1].matchAll(/\{([^\}]*)\}/g)) {
+      const fields = parseDesignatedInitializer(m[1]);
+      if (fields.size > 0) {
+        glyphDscs.push(GLYPH_DSC_FIELDS.map(f => parseCInt(`glyph_dsc.${f}`, fields.get(f) ?? '0')));
+      } else {
+        const values = m[1].split(',').map(s => s.trim()).filter(s => s !== '');
+        if (values.length < GLYPH_DSC_FIELDS.length) {
+          throw new Error(`Too few parameters for lv_font_fmt_txt_glyph_dsc_t: ${m[0]}`);
+        }
+        glyphDscs.push(values.slice(0, GLYPH_DSC_FIELDS.length).map(v => parseCInt('glyph_dsc', v)));
+      }
+    }
+
+    // Character maps: code point --> glyph id
+    const cmapsName = requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'cmaps');
+    const mCmaps = new RegExp(
+        `\\blv_font_fmt_txt_cmap_t\\s+${cmapsName}\\s*\\[\\s*\\]\\s*=\\s*\\{([\\s\\S]*?)\\}\\s*;`, 'm').exec(src);
+    if (!mCmaps) throw new Error(`Failed to find character maps: ${cmapsName}`);
+    const codeToGid = new Map<number, number>();
+    for (const m of mCmaps[1].matchAll(/\{([^\}]*)\}/g)) {
+      const fields = parseDesignatedInitializer(m[1]);
+      if (fields.size === 0) continue;
+      const rangeStart = parseCInt('cmap.range_start', requireField(fields, 'cmap', 'range_start'));
+      const rangeLength = parseCInt('cmap.range_length', requireField(fields, 'cmap', 'range_length'));
+      const gidStart = parseCInt('cmap.glyph_id_start', requireField(fields, 'cmap', 'glyph_id_start'));
+      const unicodeListName = fields.get('unicode_list') ?? 'NULL';
+      const gidOfsListName = fields.get('glyph_id_ofs_list') ?? 'NULL';
+      const unicodeList = unicodeListName === 'NULL' ? null : findCIntArray(src, unicodeListName, 'unicode list');
+      const gidOfsList = gidOfsListName === 'NULL' ? null : findCIntArray(src, gidOfsListName, 'glyph id offset list');
+
+      // Same rules as LVGL's lv_font_fmt_txt.c: the list pointers decide the format
+      if (!unicodeList) {
+        for (let rcp = 0; rcp < rangeLength; rcp++) {
+          const gid = gidOfsList ? gidStart + (gidOfsList[rcp] ?? 0) : gidStart + rcp;
+          codeToGid.set(rangeStart + rcp, gid);
+        }
+      } else {
+        unicodeList.forEach((rcp, i) => {
+          const gid = gidOfsList ? gidStart + (gidOfsList[i] ?? 0) : gidStart + i;
+          codeToGid.set(rangeStart + rcp, gid);
+        });
+      }
+    }
+
+    for (const [code, gid] of codeToGid) {
+      if (gid <= 0 || gid >= glyphDscs.length) continue;
+      const [bitmapIndex, advW, boxW, boxH, ofsX, ofsY] = glyphDscs[gid];
+      let bmp: GrayBitmap|null = null;
+      if (boxW > 0 && boxH > 0) {
+        const numBytes = Math.ceil(boxW * boxH * bpp / 8);
+        if (bitmapIndex < 0 || bitmapData.length < bitmapIndex + numBytes) {
+          throw new Error(`Glyph bitmap out of range: U+${code.toString(16).toUpperCase()}`);
+        }
+        bmp = new GrayBitmap(
+            boxW, boxH, bitmapData.subarray(bitmapIndex, bitmapIndex + numBytes),
+            ScanType.LVGL_PACKED, true, bpp);
+      }
+      // LVGL: adv_w is in 1/16 px and rounded; ofs_y is the box bottom measured up from the baseline
+      const xAdvance = (advW + 8) >> 4;
+      this.glyphs.set(code, new Glyph(bitmapIndex, bmp, boxW, boxH, xAdvance, ofsX, -(ofsY + boxH)));
+    }
+
+    if (this.glyphs.size === 0) throw new Error('No glyphs found in LVGL font');
+    const codes = Array.from(this.glyphs.keys());
+    this.firstCode = Math.min(...codes);
+    this.lastCode = Math.max(...codes);
     return true;
   }
 
@@ -389,13 +540,15 @@ class App {
       let sampleText =
           ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
 
-      const allowedUrls = {
-        '/shapofont/':
-            'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/',
-        '/ghuc/': 'https://raw.githubusercontent.com/',
-        '/gist/': 'https://gist.githubusercontent.com/',
-
-      };
+      // Short prefixes accepted in the `u=` hash parameter. The first match wins,
+      // so more specific prefixes come first.
+      const REPO_RAW = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/';
+      const allowedUrls: [string, string][] = [
+        ['/shapofont/lvgl/', REPO_RAW + 'lvgl/'],
+        ['/shapofont/', REPO_RAW + 'gfxfont/cpp/include/'],
+        ['/ghuc/', 'https://raw.githubusercontent.com/'],
+        ['/gist/', 'https://gist.githubusercontent.com/'],
+      ];
 
       if (hash.startsWith('#')) {
         hash = hash.slice(1);
@@ -407,10 +560,11 @@ class App {
             case 'u': {
               const url = decodeURIComponent(value);
               let accepted = false;
-              for (const [key, prefix] of Object.entries(allowedUrls)) {
+              for (const [key, prefix] of allowedUrls) {
                 if (url.startsWith(prefix)) {
                   srcUrl = url;
                   accepted = true;
+                  break;
                 } else if (url.startsWith(key)) {
                   srcUrl = prefix + url.slice(key.length);
                   accepted = true;
@@ -456,6 +610,7 @@ class App {
   }
 
   private requestParse(): void {
+    if (this.parseRequestId >= 0) clearTimeout(this.parseRequestId);
     this.parseRequestId = setTimeout(() => this.runParse(), 300);
   }
 
@@ -472,6 +627,8 @@ class App {
       this.font = font;
 
       this.logInfo(
+          `format: ${font.format}, ` +
+          `glyphs: ${font.glyphs.size}, ` +
           `firstCode: ${codeToStr(font.firstCode)}, ` +
           `lastCode: ${codeToStr(font.lastCode)}, ` +
           `yAdvance: ${font.yAdvance}`);
@@ -490,6 +647,7 @@ class App {
   }
 
   private requestUpdatePreview(): void {
+    if (this.updatePreviewRequestId >= 0) clearTimeout(this.updatePreviewRequestId);
     this.updatePreviewRequestId = setTimeout(() => this.updatePreview(), 300);
   }
 
