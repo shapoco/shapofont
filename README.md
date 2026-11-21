@@ -16,6 +16,9 @@ Click thumbnail to open the font with the [Web Simulator](https://shapoco.github
 - **GFXfont**: 1 bpp (monochrome) fonts for Adafruit GFX, LovyanGFX, etc.
 - **LVGL**: 1 bpp (monochrome) and 2 bpp (grayscale) fonts for LVGL v8 / v9.
 
+The simulator can also load any GFXfont or LVGL font (plain or compressed) from a GitHub / Gist URL pasted into its URL box.<br>
+シミュレータは GitHub / Gist 上の任意の GFXfont / LVGL フォント (非圧縮・圧縮) の URL を貼り付けて読み込むこともできます。
+
 <!-- SHAPOFONT_START_OF_FONT_CATALOG -->
 
 ## ShapoSansP

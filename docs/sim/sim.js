@@ -181,12 +181,108 @@ function findCIntArray(src, name, what) {
         throw new Error("Failed to find array: ".concat(name, " (").concat(what, ")"));
     return m[3].split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s !== ''; }).map(function (s) { return parseCInt(what, s); });
 }
+/** Reads `len` bits (MSB first) at bit position `bitPos`. Bytes past the end read as 0. */
+function getBits(data, bitPos, len) {
+    var _a, _b;
+    var mask = (1 << len) - 1;
+    var bytePos = bitPos >> 3;
+    var bitOfs = bitPos & 7;
+    var hi = (_a = data[bytePos]) !== null && _a !== void 0 ? _a : 0;
+    if (bitOfs + len > 8) {
+        var lo = (_b = data[bytePos + 1]) !== null && _b !== void 0 ? _b : 0;
+        return (((hi << 8) | lo) >> (16 - bitOfs - len)) & mask;
+    }
+    return (hi >> (8 - bitOfs - len)) & mask;
+}
+/**
+ * Decoder for LVGL's compressed glyph bitmaps (lv_font_fmt_txt, bitmap_format 1 or 2).
+ * Port of rle_next() / decompress() in lv_font_fmt_txt.c. Returns one level per pixel.
+ */
+var LvglRleDecoder = /** @class */ (function () {
+    function LvglRleDecoder(data, bpp) {
+        this.data = data;
+        this.bpp = bpp;
+        this.STATE_SINGLE = 0;
+        this.STATE_REPEATED = 1;
+        this.STATE_COUNTER = 2;
+        this.state = this.STATE_SINGLE;
+        this.rdp = 0;
+        this.prevV = 0;
+        this.count = 0;
+    }
+    LvglRleDecoder.prototype.next = function () {
+        var ret = 0;
+        if (this.state === this.STATE_SINGLE) {
+            ret = getBits(this.data, this.rdp, this.bpp);
+            if (this.rdp !== 0 && this.prevV === ret) {
+                this.count = 0;
+                this.state = this.STATE_REPEATED;
+            }
+            this.prevV = ret;
+            this.rdp += this.bpp;
+        }
+        else if (this.state === this.STATE_REPEATED) {
+            var v = getBits(this.data, this.rdp, 1);
+            this.count++;
+            this.rdp += 1;
+            if (v === 1) {
+                ret = this.prevV;
+                if (this.count === 11) {
+                    this.count = getBits(this.data, this.rdp, 6);
+                    this.rdp += 6;
+                    if (this.count !== 0) {
+                        this.state = this.STATE_COUNTER;
+                    }
+                    else {
+                        ret = getBits(this.data, this.rdp, this.bpp);
+                        this.prevV = ret;
+                        this.rdp += this.bpp;
+                        this.state = this.STATE_SINGLE;
+                    }
+                }
+            }
+            else {
+                ret = getBits(this.data, this.rdp, this.bpp);
+                this.prevV = ret;
+                this.rdp += this.bpp;
+                this.state = this.STATE_SINGLE;
+            }
+        }
+        else {
+            ret = this.prevV;
+            this.count--;
+            if (this.count === 0) {
+                ret = getBits(this.data, this.rdp, this.bpp);
+                this.prevV = ret;
+                this.rdp += this.bpp;
+                this.state = this.STATE_SINGLE;
+            }
+        }
+        return ret;
+    };
+    /** Decodes a w x h glyph. With `prefilter`, each line is XORed with the previous one. */
+    LvglRleDecoder.prototype.decode = function (w, h, prefilter) {
+        var out = new Uint8Array(w * h);
+        var line = new Uint8Array(w);
+        for (var y = 0; y < h; y++) {
+            for (var x = 0; x < w; x++) {
+                var v = this.next();
+                line[x] = (prefilter && y > 0) ? (line[x] ^ v) : v;
+                out[y * w + x] = line[x];
+            }
+        }
+        return out;
+    };
+    return LvglRleDecoder;
+}());
 var ScanType;
 (function (ScanType) {
     /** 1 bpp, rows packed back to back, MSB first (GFXfont) */
     ScanType[ScanType["HORIZONTAL_PACKED"] = 0] = "HORIZONTAL_PACKED";
     /** 1/2/4/8 bpp, rows packed back to back, MSB first (LVGL plain format) */
     ScanType[ScanType["LVGL_PACKED"] = 1] = "LVGL_PACKED";
+    /** one level (0 .. 2^bpp-1) per byte, already unpacked */
+    ScanType[ScanType["LEVELS"] = 2] = "LEVELS";
 })(ScanType || (ScanType = {}));
 var GrayBitmap = /** @class */ (function () {
     function GrayBitmap(width, height, rawData, scanType, msb1st, bitsPerPixel) {
@@ -222,15 +318,17 @@ var GrayBitmap = /** @class */ (function () {
                 break;
             case ScanType.LVGL_PACKED:
                 {
-                    var bpp = bitsPerPixel;
-                    var maxLevel = (1 << bpp) - 1;
-                    var bitPos = 0;
+                    var maxLevel = (1 << bitsPerPixel) - 1;
                     for (var i = 0; i < width * height; i++) {
-                        var byte = rawData[bitPos >> 3];
-                        var shift = 8 - bpp - (bitPos & 7);
-                        var level = (byte >> shift) & maxLevel;
-                        grayData[i] = Math.round(level * 255 / maxLevel);
-                        bitPos += bpp;
+                        grayData[i] = Math.round(getBits(rawData, i * bitsPerPixel, bitsPerPixel) * 255 / maxLevel);
+                    }
+                }
+                break;
+            case ScanType.LEVELS:
+                {
+                    var maxLevel = (1 << bitsPerPixel) - 1;
+                    for (var i = 0; i < width * height; i++) {
+                        grayData[i] = Math.round(rawData[i] * 255 / maxLevel);
                     }
                 }
                 break;
@@ -408,13 +506,17 @@ var Font = /** @class */ (function () {
         if (!mDsc)
             throw new Error("Failed to find font descriptor: ".concat(dscName));
         var dscFields = parseDesignatedInitializer(mDsc[1]);
+        // 0: plain, 1: RLE compressed with XOR prefilter, 2: RLE compressed without prefilter
         var bitmapFormat = parseCInt('bitmap_format', (_d = dscFields.get('bitmap_format')) !== null && _d !== void 0 ? _d : '0');
-        if (bitmapFormat !== 0) {
-            throw new Error('Compressed LVGL fonts are not supported. Convert with --no-compress.');
-        }
+        if (![0, 1, 2].includes(bitmapFormat))
+            throw new Error("Unsupported bitmap_format: ".concat(bitmapFormat));
+        var compressed = bitmapFormat !== 0;
+        this.format = compressed ? 'LVGL (compressed)' : 'LVGL';
         var bpp = parseCInt('bpp', requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'bpp'));
-        if (![1, 2, 4, 8].includes(bpp))
+        if (![1, 2, 3, 4, 8].includes(bpp))
             throw new Error("Unsupported bpp: ".concat(bpp));
+        if (!compressed && bpp === 3)
+            throw new Error('bpp = 3 is only valid for compressed fonts');
         var bitmapData = new Uint8Array(findCIntArray(src, requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_bitmap'), 'glyph bitmap'));
         // Glyph descriptors
         var glyphDscName = requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_dsc');
@@ -502,11 +604,21 @@ var Font = /** @class */ (function () {
                 var _o = __read(glyphDscs[gid], 6), bitmapIndex = _o[0], advW = _o[1], boxW = _o[2], boxH = _o[3], ofsX = _o[4], ofsY = _o[5];
                 var bmp = null;
                 if (boxW > 0 && boxH > 0) {
-                    var numBytes = Math.ceil(boxW * boxH * bpp / 8);
-                    if (bitmapIndex < 0 || bitmapData.length < bitmapIndex + numBytes) {
+                    if (bitmapIndex < 0 || bitmapData.length <= bitmapIndex) {
                         throw new Error("Glyph bitmap out of range: U+".concat(code.toString(16).toUpperCase()));
                     }
-                    bmp = new GrayBitmap(boxW, boxH, bitmapData.subarray(bitmapIndex, bitmapIndex + numBytes), ScanType.LVGL_PACKED, true, bpp);
+                    if (compressed) {
+                        var levels = new LvglRleDecoder(bitmapData.subarray(bitmapIndex), bpp)
+                            .decode(boxW, boxH, bitmapFormat === 1);
+                        bmp = new GrayBitmap(boxW, boxH, levels, ScanType.LEVELS, true, bpp);
+                    }
+                    else {
+                        var numBytes = Math.ceil(boxW * boxH * bpp / 8);
+                        if (bitmapData.length < bitmapIndex + numBytes) {
+                            throw new Error("Glyph bitmap out of range: U+".concat(code.toString(16).toUpperCase()));
+                        }
+                        bmp = new GrayBitmap(boxW, boxH, bitmapData.subarray(bitmapIndex, bitmapIndex + numBytes), ScanType.LVGL_PACKED, true, bpp);
+                    }
                 }
                 // LVGL: adv_w is in 1/16 px and rounded; ofs_y is the box bottom measured up from the baseline
                 var xAdvance = (advW + 8) >> 4;
@@ -565,13 +677,127 @@ var Character = /** @class */ (function () {
     };
     return Character;
 }());
+var REPO_RAW_URL = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/';
+/**
+ * Short prefixes accepted in the `u=` hash parameter and their expansions.
+ * The first match wins, so more specific prefixes come first.
+ */
+var URL_PREFIXES = [
+    ['/shapofont/lvgl/', REPO_RAW_URL + 'lvgl/'],
+    ['/shapofont/', REPO_RAW_URL + 'gfxfont/cpp/include/'],
+    ['/ghuc/', 'https://raw.githubusercontent.com/'],
+    ['/gist/', 'https://gist.githubusercontent.com/'],
+];
+/**
+ * Converts a URL the user pasted from the browser's address bar into a URL whose
+ * content can be fetched from this page (CORS allowed). Only GitHub and Gist are accepted.
+ */
+function resolveFontUrl(input) {
+    var e_7, _a;
+    input = input.trim();
+    try {
+        for (var URL_PREFIXES_1 = __values(URL_PREFIXES), URL_PREFIXES_1_1 = URL_PREFIXES_1.next(); !URL_PREFIXES_1_1.done; URL_PREFIXES_1_1 = URL_PREFIXES_1.next()) {
+            var _b = __read(URL_PREFIXES_1_1.value, 2), key = _b[0], prefix = _b[1];
+            if (input.startsWith(key))
+                return prefix + input.slice(key.length);
+        }
+    }
+    catch (e_7_1) { e_7 = { error: e_7_1 }; }
+    finally {
+        try {
+            if (URL_PREFIXES_1_1 && !URL_PREFIXES_1_1.done && (_a = URL_PREFIXES_1.return)) _a.call(URL_PREFIXES_1);
+        }
+        finally { if (e_7) throw e_7.error; }
+    }
+    var url;
+    try {
+        url = new URL(input);
+    }
+    catch (_c) {
+        throw new Error('Invalid URL.');
+    }
+    if (url.protocol !== 'https:')
+        throw new Error('Only https:// URLs are accepted.');
+    var parts = url.pathname.split('/').filter(function (p) { return p !== ''; });
+    switch (url.hostname) {
+        case 'raw.githubusercontent.com':
+        case 'gist.githubusercontent.com':
+            return url.origin + url.pathname;
+        case 'github.com': {
+            // https://github.com/<user>/<repo>/(blob|raw)/<ref>/<path>
+            if (parts.length < 5 || !['blob', 'raw'].includes(parts[2])) {
+                throw new Error('GitHub URL must point to a file: https://github.com/<user>/<repo>/blob/<branch>/<path>');
+            }
+            var _d = __read(parts), user = _d[0], repo = _d[1], rest = _d.slice(3);
+            return "https://raw.githubusercontent.com/".concat(user, "/").concat(repo, "/").concat(rest.join('/'));
+        }
+        case 'gist.github.com': {
+            // https://gist.github.com/<user>/<id>[#file-<name>]
+            if (parts.length < 2)
+                throw new Error('Gist URL must be https://gist.github.com/<user>/<id>');
+            var _e = __read(parts, 2), user = _e[0], id = _e[1];
+            var mFile = /^file-(.+)$/.exec(url.hash.slice(1));
+            var file = mFile ? mFile[1].replace(/-([^-]*)$/, '.$1') : '';
+            return "https://gist.githubusercontent.com/".concat(user, "/").concat(id, "/raw/").concat(file);
+        }
+        default:
+            throw new Error("Unsupported host: ".concat(url.hostname, " (GitHub and Gist only)"));
+    }
+}
+/** Shortens a fetchable URL with the known prefixes, for a compact `u=` hash parameter. */
+function shortenFontUrl(url) {
+    var e_8, _a;
+    try {
+        for (var URL_PREFIXES_2 = __values(URL_PREFIXES), URL_PREFIXES_2_1 = URL_PREFIXES_2.next(); !URL_PREFIXES_2_1.done; URL_PREFIXES_2_1 = URL_PREFIXES_2.next()) {
+            var _b = __read(URL_PREFIXES_2_1.value, 2), key = _b[0], prefix = _b[1];
+            if (url.startsWith(prefix))
+                return key + url.slice(prefix.length);
+        }
+    }
+    catch (e_8_1) { e_8 = { error: e_8_1 }; }
+    finally {
+        try {
+            if (URL_PREFIXES_2_1 && !URL_PREFIXES_2_1.done && (_a = URL_PREFIXES_2.return)) _a.call(URL_PREFIXES_2);
+        }
+        finally { if (e_8) throw e_8.error; }
+    }
+    return url;
+}
+function parseHashParams(hash) {
+    var e_9, _a;
+    var params = new Map();
+    if (hash.startsWith('#'))
+        hash = hash.slice(1);
+    try {
+        for (var _b = __values(hash.split('&')), _c = _b.next(); !_c.done; _c = _b.next()) {
+            var param = _c.value;
+            if (param === '')
+                continue;
+            var i = param.indexOf('=');
+            if (i < 0)
+                continue;
+            params.set(param.slice(0, i), decodeURIComponent(param.slice(i + 1)));
+        }
+    }
+    catch (e_9_1) { e_9 = { error: e_9_1 }; }
+    finally {
+        try {
+            if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+        }
+        finally { if (e_9) throw e_9.error; }
+    }
+    return params;
+}
 var App = /** @class */ (function () {
     function App() {
-        var e_7, _a, e_8, _b;
+        var e_10, _a, e_11, _b;
         var _this = this;
         this.parseRequestId = -1;
         this.updatePreviewRequestId = -1;
         this.font = null;
+        this.fontUrlBox = document.querySelector('#font-url');
+        this.fontUrlLoadButton = document.querySelector('#font-url-load');
+        this.fontUrlLog = document.querySelector('#font-url-log');
         this.fontSrcBox =
             document.querySelector('#font-src');
         this.sampleTextBox =
@@ -592,6 +818,17 @@ var App = /** @class */ (function () {
         this.fgColorBox = document.querySelector('#fg-color');
         this.bgColorBox = document.querySelector('#bg-color');
         this.logBox = document.querySelector('#log');
+        this.fontUrlLoadButton.addEventListener('click', function () {
+            _this.loadFontFromUrl(_this.fontUrlBox.value, true);
+        });
+        this.fontUrlBox.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter')
+                _this.loadFontFromUrl(_this.fontUrlBox.value, true);
+        });
+        this.fontUrlBox.addEventListener('paste', function () {
+            // The pasted text is in the box after this event has been handled
+            setTimeout(function () { return _this.loadFontFromUrl(_this.fontUrlBox.value, true); }, 0);
+        });
         this.fontSrcBox.addEventListener('input', function () {
             _this.requestParse();
         });
@@ -606,12 +843,12 @@ var App = /** @class */ (function () {
                 box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
-        catch (e_7_1) { e_7 = { error: e_7_1 }; }
+        catch (e_10_1) { e_10 = { error: e_10_1 }; }
         finally {
             try {
                 if (_d && !_d.done && (_a = _c.return)) _a.call(_c);
             }
-            finally { if (e_7) throw e_7.error; }
+            finally { if (e_10) throw e_10.error; }
         }
         var previewOptions = document.querySelector('#preview-options');
         try {
@@ -621,12 +858,12 @@ var App = /** @class */ (function () {
                 box.addEventListener('input', function () { return _this.requestUpdatePreview(); });
             }
         }
-        catch (e_8_1) { e_8 = { error: e_8_1 }; }
+        catch (e_11_1) { e_11 = { error: e_11_1 }; }
         finally {
             try {
                 if (_f && !_f.done && (_b = _e.return)) _b.call(_e);
             }
-            finally { if (e_8) throw e_8.error; }
+            finally { if (e_11) throw e_11.error; }
         }
         document.querySelector('#color-swap').addEventListener('click', function () {
             var fg = _this.fgColorBox.value;
@@ -636,7 +873,7 @@ var App = /** @class */ (function () {
             _this.requestUpdatePreview();
         });
         document.querySelector('#color-rotate').addEventListener('click', function () {
-            var e_9, _a;
+            var e_12, _a;
             try {
                 for (var _b = __values([_this.fgColorBox, _this.bgColorBox]), _c = _b.next(); !_c.done; _c = _b.next()) {
                     var box = _c.value;
@@ -648,117 +885,128 @@ var App = /** @class */ (function () {
                     box.value = encodeColor(rgb);
                 }
             }
-            catch (e_9_1) { e_9 = { error: e_9_1 }; }
+            catch (e_12_1) { e_12 = { error: e_12_1 }; }
             finally {
                 try {
                     if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
-                finally { if (e_9) throw e_9.error; }
+                finally { if (e_12) throw e_12.error; }
             }
             _this.requestUpdatePreview();
         });
     }
     App.prototype.init = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var hash, srcUrl, sampleText, REPO_RAW, allowedUrls, params, params_1, params_1_1, param, _a, key, value, url, accepted, allowedUrls_1, allowedUrls_1_1, _b, key_1, prefix, fontSrc, fontText, error_1;
-            var e_10, _c, e_11, _d;
+            var DEFAULT_FONT_URL, sampleText, srcUrl, _a, _b, _c, key, value;
+            var e_13, _d;
             return __generator(this, function (_e) {
                 switch (_e.label) {
                     case 0:
-                        _e.trys.push([0, 4, , 5]);
-                        hash = window.location.hash;
-                        srcUrl = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
+                        DEFAULT_FONT_URL = REPO_RAW_URL + 'gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
                         sampleText = ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
-                        REPO_RAW = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/';
-                        allowedUrls = [
-                            ['/shapofont/lvgl/', REPO_RAW + 'lvgl/'],
-                            ['/shapofont/', REPO_RAW + 'gfxfont/cpp/include/'],
-                            ['/ghuc/', 'https://raw.githubusercontent.com/'],
-                            ['/gist/', 'https://gist.githubusercontent.com/'],
-                        ];
-                        if (hash.startsWith('#')) {
-                            hash = hash.slice(1);
-                            params = hash.split('&');
-                            try {
-                                for (params_1 = __values(params), params_1_1 = params_1.next(); !params_1_1.done; params_1_1 = params_1.next()) {
-                                    param = params_1_1.value;
-                                    _a = __read(param.split('='), 2), key = _a[0], value = _a[1];
-                                    switch (key) {
-                                        case 'u':
-                                            {
-                                                url = decodeURIComponent(value);
-                                                accepted = false;
-                                                try {
-                                                    for (allowedUrls_1 = (e_11 = void 0, __values(allowedUrls)), allowedUrls_1_1 = allowedUrls_1.next(); !allowedUrls_1_1.done; allowedUrls_1_1 = allowedUrls_1.next()) {
-                                                        _b = __read(allowedUrls_1_1.value, 2), key_1 = _b[0], prefix = _b[1];
-                                                        if (url.startsWith(prefix)) {
-                                                            srcUrl = url;
-                                                            accepted = true;
-                                                            break;
-                                                        }
-                                                        else if (url.startsWith(key_1)) {
-                                                            srcUrl = prefix + url.slice(key_1.length);
-                                                            accepted = true;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                catch (e_11_1) { e_11 = { error: e_11_1 }; }
-                                                finally {
-                                                    try {
-                                                        if (allowedUrls_1_1 && !allowedUrls_1_1.done && (_d = allowedUrls_1.return)) _d.call(allowedUrls_1);
-                                                    }
-                                                    finally { if (e_11) throw e_11.error; }
-                                                }
-                                                if (!accepted) {
-                                                    throw new Error('Disallowed URL.');
-                                                }
-                                            }
-                                            break;
-                                        case 't':
-                                            sampleText = decodeURIComponent(value);
-                                            break;
-                                        case 's':
-                                            this.screenSizeBox.value = decodeURIComponent(value);
-                                            break;
-                                        case 'fg':
-                                            this.fgColorBox.value = '#' + decodeURIComponent(value);
-                                            break;
-                                        case 'bg':
-                                            this.bgColorBox.value = '#' + decodeURIComponent(value);
-                                            break;
-                                    }
+                        srcUrl = DEFAULT_FONT_URL;
+                        try {
+                            for (_a = __values(parseHashParams(window.location.hash)), _b = _a.next(); !_b.done; _b = _a.next()) {
+                                _c = __read(_b.value, 2), key = _c[0], value = _c[1];
+                                switch (key) {
+                                    case 'u':
+                                        srcUrl = value;
+                                        break;
+                                    case 't':
+                                        sampleText = value;
+                                        break;
+                                    case 's':
+                                        this.screenSizeBox.value = value;
+                                        break;
+                                    case 'fg':
+                                        this.fgColorBox.value = '#' + value;
+                                        break;
+                                    case 'bg':
+                                        this.bgColorBox.value = '#' + value;
+                                        break;
                                 }
-                            }
-                            catch (e_10_1) { e_10 = { error: e_10_1 }; }
-                            finally {
-                                try {
-                                    if (params_1_1 && !params_1_1.done && (_c = params_1.return)) _c.call(params_1);
-                                }
-                                finally { if (e_10) throw e_10.error; }
                             }
                         }
+                        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+                        finally {
+                            try {
+                                if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                            }
+                            finally { if (e_13) throw e_13.error; }
+                        }
                         this.sampleTextBox.value = sampleText;
-                        if (!srcUrl) return [3 /*break*/, 3];
-                        return [4 /*yield*/, fetch(srcUrl)];
+                        return [4 /*yield*/, this.loadFontFromUrl(srcUrl, false)];
                     case 1:
-                        fontSrc = _e.sent();
-                        return [4 /*yield*/, fontSrc.text()];
-                    case 2:
-                        fontText = _e.sent();
-                        document.querySelector('#font-src').value =
-                            fontText;
-                        this.runParse();
-                        _e.label = 3;
-                    case 3: return [3 /*break*/, 5];
-                    case 4:
-                        error_1 = _e.sent();
-                        this.logError(error_1.message);
-                        return [3 /*break*/, 5];
-                    case 5: return [2 /*return*/];
+                        _e.sent();
+                        return [2 /*return*/];
                 }
             });
         });
+    };
+    /** Fetches a font source from a GitHub/Gist URL into the source box and parses it. */
+    App.prototype.loadFontFromUrl = function (input, updateHash) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, response, _a, error_1, reason;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        if (input.trim() === '')
+                            return [2 /*return*/];
+                        try {
+                            url = resolveFontUrl(input);
+                        }
+                        catch (error) {
+                            this.setUrlLog("Error: ".concat(error.message), true);
+                            return [2 /*return*/];
+                        }
+                        this.fontUrlBox.value = url;
+                        this.fontUrlLoadButton.disabled = true;
+                        this.setUrlLog("Loading ".concat(url, " ..."), false);
+                        _b.label = 1;
+                    case 1:
+                        _b.trys.push([1, 4, 5, 6]);
+                        return [4 /*yield*/, fetch(url)];
+                    case 2:
+                        response = _b.sent();
+                        if (!response.ok) {
+                            throw new Error("HTTP ".concat(response.status, " ").concat(response.statusText));
+                        }
+                        _a = this.fontSrcBox;
+                        return [4 /*yield*/, response.text()];
+                    case 3:
+                        _a.value = _b.sent();
+                        this.setUrlLog("Loaded ".concat(url, " (").concat(this.fontSrcBox.value.length, " chars)"), false);
+                        if (updateHash)
+                            this.updateHash(url);
+                        this.runParse();
+                        return [3 /*break*/, 6];
+                    case 4:
+                        error_1 = _b.sent();
+                        reason = error_1 instanceof TypeError ? 'network error or the host does not allow cross-origin access' : error_1.message;
+                        this.setUrlLog("Error: failed to load ".concat(url, ": ").concat(reason), true);
+                        return [3 /*break*/, 6];
+                    case 5:
+                        this.fontUrlLoadButton.disabled = false;
+                        return [7 /*endfinally*/];
+                    case 6: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    App.prototype.updateHash = function (url) {
+        var params = parseHashParams(window.location.hash);
+        params.set('u', shortenFontUrl(url));
+        var hash = '#' + Array.from(params).map(function (_a) {
+            var _b = __read(_a, 2), k = _b[0], v = _b[1];
+            return "".concat(k, "=").concat(encodeURIComponent(v));
+        }).join('&');
+        history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+    };
+    App.prototype.setUrlLog = function (msg, isError) {
+        this.fontUrlLog.textContent = msg;
+        this.fontUrlLog.style.color = isError ? '#f66' : '#0cf';
+        if (isError)
+            console.error(msg);
     };
     App.prototype.requestParse = function () {
         var _this = this;
@@ -798,7 +1046,7 @@ var App = /** @class */ (function () {
         this.updatePreviewRequestId = setTimeout(function () { return _this.updatePreview(); }, 300);
     };
     App.prototype.updatePreview = function () {
-        var e_12, _a, e_13, _b;
+        var e_14, _a, e_15, _b;
         if (this.updatePreviewRequestId >= 0) {
             clearTimeout(this.updatePreviewRequestId);
             this.updatePreviewRequestId = -1;
@@ -834,12 +1082,12 @@ var App = /** @class */ (function () {
                 textBottom = Math.max(textBottom, c.getBottom());
             }
         }
-        catch (e_12_1) { e_12 = { error: e_12_1 }; }
+        catch (e_14_1) { e_14 = { error: e_14_1 }; }
         finally {
             try {
                 if (chars_1_1 && !chars_1_1.done && (_a = chars_1.return)) _a.call(chars_1);
             }
-            finally { if (e_12) throw e_12.error; }
+            finally { if (e_14) throw e_14.error; }
         }
         var textWidth = textRight - originX;
         var textHeight = textBottom - originY;
@@ -896,16 +1144,16 @@ var App = /** @class */ (function () {
                 c.glyph.render(ctx, c.x * dotSize, c.y * dotSize, c.size, dotSize, dotEmphasis, fgColorStr);
             }
         }
-        catch (e_13_1) { e_13 = { error: e_13_1 }; }
+        catch (e_15_1) { e_15 = { error: e_15_1 }; }
         finally {
             try {
                 if (chars_2_1 && !chars_2_1.done && (_b = chars_2.return)) _b.call(chars_2);
             }
-            finally { if (e_13) throw e_13.error; }
+            finally { if (e_15) throw e_15.error; }
         }
     };
     App.prototype.layoutChars = function (font, text, x, y, size, xAdvanceAdjust, yAdvanceAdjust) {
-        var e_14, _a;
+        var e_16, _a;
         var cursorX = x;
         var cursorY = y;
         var characters = [];
@@ -926,12 +1174,12 @@ var App = /** @class */ (function () {
                 }
             }
         }
-        catch (e_14_1) { e_14 = { error: e_14_1 }; }
+        catch (e_16_1) { e_16 = { error: e_16_1 }; }
         finally {
             try {
                 if (text_1_1 && !text_1_1.done && (_a = text_1.return)) _a.call(text_1);
             }
-            finally { if (e_14) throw e_14.error; }
+            finally { if (e_16) throw e_16.error; }
         }
         return characters;
     };

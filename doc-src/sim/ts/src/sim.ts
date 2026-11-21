@@ -105,11 +105,103 @@ function findCIntArray(src: string, name: string, what: string): number[] {
   return m[3].split(',').map(s => s.trim()).filter(s => s !== '').map(s => parseCInt(what, s));
 }
 
+/** Reads `len` bits (MSB first) at bit position `bitPos`. Bytes past the end read as 0. */
+function getBits(data: Uint8Array, bitPos: number, len: number): number {
+  const mask = (1 << len) - 1;
+  const bytePos = bitPos >> 3;
+  const bitOfs = bitPos & 7;
+  const hi = data[bytePos] ?? 0;
+  if (bitOfs + len > 8) {
+    const lo = data[bytePos + 1] ?? 0;
+    return (((hi << 8) | lo) >> (16 - bitOfs - len)) & mask;
+  }
+  return (hi >> (8 - bitOfs - len)) & mask;
+}
+
+/**
+ * Decoder for LVGL's compressed glyph bitmaps (lv_font_fmt_txt, bitmap_format 1 or 2).
+ * Port of rle_next() / decompress() in lv_font_fmt_txt.c. Returns one level per pixel.
+ */
+class LvglRleDecoder {
+  private readonly STATE_SINGLE = 0;
+  private readonly STATE_REPEATED = 1;
+  private readonly STATE_COUNTER = 2;
+  private state = this.STATE_SINGLE;
+  private rdp = 0;
+  private prevV = 0;
+  private count = 0;
+
+  constructor(private data: Uint8Array, private bpp: number) {}
+
+  private next(): number {
+    let ret = 0;
+    if (this.state === this.STATE_SINGLE) {
+      ret = getBits(this.data, this.rdp, this.bpp);
+      if (this.rdp !== 0 && this.prevV === ret) {
+        this.count = 0;
+        this.state = this.STATE_REPEATED;
+      }
+      this.prevV = ret;
+      this.rdp += this.bpp;
+    } else if (this.state === this.STATE_REPEATED) {
+      const v = getBits(this.data, this.rdp, 1);
+      this.count++;
+      this.rdp += 1;
+      if (v === 1) {
+        ret = this.prevV;
+        if (this.count === 11) {
+          this.count = getBits(this.data, this.rdp, 6);
+          this.rdp += 6;
+          if (this.count !== 0) {
+            this.state = this.STATE_COUNTER;
+          } else {
+            ret = getBits(this.data, this.rdp, this.bpp);
+            this.prevV = ret;
+            this.rdp += this.bpp;
+            this.state = this.STATE_SINGLE;
+          }
+        }
+      } else {
+        ret = getBits(this.data, this.rdp, this.bpp);
+        this.prevV = ret;
+        this.rdp += this.bpp;
+        this.state = this.STATE_SINGLE;
+      }
+    } else {
+      ret = this.prevV;
+      this.count--;
+      if (this.count === 0) {
+        ret = getBits(this.data, this.rdp, this.bpp);
+        this.prevV = ret;
+        this.rdp += this.bpp;
+        this.state = this.STATE_SINGLE;
+      }
+    }
+    return ret;
+  }
+
+  /** Decodes a w x h glyph. With `prefilter`, each line is XORed with the previous one. */
+  public decode(w: number, h: number, prefilter: boolean): Uint8Array {
+    const out = new Uint8Array(w * h);
+    const line = new Uint8Array(w);
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const v = this.next();
+        line[x] = (prefilter && y > 0) ? (line[x] ^ v) : v;
+        out[y * w + x] = line[x];
+      }
+    }
+    return out;
+  }
+}
+
 enum ScanType {
   /** 1 bpp, rows packed back to back, MSB first (GFXfont) */
   HORIZONTAL_PACKED,
   /** 1/2/4/8 bpp, rows packed back to back, MSB first (LVGL plain format) */
   LVGL_PACKED,
+  /** one level (0 .. 2^bpp-1) per byte, already unpacked */
+  LEVELS,
 }
 
 class GrayBitmap {
@@ -141,15 +233,16 @@ class GrayBitmap {
       } break;
 
       case ScanType.LVGL_PACKED: {
-        const bpp = bitsPerPixel;
-        const maxLevel = (1 << bpp) - 1;
-        let bitPos = 0;
+        const maxLevel = (1 << bitsPerPixel) - 1;
         for (let i = 0; i < width * height; i++) {
-          const byte = rawData[bitPos >> 3];
-          const shift = 8 - bpp - (bitPos & 7);
-          const level = (byte >> shift) & maxLevel;
-          grayData[i] = Math.round(level * 255 / maxLevel);
-          bitPos += bpp;
+          grayData[i] = Math.round(getBits(rawData, i * bitsPerPixel, bitsPerPixel) * 255 / maxLevel);
+        }
+      } break;
+
+      case ScanType.LEVELS: {
+        const maxLevel = (1 << bitsPerPixel) - 1;
+        for (let i = 0; i < width * height; i++) {
+          grayData[i] = Math.round(rawData[i] * 255 / maxLevel);
         }
       } break;
 
@@ -341,12 +434,14 @@ class Font {
     if (!mDsc) throw new Error(`Failed to find font descriptor: ${dscName}`);
     const dscFields = parseDesignatedInitializer(mDsc[1]);
 
+    // 0: plain, 1: RLE compressed with XOR prefilter, 2: RLE compressed without prefilter
     const bitmapFormat = parseCInt('bitmap_format', dscFields.get('bitmap_format') ?? '0');
-    if (bitmapFormat !== 0) {
-      throw new Error('Compressed LVGL fonts are not supported. Convert with --no-compress.');
-    }
+    if (![0, 1, 2].includes(bitmapFormat)) throw new Error(`Unsupported bitmap_format: ${bitmapFormat}`);
+    const compressed = bitmapFormat !== 0;
+    this.format = compressed ? 'LVGL (compressed)' : 'LVGL';
     const bpp = parseCInt('bpp', requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'bpp'));
-    if (![1, 2, 4, 8].includes(bpp)) throw new Error(`Unsupported bpp: ${bpp}`);
+    if (![1, 2, 3, 4, 8].includes(bpp)) throw new Error(`Unsupported bpp: ${bpp}`);
+    if (!compressed && bpp === 3) throw new Error('bpp = 3 is only valid for compressed fonts');
 
     const bitmapData = new Uint8Array(
         findCIntArray(src, requireField(dscFields, 'lv_font_fmt_txt_dsc_t', 'glyph_bitmap'), 'glyph bitmap'));
@@ -407,13 +502,22 @@ class Font {
       const [bitmapIndex, advW, boxW, boxH, ofsX, ofsY] = glyphDscs[gid];
       let bmp: GrayBitmap|null = null;
       if (boxW > 0 && boxH > 0) {
-        const numBytes = Math.ceil(boxW * boxH * bpp / 8);
-        if (bitmapIndex < 0 || bitmapData.length < bitmapIndex + numBytes) {
+        if (bitmapIndex < 0 || bitmapData.length <= bitmapIndex) {
           throw new Error(`Glyph bitmap out of range: U+${code.toString(16).toUpperCase()}`);
         }
-        bmp = new GrayBitmap(
-            boxW, boxH, bitmapData.subarray(bitmapIndex, bitmapIndex + numBytes),
-            ScanType.LVGL_PACKED, true, bpp);
+        if (compressed) {
+          const levels = new LvglRleDecoder(bitmapData.subarray(bitmapIndex), bpp)
+                             .decode(boxW, boxH, bitmapFormat === 1);
+          bmp = new GrayBitmap(boxW, boxH, levels, ScanType.LEVELS, true, bpp);
+        } else {
+          const numBytes = Math.ceil(boxW * boxH * bpp / 8);
+          if (bitmapData.length < bitmapIndex + numBytes) {
+            throw new Error(`Glyph bitmap out of range: U+${code.toString(16).toUpperCase()}`);
+          }
+          bmp = new GrayBitmap(
+              boxW, boxH, bitmapData.subarray(bitmapIndex, bitmapIndex + numBytes),
+              ScanType.LVGL_PACKED, true, bpp);
+        }
       }
       // LVGL: adv_w is in 1/16 px and rounded; ofs_y is the box bottom measured up from the baseline
       const xAdvance = (advW + 8) >> 4;
@@ -452,10 +556,93 @@ class Character {
   }
 }
 
+const REPO_RAW_URL = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/';
+
+/**
+ * Short prefixes accepted in the `u=` hash parameter and their expansions.
+ * The first match wins, so more specific prefixes come first.
+ */
+const URL_PREFIXES: [string, string][] = [
+  ['/shapofont/lvgl/', REPO_RAW_URL + 'lvgl/'],
+  ['/shapofont/', REPO_RAW_URL + 'gfxfont/cpp/include/'],
+  ['/ghuc/', 'https://raw.githubusercontent.com/'],
+  ['/gist/', 'https://gist.githubusercontent.com/'],
+];
+
+/**
+ * Converts a URL the user pasted from the browser's address bar into a URL whose
+ * content can be fetched from this page (CORS allowed). Only GitHub and Gist are accepted.
+ */
+function resolveFontUrl(input: string): string {
+  input = input.trim();
+  for (const [key, prefix] of URL_PREFIXES) {
+    if (input.startsWith(key)) return prefix + input.slice(key.length);
+  }
+
+  let url: URL;
+  try {
+    url = new URL(input);
+  } catch {
+    throw new Error('Invalid URL.');
+  }
+  if (url.protocol !== 'https:') throw new Error('Only https:// URLs are accepted.');
+  const parts = url.pathname.split('/').filter(p => p !== '');
+
+  switch (url.hostname) {
+    case 'raw.githubusercontent.com':
+    case 'gist.githubusercontent.com':
+      return url.origin + url.pathname;
+
+    case 'github.com': {
+      // https://github.com/<user>/<repo>/(blob|raw)/<ref>/<path>
+      if (parts.length < 5 || !['blob', 'raw'].includes(parts[2])) {
+        throw new Error('GitHub URL must point to a file: https://github.com/<user>/<repo>/blob/<branch>/<path>');
+      }
+      const [user, repo, , ...rest] = parts;
+      return `https://raw.githubusercontent.com/${user}/${repo}/${rest.join('/')}`;
+    }
+
+    case 'gist.github.com': {
+      // https://gist.github.com/<user>/<id>[#file-<name>]
+      if (parts.length < 2) throw new Error('Gist URL must be https://gist.github.com/<user>/<id>');
+      const [user, id] = parts;
+      const mFile = /^file-(.+)$/.exec(url.hash.slice(1));
+      const file = mFile ? mFile[1].replace(/-([^-]*)$/, '.$1') : '';
+      return `https://gist.githubusercontent.com/${user}/${id}/raw/${file}`;
+    }
+
+    default:
+      throw new Error(`Unsupported host: ${url.hostname} (GitHub and Gist only)`);
+  }
+}
+
+/** Shortens a fetchable URL with the known prefixes, for a compact `u=` hash parameter. */
+function shortenFontUrl(url: string): string {
+  for (const [key, prefix] of URL_PREFIXES) {
+    if (url.startsWith(prefix)) return key + url.slice(prefix.length);
+  }
+  return url;
+}
+
+function parseHashParams(hash: string): Map<string, string> {
+  const params = new Map<string, string>();
+  if (hash.startsWith('#')) hash = hash.slice(1);
+  for (const param of hash.split('&')) {
+    if (param === '') continue;
+    const i = param.indexOf('=');
+    if (i < 0) continue;
+    params.set(param.slice(0, i), decodeURIComponent(param.slice(i + 1)));
+  }
+  return params;
+}
+
 class App {
   private parseRequestId = -1;
   private updatePreviewRequestId = -1;
   private font: Font|null = null;
+  private fontUrlBox: HTMLInputElement;
+  private fontUrlLoadButton: HTMLButtonElement;
+  private fontUrlLog: HTMLSpanElement;
   private fontSrcBox: HTMLTextAreaElement;
   private sampleTextBox: HTMLTextAreaElement;
   private screenSizeBox: HTMLSelectElement;
@@ -471,6 +658,9 @@ class App {
   private logBox: HTMLPreElement;
 
   constructor() {
+    this.fontUrlBox = document.querySelector('#font-url') as HTMLInputElement;
+    this.fontUrlLoadButton = document.querySelector('#font-url-load') as HTMLButtonElement;
+    this.fontUrlLog = document.querySelector('#font-url-log') as HTMLSpanElement;
     this.fontSrcBox =
         document.querySelector('#font-src') as HTMLTextAreaElement;
     this.sampleTextBox =
@@ -492,6 +682,16 @@ class App {
     this.bgColorBox = document.querySelector('#bg-color') as HTMLInputElement;
     this.logBox = document.querySelector('#log') as HTMLPreElement;
 
+    this.fontUrlLoadButton.addEventListener('click', () => {
+      this.loadFontFromUrl(this.fontUrlBox.value, true);
+    });
+    this.fontUrlBox.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key === 'Enter') this.loadFontFromUrl(this.fontUrlBox.value, true);
+    });
+    this.fontUrlBox.addEventListener('paste', () => {
+      // The pasted text is in the box after this event has been handled
+      setTimeout(() => this.loadFontFromUrl(this.fontUrlBox.value, true), 0);
+    });
     this.fontSrcBox.addEventListener('input', () => {
       this.requestParse();
     });
@@ -533,80 +733,78 @@ class App {
   }
 
   async init() {
-    try {
-      let hash = window.location.hash;
-      let srcUrl =
-          'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
-      let sampleText =
-          ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
+    const DEFAULT_FONT_URL = REPO_RAW_URL + 'gfxfont/cpp/include/ShapoSansP_s12c09a01w02.h';
+    let sampleText =
+        ' !"#$%&\'()*+,-./\n0123456789:;<=>?\n@ABCDEFGHIJKLMNO\nPQRSTUVWXYZ[\\]^_\n`abcdefghijklmno\npqrstuvwxyz{|}~';
+    let srcUrl = DEFAULT_FONT_URL;
 
-      // Short prefixes accepted in the `u=` hash parameter. The first match wins,
-      // so more specific prefixes come first.
-      const REPO_RAW = 'https://raw.githubusercontent.com/shapoco/shapofont/refs/heads/main/';
-      const allowedUrls: [string, string][] = [
-        ['/shapofont/lvgl/', REPO_RAW + 'lvgl/'],
-        ['/shapofont/', REPO_RAW + 'gfxfont/cpp/include/'],
-        ['/ghuc/', 'https://raw.githubusercontent.com/'],
-        ['/gist/', 'https://gist.githubusercontent.com/'],
-      ];
-
-      if (hash.startsWith('#')) {
-        hash = hash.slice(1);
-
-        const params = hash.split('&');
-        for (const param of params) {
-          const [key, value] = param.split('=');
-          switch (key) {
-            case 'u': {
-              const url = decodeURIComponent(value);
-              let accepted = false;
-              for (const [key, prefix] of allowedUrls) {
-                if (url.startsWith(prefix)) {
-                  srcUrl = url;
-                  accepted = true;
-                  break;
-                } else if (url.startsWith(key)) {
-                  srcUrl = prefix + url.slice(key.length);
-                  accepted = true;
-                  break;
-                }
-              }
-              if (!accepted) {
-                throw new Error('Disallowed URL.');
-              }
-            } break;
-
-            case 't':
-              sampleText = decodeURIComponent(value);
-              break;
-
-            case 's':
-              this.screenSizeBox.value = decodeURIComponent(value);
-              break;
-
-            case 'fg':
-              this.fgColorBox.value = '#'+ decodeURIComponent(value);
-              break;
-
-            case 'bg':
-              this.bgColorBox.value = '#'+ decodeURIComponent(value);
-              break;
-          }
-        }
+    for (const [key, value] of parseHashParams(window.location.hash)) {
+      switch (key) {
+        case 'u':
+          srcUrl = value;
+          break;
+        case 't':
+          sampleText = value;
+          break;
+        case 's':
+          this.screenSizeBox.value = value;
+          break;
+        case 'fg':
+          this.fgColorBox.value = '#' + value;
+          break;
+        case 'bg':
+          this.bgColorBox.value = '#' + value;
+          break;
       }
-
-      this.sampleTextBox.value = sampleText;
-
-      if (srcUrl) {
-        const fontSrc = await fetch(srcUrl);
-        const fontText = await fontSrc.text();
-        (document.querySelector('#font-src') as HTMLTextAreaElement).value =
-            fontText;
-        this.runParse();
-      }
-    } catch (error) {
-      this.logError(error.message);
     }
+
+    this.sampleTextBox.value = sampleText;
+    await this.loadFontFromUrl(srcUrl, false);
+  }
+
+  /** Fetches a font source from a GitHub/Gist URL into the source box and parses it. */
+  private async loadFontFromUrl(input: string, updateHash: boolean): Promise<void> {
+    if (input.trim() === '') return;
+    let url: string;
+    try {
+      url = resolveFontUrl(input);
+    } catch (error) {
+      this.setUrlLog(`Error: ${error.message}`, true);
+      return;
+    }
+
+    this.fontUrlBox.value = url;
+    this.fontUrlLoadButton.disabled = true;
+    this.setUrlLog(`Loading ${url} ...`, false);
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      }
+      this.fontSrcBox.value = await response.text();
+      this.setUrlLog(`Loaded ${url} (${this.fontSrcBox.value.length} chars)`, false);
+      if (updateHash) this.updateHash(url);
+      this.runParse();
+    } catch (error) {
+      // fetch() reports CORS and network failures as TypeError without details
+      const reason = error instanceof TypeError ? 'network error or the host does not allow cross-origin access' : error.message;
+      this.setUrlLog(`Error: failed to load ${url}: ${reason}`, true);
+    } finally {
+      this.fontUrlLoadButton.disabled = false;
+    }
+  }
+
+  private updateHash(url: string): void {
+    const params = parseHashParams(window.location.hash);
+    params.set('u', shortenFontUrl(url));
+    const hash = '#' + Array.from(params).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    history.replaceState(null, '', window.location.pathname + window.location.search + hash);
+  }
+
+  private setUrlLog(msg: string, isError: boolean): void {
+    this.fontUrlLog.textContent = msg;
+    this.fontUrlLog.style.color = isError ? '#f66' : '#0cf';
+    if (isError) console.error(msg);
   }
 
   private requestParse(): void {

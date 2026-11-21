@@ -26,8 +26,8 @@
     }
   </script>
 
-  <title>GFXfont Web Simulator</title>
-  <script src="sim.js?20251121120000"></script>
+  <title>Embedded Font Simulator</title>
+  <script src="sim.js?20251121140000"></script>
 
   <style>
     body {
@@ -105,6 +105,22 @@
       border-radius: 5px;
     }
 
+    .url-row {
+      display: flex;
+      gap: 5px;
+    }
+    #font-url {
+      flex: 1;
+      width: auto;
+      min-width: 0;
+      font-family: Consolas, 'Courier New', Courier, monospace;
+      font-size: 12px;
+    }
+    .small-log {
+      font-family: Consolas, 'Courier New', Courier, monospace;
+      font-size: 12px;
+      word-break: break-all;
+    }
     #font-src {
       width: 100%;
       height: 150px;
@@ -169,13 +185,20 @@
 
 <body>
   <main>
-    <h1>GFXfont Web Simulator</h1>
+    <h1>Embedded Font Simulator</h1>
     <p>
-      Paste the GFXfont source code below to see the rendering results with any text.<br>
-      GFXfont のソースコードを下に貼り付けると、任意のテキストを使ってレンダリング結果をチェックできます。
+      Paste the URL of a font source file on GitHub, or the source code itself, to see the rendering results with any text.
+      GFXfont and LVGL fonts (plain and compressed) are supported.<br>
+      GitHub 上のフォントソースファイルの URL、またはソースコードそのものを貼り付けると、任意のテキストを使ってレンダリング結果をチェックできます。
+      GFXfont と LVGL フォント (非圧縮・圧縮) に対応しています。
     </p>
-
-    <h2>GFXfont source code</h2>
+    <h2>Font source URL (GitHub / Gist)</h2>
+    <p class="url-row">
+      <input type="text" id="font-url" placeholder="https://github.com/user/repo/blob/main/path/to/font.c" spellcheck="false" />
+      <button id="font-url-load">Load</button>
+    </p>
+    <p><span id="font-url-log" class="small-log"></span></p>
+    <h2>Font source code (GFXfont / LVGL)</h2>
     <p>
       <textarea id="font-src"></textarea>
     </p>
