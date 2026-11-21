@@ -66,6 +66,15 @@ Proportional fonts for embedded projects
 |<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/ShapoSquareRoundP_s27c22a01w04.h" target="_blank"><img src="img/sample/ShapoSquareRoundP_s27c22a01w04.png" style="width: 250px;"></a>|**s27c22a01w04**<br>[GFXfont](gfxfont/cpp/include/ShapoSquareRoundP_s27c22a01w04.h) (3.59 kB)<br>[LVGL](lvgl/ShapoSquareRoundP_s27c22a01w04.c) (3.76 kB)|
 
 
+## WcbSansP
+
+Proportional fonts designed for WildCardBoy
+
+|Sample|Downloads (Footprint)|
+|:--|:--|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (3.16 kB)|
+
+
 ## MameSansP
 
 Proportional fonts

@@ -17,6 +17,7 @@ FAMILIES: list[tuple[str, str]] = [
     ("ShapoSansDigitP", "Proportional number fonts for embedded projects"),
     ("ShapoSansMono", "Monospaced fonts for embedded projects"),
     ("ShapoSquareRoundP", "Proportional fonts for embedded projects"),
+    ("WcbSansP", "Proportional fonts designed for WildCardBoy"),
     ("MameSansP", "Proportional fonts"),
     ("MameSansDigitP", "Proportional number fonts"),
     ("MameSeg7", "7-segment display fonts"),
