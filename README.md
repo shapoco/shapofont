@@ -72,8 +72,8 @@ Proportional fonts designed for WildCardBoy
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (5.58 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01w02g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01w02g02.png" style="width: 250px;"></a>|**s18c14a01w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01w02g02.c) (5.86 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (7.71 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01w02g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01w02g02.png" style="width: 250px;"></a>|**s18c14a01w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01w02g02.c) (7.99 kB)|
 
 
 ## MameSansP
@@ -285,4 +285,73 @@ The rights to font files generated using the tools included in ShapoFont are sub
 0xD0  ﾐ   ﾑ   ﾒ   ﾓ   ﾔ   ﾕ   ﾖ   ﾗ   ﾘ   ﾙ   ﾚ   ﾛ   ﾜ   ﾝ   ﾞ   ﾟ
 0xE0
 0xF0
+```
+
+## Symbols
+
+```
+U+00B0 °
+U+00B1 ±
+U+00D7 ×
+U+00F7 ÷
+U+03A9 Ω
+U+03BC μ
+U+2103 ℃
+U+2190 ←
+U+2191 ↑
+U+2192 →
+U+2193 ↓
+U+2194 ↔
+U+2195 ↕
+U+2196 ↖
+U+2197 ↗
+U+2198 ↘
+U+2199 ↙
+U+2328 ⌨
+U+23CE ⏎
+U+23FB ⏻
+U+24B6 Ⓐ
+U+24B7 Ⓑ
+U+24BD Ⓗ (Home)
+U+24C1 Ⓛ
+U+24C7 Ⓡ
+U+24C8 Ⓢ (Start)
+U+24C9 Ⓣ (Select)
+U+24CD Ⓧ
+U+24CE Ⓨ
+U+25B2 ▲
+U+25B6 ▶
+U+25BC ▼
+U+25C0 ◀
+U+2610 ☐
+U+2611 ☑
+U+2699 ⚙
+U+26A0 ⚠
+U+26D4 ⛔
+U+270E ✎
+U+271C ✜
+U+274C ❌
+U+2753 ❓
+U+2B55 ⭕
+U+1F321 🌡
+U+1F3AE 🎮
+U+1F3E0 🏠
+U+1F446 👆
+U+1F4A1 💡
+U+1F4AC 💬
+U+1F4BE 💾
+U+1F4C1 📁
+U+1F4C2 📂
+U+1F4C3 📃
+U+1F4D6 📖
+U+1F4E6 📦
+U+1F507 🔇
+U+1F50A 🔊
+U+1F50B 🔋
+U+1F50C 🔌
+U+1F50D 🔍
+U+1F514 🔔
+U+1F5A5 🖥
+U+1FAAB 🪫
+U+1FAB2 🪲
 ```
