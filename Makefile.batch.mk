@@ -29,10 +29,10 @@ GFX_HEADER_LIST = \
 LVGL_SOURCE_LIST = \
 	lvgl/MameSansP_s48c40w08.c \
 	lvgl/MameSquareWide_s64c48a04w16.c \
-	lvgl/ShapoSansP_s27c22a01w04.c \
-	lvgl/ShapoSquareRoundP_s27c22a01w04.c \
 	lvgl/WcbSansP_s18c14a01w02g02.c \
 	lvgl/WcbSansP_s18c14a01g02.c \
+	lvgl/ShapoSansP_s27c22a01w04.c \
+	lvgl/ShapoSquareRoundP_s27c22a01w04.c \
 	lvgl/MameSansP_s15c12w02g02.c \
 	lvgl/MameSansP_s15c12g02.c \
 	lvgl/ShapoSansP_s21c16a01w03.c \
@@ -59,10 +59,10 @@ LVGL_SOURCE_LIST = \
 SAMPLE_IMAGE_LIST = \
 	img/sample/MameSansP_s48c40w08.png \
 	img/sample/MameSquareWide_s64c48a04w16.png \
-	img/sample/ShapoSansP_s27c22a01w04.png \
-	img/sample/ShapoSquareRoundP_s27c22a01w04.png \
 	img/sample/WcbSansP_s18c14a01w02g02.png \
 	img/sample/WcbSansP_s18c14a01g02.png \
+	img/sample/ShapoSansP_s27c22a01w04.png \
+	img/sample/ShapoSquareRoundP_s27c22a01w04.png \
 	img/sample/MameSansP_s15c12w02g02.png \
 	img/sample/MameSansP_s15c12g02.png \
 	img/sample/ShapoSansP_s21c16a01w03.png \
@@ -114,6 +114,22 @@ img/sample/MameSquareWide_s64c48a04w16.png: design/MameSquareWide_s64c48a04w16/d
 	@mkdir -p $(dir $@)
 	$(CMD_SHAPOFONT) convert -i design/MameSquareWide_s64c48a04w16 --sample-img $@
 
+lvgl/WcbSansP_s18c14a01w02g02.c: design/WcbSansP_s18c14a01w02g02/design.png design/WcbSansP_s18c14a01w02g02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01w02g02 --lvgl-outdir $(dir $@)
+
+img/sample/WcbSansP_s18c14a01w02g02.png: design/WcbSansP_s18c14a01w02g02/design.png design/WcbSansP_s18c14a01w02g02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01w02g02 --sample-img $@
+
+lvgl/WcbSansP_s18c14a01g02.c: design/WcbSansP_s18c14a01g02/design.png design/WcbSansP_s18c14a01g02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01g02 --lvgl-outdir $(dir $@)
+
+img/sample/WcbSansP_s18c14a01g02.png: design/WcbSansP_s18c14a01g02/design.png design/WcbSansP_s18c14a01g02/design.json $(COMMON_DEPENDENCIES)
+	@mkdir -p $(dir $@)
+	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01g02 --sample-img $@
+
 gfxfont/cpp/include/ShapoSansP_s27c22a01w04.h: design/ShapoSansP_s27c22a01w04/design.png design/ShapoSansP_s27c22a01w04/design.json $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_SHAPOFONT) convert -i design/ShapoSansP_s27c22a01w04 --gfx-outdir $(dir $@)
@@ -137,22 +153,6 @@ lvgl/ShapoSquareRoundP_s27c22a01w04.c: design/ShapoSquareRoundP_s27c22a01w04/des
 img/sample/ShapoSquareRoundP_s27c22a01w04.png: design/ShapoSquareRoundP_s27c22a01w04/design.png design/ShapoSquareRoundP_s27c22a01w04/design.json $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)
 	$(CMD_SHAPOFONT) convert -i design/ShapoSquareRoundP_s27c22a01w04 --sample-img $@
-
-lvgl/WcbSansP_s18c14a01w02g02.c: design/WcbSansP_s18c14a01w02g02/design.png design/WcbSansP_s18c14a01w02g02/design.json $(COMMON_DEPENDENCIES)
-	@mkdir -p $(dir $@)
-	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01w02g02 --lvgl-outdir $(dir $@)
-
-img/sample/WcbSansP_s18c14a01w02g02.png: design/WcbSansP_s18c14a01w02g02/design.png design/WcbSansP_s18c14a01w02g02/design.json $(COMMON_DEPENDENCIES)
-	@mkdir -p $(dir $@)
-	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01w02g02 --sample-img $@
-
-lvgl/WcbSansP_s18c14a01g02.c: design/WcbSansP_s18c14a01g02/design.png design/WcbSansP_s18c14a01g02/design.json $(COMMON_DEPENDENCIES)
-	@mkdir -p $(dir $@)
-	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01g02 --lvgl-outdir $(dir $@)
-
-img/sample/WcbSansP_s18c14a01g02.png: design/WcbSansP_s18c14a01g02/design.png design/WcbSansP_s18c14a01g02/design.json $(COMMON_DEPENDENCIES)
-	@mkdir -p $(dir $@)
-	$(CMD_SHAPOFONT) convert -i design/WcbSansP_s18c14a01g02 --sample-img $@
 
 lvgl/MameSansP_s15c12w02g02.c: design/MameSansP_s15c12w02g02/design.png design/MameSansP_s15c12w02g02/design.json $(COMMON_DEPENDENCIES)
 	@mkdir -p $(dir $@)

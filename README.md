@@ -72,8 +72,8 @@ Proportional fonts designed for WildCardBoy
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (3.18 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01w02g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01w02g02.png" style="width: 250px;"></a>|**s18c14a01w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01w02g02.c) (3.44 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (5.58 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01w02g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01w02g02.png" style="width: 250px;"></a>|**s18c14a01w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01w02g02.c) (5.86 kB)|
 
 
 ## MameSansP
