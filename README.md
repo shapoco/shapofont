@@ -72,8 +72,8 @@ Proportional fonts designed for WildCardBoy
 
 |Sample|Downloads (Footprint)|
 |:--|:--|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (7.71 kB)|
-|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01w02g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01w02g02.png" style="width: 250px;"></a>|**s18c14a01w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01w02g02.c) (7.99 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01g02.png" style="width: 250px;"></a>|**s18c14a01g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01g02.c) (8.63 kB)|
+|<a href="https://shapoco.github.io/shapofont/sim/#u=/shapofont/lvgl/WcbSansP_s18c14a01w02g02.c" target="_blank"><img src="img/sample/WcbSansP_s18c14a01w02g02.png" style="width: 250px;"></a>|**s18c14a01w02g02**<br>(GFXfont not available: grayscale)<br>[LVGL](lvgl/WcbSansP_s18c14a01w02g02.c) (8.91 kB)|
 
 
 ## MameSansP
@@ -309,6 +309,9 @@ U+2198 ↘
 U+2199 ↙
 U+2328 ⌨
 U+23CE ⏎
+U+23EF ⏯
+U+23F8 ⏸
+U+23F9 ⏹
 U+23FB ⏻
 U+24B6 Ⓐ
 U+24B7 Ⓑ
@@ -323,8 +326,12 @@ U+25B2 ▲
 U+25B6 ▶
 U+25BC ▼
 U+25C0 ◀
+U+25CF ●
+U+2605 ★
 U+2610 ☐
 U+2611 ☑
+U+2665 ♥
+U+266A ♪
 U+2699 ⚙
 U+26A0 ⚠
 U+26D4 ⛔
@@ -337,6 +344,9 @@ U+1F321 🌡
 U+1F3AE 🎮
 U+1F3E0 🏠
 U+1F446 👆
+U+1F447 👇
+U+1F448 👈
+U+1F449 👉
 U+1F4A1 💡
 U+1F4AC 💬
 U+1F4BE 💾
@@ -350,8 +360,12 @@ U+1F50A 🔊
 U+1F50B 🔋
 U+1F50C 🔌
 U+1F50D 🔍
+U+1F511 🔑
+U+1F512 🔒
+U+1F513 🔓
 U+1F514 🔔
 U+1F5A5 🖥
+U+1F5D1 🗑
 U+1FAAB 🪫
 U+1FAB2 🪲
 ```
